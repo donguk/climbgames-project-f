@@ -1,6 +1,7 @@
 ﻿using ClimbGames.UI;
-using Unity.VisualScripting;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
+using R3;
 
 namespace ClimbGames.Project_HC
 {
@@ -8,7 +9,8 @@ namespace ClimbGames.Project_HC
     {
         [SerializeField] private Transform model;
 
-        private UIBase uiMenu, uiIndicator;
+        private UIBase uiIndicator;
+        private UIMenu uiMenu;
 
         void Awake()
         {
@@ -30,7 +32,10 @@ namespace ClimbGames.Project_HC
         void OnTriggerEnter(Collider other)
         {
             if (uiMenu == null)
+            {
                 uiMenu = UIManager.Instance.CreateUI<UIMenu>("UIMenu", UILayer.HUD);
+                uiMenu.OnClickFishingAsObservable().Subscribe(_ => WorldManager.Instance.TransitionToFishing($"FishingPoint_{name}").Forget()).AddTo(uiMenu);
+            }
         }
 
         void OnTriggerExit(Collider other)

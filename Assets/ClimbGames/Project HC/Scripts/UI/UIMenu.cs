@@ -10,15 +10,6 @@ namespace ClimbGames.Project_HC
     {
         [SerializeField] private Button btn_fishing;
 
-        protected override UniTask OnInitialize()
-        {
-            btn_fishing.OnClickAsObservable().Subscribe(_ => OnClickFishing()).AddTo(this);
-            return base.OnInitialize();
-        }
-
-        void OnClickFishing()
-        {
-            Debug.Log("[UIMenu] OnClickFishing");
-        }
+        public Observable<Unit> OnClickFishingAsObservable() => btn_fishing.OnClickAsObservable();
     }
 }
