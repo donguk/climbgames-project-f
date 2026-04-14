@@ -72,6 +72,37 @@ Transform:
   - {fileID: 1000443587119131825}
   m_Father: {fileID: 713904009642500311}
   m_LocalEulerAnglesHint: {x: 0, y: -132.5, z: 0}
+--- !u!1 &2176334550158433947
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2316527112832728251}
+  m_Layer: 0
+  m_Name: root
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2316527112832728251
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2176334550158433947}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.27457005, y: 0.8498634, z: 0.41026846, w: 0.1844541}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4868305174733118473}
+  m_LocalEulerAnglesHint: {x: -53, y: 171.57, z: -31.6}
 --- !u!1 &3336730952213897383
 GameObject:
   m_ObjectHideFlags: 0
@@ -524,6 +555,38 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &6904845140774258931
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4868305174733118473}
+  m_Layer: 0
+  m_Name: Rod
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4868305174733118473
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6904845140774258931}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2.38, y: 1.35, z: -0.56}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2316527112832728251}
+  m_Father: {fileID: 2649791942905605046}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7001329877192263619
 GameObject:
   m_ObjectHideFlags: 0
@@ -566,7 +629,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2161777826188635178}
   m_Layer: 0
-  m_Name: FishingPoints
+  m_Name: Fishing Points
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -647,11 +710,12 @@ Transform:
   m_GameObject: {fileID: 8704222835233074568}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 20.450005, y: 0, z: -2.4699993}
+  m_LocalPosition: {x: 19.76, y: 0, z: -2.42}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4164897094857161904}
+  - {fileID: 4868305174733118473}
   m_Father: {fileID: 2161777826188635178}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &990974677110943215
@@ -667,6 +731,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingPoint
   model: {fileID: 4164897094857161904}
+  rodRoot: {fileID: 2316527112832728251}
 --- !u!65 &6965767381245694050
 BoxCollider:
   m_ObjectHideFlags: 0

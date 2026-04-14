@@ -8,9 +8,12 @@ namespace ClimbGames.Project_HC
     public class FishingPoint : MonoBehaviour
     {
         [SerializeField] private Transform model;
+        [SerializeField] private Transform rodRoot;
 
         private UIBase uiIndicator;
         private UIMenu uiMenu;
+
+        public Transform RodRoot => rodRoot;
 
         void Awake()
         {
@@ -34,7 +37,7 @@ namespace ClimbGames.Project_HC
             if (uiMenu == null)
             {
                 uiMenu = UIManager.Instance.CreateUI<UIMenu>("UIMenu", UILayer.HUD);
-                uiMenu.OnClickFishingAsObservable().Subscribe(_ => WorldManager.Instance.TransitionToFishing($"FishingPoint_{name}").Forget()).AddTo(uiMenu);
+                uiMenu.OnClickFishingAsObservable().Subscribe(_ => WorldManager.Instance.TransitionToFishing(this).Forget()).AddTo(uiMenu);
             }
         }
 

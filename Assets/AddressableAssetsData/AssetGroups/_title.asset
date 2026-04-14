@@ -10,23 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: _ui_world
+  m_Name: _title
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
-  m_GroupName: _ui_world
-  m_GUID: 477fb22652da430489d382f8216e8e09
+  m_GroupName: _title
+  m_GUID: 34263d1ee5bb80d47869fabcc5bf60fe
   m_SerializeEntries:
-  - m_GUID: 32f9f52d44df09641a8a157ecb4e143c
-    m_Address: UIFisingArea
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 81c20ba05817cec4fbef10670a2e8b23
-    m_Address: UIMenu
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: ec536a7718376554185e4a856d5ae230
-    m_Address: PlayerJoystick
+  - m_GUID: 6b1230a0de8e5d942b9f2817006fb845
+    m_Address: UITitle
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -34,5 +24,5 @@ MonoBehaviour:
   m_Settings: {fileID: 11400000, guid: f483d4dbedf6625409321a4feaac25b5, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: d0a1f130a6ea0624dac51683015c5601, type: 2}
-    - {fileID: 11400000, guid: 851a6652ea66fe440b1d10fcb30e78ae, type: 2}
+    - {fileID: 11400000, guid: 98529b8bb303ec74e8ba985e7817050f, type: 2}
+    - {fileID: 11400000, guid: 0fb78402dc7cedf49aca6f9cb71c619d, type: 2}
