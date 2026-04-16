@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
@@ -14,6 +16,19 @@ namespace ClimbGames.Project_HC
         private FishingRod fishingRod;
         private FishingBait fishingBait;
 
+        private FishingRodActor rodActor = new FishingRodActor();
+
+        public FishingInputProvider InputProvider => inputProvider;
+
+        protected override void Awake()
+        {
+            base.Awake();
+
+            inputProvider.CastAction.onPressed += OnCastStarted;
+            inputProvider.CastAction.onReleased += OnCastReleased;
+            inputProvider.CastAction.onCanceled += OnCastCanceled;
+        }
+
         public void Setup(FishingPoint fishingPoint)
         {
             this.fishingPoint = fishingPoint;
@@ -28,12 +43,30 @@ namespace ClimbGames.Project_HC
             fishingBait.Setup(fishingRod);
             fishingLine.Setup(fishingRod, fishingBait);
 
+            rodActor.Initialize(fishingRod);
+            rodActor.Start(FishingRodAction.Idle, fishingRod.GetCancellationTokenOnDestroy());
+
             gameObject.SetActive(true);
         }
 
         public void Close()
         {
             gameObject.SetActive(false);
+        }
+
+        void OnCastStarted()
+        {
+            rodActor.ChangeState(FishingRodAction.Load);
+        }
+
+        void OnCastReleased()
+        {
+            rodActor.ChangeState(FishingRodAction.Cast);
+        }
+
+        void OnCastCanceled()
+        {
+            rodActor.ChangeState(FishingRodAction.Idle);
         }
     }
 }

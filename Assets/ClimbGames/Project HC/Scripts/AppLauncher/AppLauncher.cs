@@ -10,7 +10,7 @@ namespace ClimbGames.Project_HC
             PrepareSDK,
         }
 
-        public abstract class LaunchStep : TaskSequencer.StapBase
+        public abstract class LaunchStep : TaskSequencer.StepBase
         {
             public abstract StepType Type { get; }
         }
@@ -43,6 +43,6 @@ namespace ClimbGames.Project_HC
             controller.Start((result) => Result = result);
         }
 
-        public void Clear() => controller.Clear();
+        public void Clear() => controller.Dispose();
     }
 }

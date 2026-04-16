@@ -7,5 +7,10 @@ namespace ClimbGames.Project_HC
         [SerializeField] private Transform poleTip;
 
         public Transform PoleTipe => poleTip;
+
+        public virtual void OnLoading(FishingInput.ICastAction castAction)
+        {
+
+        }
     }
 }
