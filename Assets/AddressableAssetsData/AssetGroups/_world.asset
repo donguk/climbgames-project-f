@@ -15,18 +15,23 @@ MonoBehaviour:
   m_GroupName: _world
   m_GUID: 477fb22652da430489d382f8216e8e09
   m_SerializeEntries:
+  - m_GUID: 0c4ce480f58c82841996eda817b19715
+    m_Address: FishingBait
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 32f9f52d44df09641a8a157ecb4e143c
     m_Address: UIFisingArea
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 51cfb8ee4041c204ea445a54995259f5
-    m_Address: FishingManager
+  - m_GUID: 4e5fd42cef784fe4682f6dd187a0b5d2
+    m_Address: PhysicsRod
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 63ace58c592da454dafad0683fb13c82
-    m_Address: FishingRod_Sample
+  - m_GUID: 51cfb8ee4041c204ea445a54995259f5
+    m_Address: FishingManager
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

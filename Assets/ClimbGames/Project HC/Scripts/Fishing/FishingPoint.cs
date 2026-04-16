@@ -9,11 +9,13 @@ namespace ClimbGames.Project_HC
     {
         [SerializeField] private Transform model;
         [SerializeField] private Transform rodRoot;
+        [SerializeField] private Transform castingArea;
 
         private UIBase uiIndicator;
         private UIMenu uiMenu;
 
         public Transform RodRoot => rodRoot;
+        public Vector3 CastingPosition => castingArea.position;
 
         void Awake()
         {

@@ -47,9 +47,9 @@ namespace ClimbGames.Project_HC
 
         public async UniTaskVoid TransitionToFishing(FishingPoint fishingPoint)
         {
-            WorldCamera.Instance.ChangeCinemachine($"FishingPoint_{fishingPoint.name}");
-
+            var cinemachine = WorldCamera.Instance.ChangeCinemachine($"FishingPoint_{fishingPoint.name}");
             await UniTask.NextFrame();
+
             var activeBlend = WorldCamera.Instance.ActiveBlend;
             if (activeBlend != null)
             {
@@ -57,9 +57,13 @@ namespace ClimbGames.Project_HC
                 await UniTask.WaitUntil(() => activeBlend.TimeInBlend > transitionTime);
                 await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
 
-                ActiveFishing(fishingPoint);
+                SetupFishing(fishingPoint);
                 await UniTask.WaitUntil(() => activeBlend.IsComplete);
                 (DefaultTransition.Instance as ITransitionHandler).Complete();
+            }
+            else
+            {
+                SetupFishing(fishingPoint);
             }
         }
 
@@ -68,11 +72,11 @@ namespace ClimbGames.Project_HC
             await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
             WorldCamera.Instance.RestoreCinemachine();
 
-            DeactiveFishing();
+            SetupWorld();
             (DefaultTransition.Instance as ITransitionHandler).Complete();
         }
 
-        void ActiveFishing(FishingPoint fishingPoint)
+        void SetupFishing(FishingPoint fishingPoint)
         {
             player.gameObject.SetActive(false);
             joystick.gameObject.SetActive(false);
@@ -80,7 +84,7 @@ namespace ClimbGames.Project_HC
             FishingManager.Instance.Setup(fishingPoint);
         }
 
-        void DeactiveFishing()
+        void SetupWorld()
         {
             player.gameObject.SetActive(true);
             joystick.gameObject.SetActive(true);
