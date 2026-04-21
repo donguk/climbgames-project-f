@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.climbgames.framework": {
-      "version": "1.0.25",
+      "version": "1.0.26",
       "depth": 0,
       "source": "registry",
       "dependencies": {

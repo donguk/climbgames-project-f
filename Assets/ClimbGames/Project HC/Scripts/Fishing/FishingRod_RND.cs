@@ -97,8 +97,8 @@ namespace ClimbGames.Project_HC
         {
             this.fishingPoint = fishingPoint;
 
-            modelRoot.transform.SetPositionAndRotation(fishingPoint.RodRoot.position, fishingPoint.RodRoot.rotation);
-            modelRoot.transform.localScale = fishingPoint.RodRoot.localScale;
+            modelRoot.transform.SetPositionAndRotation(fishingPoint.CharacterPoint.position, fishingPoint.CharacterPoint.rotation);
+            modelRoot.transform.localScale = fishingPoint.CharacterPoint.localScale;
 
             // 2. 미끼 위치를 초릿대 바로 아래로 강제 이동
             float lineLength = 1.5f; // 원하는 낚시줄 길이
@@ -147,7 +147,7 @@ namespace ClimbGames.Project_HC
                         finalAngle = Mathf.Clamp(finalAngle, 15f, 60f);
 
                         Debug.Log($"lastForwardMomenTum({lastForwardMomenTum})/ forwardMomentum({forwardMomentum})");
-                        SetLureVelocity(lure.position, fishingPoint.CastingPosition, finalAngle);
+                        SetLureVelocity(lure.position, fishingPoint.CastPosition, finalAngle);
                         isCastLure = true;
                     }
                     lastForwardMomenTum = forwardMomentum;

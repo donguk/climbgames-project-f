@@ -8,14 +8,14 @@ namespace ClimbGames.Project_HC
     public class FishingPoint : MonoBehaviour
     {
         [SerializeField] private Transform model;
-        [SerializeField] private Transform rodRoot;
-        [SerializeField] private Transform castingArea;
+        [SerializeField] private Transform characterPoint;
+        [SerializeField] private Transform castArea;
 
         private UIBase uiIndicator;
         private UIMenu uiMenu;
 
-        public Transform RodRoot => rodRoot;
-        public Vector3 CastingPosition => castingArea.position;
+        public Transform CharacterPoint => characterPoint;
+        public Vector3 CastPosition => castArea.position;
 
         void Awake()
         {

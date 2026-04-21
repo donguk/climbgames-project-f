@@ -565,7 +565,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4868305174733118473}
   m_Layer: 0
-  m_Name: RodRoot
+  m_Name: CharacterPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -579,13 +579,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6904845140774258931}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.443956, y: 1.2, z: -0.6298046}
+  m_LocalRotation: {x: 0.02639908, y: 0.97282314, z: -0.14174615, w: 0.18118048}
+  m_LocalPosition: {x: -2.68, y: 0, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2649791942905605046}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 16.58, y: 158.9, z: 0}
 --- !u!1 &7001329877192263619
 GameObject:
   m_ObjectHideFlags: 0
@@ -731,8 +731,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingPoint
   model: {fileID: 4164897094857161904}
-  rodRoot: {fileID: 4868305174733118473}
-  castingArea: {fileID: 9199511616517983929}
+  characterPoint: {fileID: 4868305174733118473}
+  castArea: {fileID: 9199511616517983929}
 --- !u!65 &6965767381245694050
 BoxCollider:
   m_ObjectHideFlags: 0

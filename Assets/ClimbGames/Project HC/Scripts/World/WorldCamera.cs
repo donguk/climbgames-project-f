@@ -22,14 +22,15 @@ namespace ClimbGames.Project_HC
             cinemachineBrain = mainCamera.GetComponent<CinemachineBrain>();
         }
 
-        public CinemachineCamera ChangeCinemachine(string key)
+        public CinemachineCamera ChangeCinemachine(string key, Transform target)
         {
-            CinemachineCamera target = null;
+            CinemachineCamera cinemachine = null;
             foreach (var pair in cinemachineCameras)
             {
                 if (pair.Key == key)
                 {
-                    target = pair.Value;
+                    cinemachine = pair.Value;
+                    cinemachine.Target.TrackingTarget = target;
                     pair.Value.Priority = CINEMACHINE_LIVE_PRIORITY;
                 }
                 else
@@ -38,9 +39,7 @@ namespace ClimbGames.Project_HC
                 }
             }
 
-            return target;
+            return cinemachine;
         }
-
-        public CinemachineCamera RestoreCinemachine() => ChangeCinemachine("World");
     }
 }

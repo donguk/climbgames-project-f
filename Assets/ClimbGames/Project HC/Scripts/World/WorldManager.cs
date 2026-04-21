@@ -1,6 +1,6 @@
 ﻿using ClimbGames.UI;
 using Cysharp.Threading.Tasks;
-using Unity.VisualScripting;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
@@ -47,7 +47,7 @@ namespace ClimbGames.Project_HC
 
         public async UniTaskVoid TransitionToFishing(FishingPoint fishingPoint)
         {
-            var cinemachine = WorldCamera.Instance.ChangeCinemachine($"FishingPoint_{fishingPoint.name}");
+            var cinemachine = WorldCamera.Instance.ChangeCinemachine($"WorldToFishing", fishingPoint.CharacterPoint);
             await UniTask.NextFrame();
 
             var activeBlend = WorldCamera.Instance.ActiveBlend;
@@ -55,33 +55,30 @@ namespace ClimbGames.Project_HC
             {
                 float transitionTime = activeBlend.Duration * 0.5f;
                 await UniTask.WaitUntil(() => activeBlend.TimeInBlend > transitionTime);
-                await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
+            }
+            await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
 
-                SetupFishing(fishingPoint);
-                await UniTask.WaitUntil(() => activeBlend.IsComplete);
-                (DefaultTransition.Instance as ITransitionHandler).Complete();
-            }
-            else
-            {
-                SetupFishing(fishingPoint);
-            }
+            Transform character = SetupFishing(cinemachine, fishingPoint);
+            WorldCamera.Instance.ChangeCinemachine($"Fishing", character);
+            (DefaultTransition.Instance as ITransitionHandler).Complete();
         }
 
         public async UniTaskVoid TransitionToWorld()
         {
             await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
-            WorldCamera.Instance.RestoreCinemachine();
+            WorldCamera.Instance.ChangeCinemachine("World", player.transform);
 
             SetupWorld();
             (DefaultTransition.Instance as ITransitionHandler).Complete();
         }
 
-        void SetupFishing(FishingPoint fishingPoint)
+        Transform SetupFishing(CinemachineCamera cinemachineCamera, FishingPoint fishingPoint)
         {
             player.gameObject.SetActive(false);
             joystick.gameObject.SetActive(false);
             UIManager.Instance.Hide<UIMenu>();
             FishingManager.Instance.Setup(fishingPoint);
+            return FishingManager.Instance.CharacterHead;
         }
 
         void SetupWorld()

@@ -29,7 +29,7 @@ namespace ClimbGames.Project_HC
                 return;
 
             // Line의 시작점을 낚싯대 끝으로 업데이트
-            lineRenderer.SetPosition(0, fishingRod.PoleTipe.position);
+            lineRenderer.SetPosition(0, fishingRod.PoleTip.position);
 
             // Line의 끝점을 미끼 위치로 업데이트
             lineRenderer.SetPosition(1, fishingBait.transform.position);

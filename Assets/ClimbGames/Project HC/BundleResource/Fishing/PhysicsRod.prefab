@@ -563,6 +563,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6d963e04dd9cb04fa2120efa0630144, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.PhysicsRod
+  model: {fileID: 3531395478202011344}
   poleTip: {fileID: 6956180829742902735}
 --- !u!1 &7334703581003273667
 GameObject:

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace ClimbGames.Project_HC
@@ -8,43 +7,41 @@ namespace ClimbGames.Project_HC
     public class FishingManager : MonoSingleton<FishingManager>
     {
         [SerializeField] private FishingInputProvider inputProvider;
-        [SerializeField] private Transform rodRoot;
-        [SerializeField] private Transform baitRoot;
+        [SerializeField] private FishingCharacter fishingCharacter;
         [SerializeField] private FishingLine fishingLine;
 
         private FishingPoint fishingPoint;
         private FishingRod fishingRod;
         private FishingBait fishingBait;
+        private FishingActor fishingActor = new FishingActor();
 
-        private FishingRodActor rodActor = new FishingRodActor();
-
-        public FishingInputProvider InputProvider => inputProvider;
+        public Transform CharacterHead => fishingCharacter.Head;
 
         protected override void Awake()
         {
             base.Awake();
 
-            inputProvider.CastAction.onPressed += OnCastStarted;
-            inputProvider.CastAction.onReleased += OnCastReleased;
-            inputProvider.CastAction.onCanceled += OnCastCanceled;
+            inputProvider.CastingInput.dragStart += OnLoadingRod;
+            inputProvider.CastingInput.dragEnd += OnCastRod;
         }
 
         public void Setup(FishingPoint fishingPoint)
         {
             this.fishingPoint = fishingPoint;
-            rodRoot.position = fishingPoint.RodRoot.position;
+            fishingCharacter.Setup(fishingPoint);
 
             if (fishingRod == null)
-                fishingRod = AssetManager.Instantiate<FishingRod>("PhysicsRod", rodRoot);
+                fishingRod = AssetManager.Instantiate<FishingRod>("PhysicsRod", fishingCharacter.Hand);
 
             if (fishingBait == null)
-                fishingBait = AssetManager.Instantiate<FishingBait>("FishingBait", baitRoot);
+                fishingBait = AssetManager.Instantiate<FishingBait>("FishingBait", transform);
 
+            fishingRod.SetBait(fishingBait);
             fishingBait.Setup(fishingRod);
             fishingLine.Setup(fishingRod, fishingBait);
 
-            rodActor.Initialize(fishingRod);
-            rodActor.Start(FishingRodAction.Idle, fishingRod.GetCancellationTokenOnDestroy());
+            fishingActor.Initialize(fishingCharacter, fishingRod);
+            fishingActor.Start(FishingAction.Idle, fishingRod.GetCancellationTokenOnDestroy());
 
             gameObject.SetActive(true);
         }
@@ -54,19 +51,21 @@ namespace ClimbGames.Project_HC
             gameObject.SetActive(false);
         }
 
-        void OnCastStarted()
+        public void CastBait(float intensity)
         {
-            rodActor.ChangeState(FishingRodAction.Load);
+            //
+            //
+            fishingBait.Fire(fishingPoint.CastPosition, 10f);
         }
 
-        void OnCastReleased()
+        void OnLoadingRod()
         {
-            rodActor.ChangeState(FishingRodAction.Cast);
+            fishingActor.ChangeState(FishingAction.CastingAim, new FishingActor.CastingAimActionParam(inputProvider.CastingInput));
         }
 
-        void OnCastCanceled()
+        void OnCastRod()
         {
-            rodActor.ChangeState(FishingRodAction.Idle);
+            fishingActor.ChangeState(FishingAction.CastRelease, new FishingActor.CastingReleaseActionParam(inputProvider.CastingInput));
         }
     }
 }
