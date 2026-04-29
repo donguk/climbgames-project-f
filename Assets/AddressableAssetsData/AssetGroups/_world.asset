@@ -31,7 +31,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 51cfb8ee4041c204ea445a54995259f5
-    m_Address: FishingManager
+    m_Address: FishingActor
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
