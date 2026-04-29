@@ -1,38 +1,71 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using Unity.Cinemachine;
+using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
-    public class FishingLine : MonoBehaviour
+    public class FishingLine : VerletLine
     {
-        [SerializeField] private LineRenderer lineRenderer;
+        [SerializeField] Transform lineEnd;
 
-        private FishingRod fishingRod;
-        private FishingBait fishingBait;
+        private FishingRod rod;
+        private FishingBait bait;
 
-        void Awake()
+        public override Transform AnchorTransform => rod != null ? rod.PoleTip : transform;
+
+        public void Setup(FishingRod rod, FishingBait bait)
         {
-            if (lineRenderer == null)
-                lineRenderer = GetComponent<LineRenderer>();
-
-            lineRenderer.positionCount = 2;
+            this.rod = rod;
+            this.bait = bait;
         }
 
-        public void Setup(FishingRod fishingRod, FishingBait fishingBait)
-        {
-            this.fishingRod = fishingRod;
-            this.fishingBait = fishingBait;
-        }
+        //protected override void DrawLine()
+        //{
+        //    float alpha = Mathf.Clamp01((Time.time - Time.fixedTime) / Time.fixedDeltaTime);
+        //    Vector3 delta = startPoint.position - fixedStartPosition;
+        //
+        //    //if (delta.magnitude > 0f)
+        //    //{
+        //    //    for (int i = 0; i < lineSegments.Count; ++i)
+        //    //    {
+        //    //        var segment = lineSegments[i];
+        //    //        segment.currentPosition += delta * alpha;
+        //    //        segment.beforePosition += delta * alpha;
+        //    //    }
+        //    //
+        //    //    fixedStartPosition += delta * alpha;
+        //    //}
+        //    //
+        //    //base.DrawLine();
+        //
+        //    for (int i = 0; i < lineSegments.Count; ++i)
+        //    {
+        //        lineRenderer.SetPosition(i, lineSegments[i].currentPosition + delta);
+        //    }
+        //
+        //    var endPosition = lineSegments[lineSegments.Count - 1].currentPosition + delta;
+        //    if (lineSegments.Count > 1)
+        //    {
+        //        var beforePosition = lineSegments[lineSegments.Count - 2].currentPosition + delta;
+        //        Vector3 up = beforePosition - endPosition;
+        //        lineEnd.up = up;
+        //    }
+        //
+        //    lineEnd.position = endPosition;
+        //}
 
-        void LateUpdate()
-        {
-            if (lineRenderer == null || fishingRod == null || fishingBait == null)
-                return;
+        //protected override void LateUpdate()
+        //{
+        //    base.LateUpdate();
+        //
+        //    if (lineSegments.Count > 0)
+        //    {
+        //        Vector3 delta = startPoint.position - fixedStartPosition;
+        //
+        //
+        //    }
+        //}
 
-            // Line의 시작점을 낚싯대 끝으로 업데이트
-            lineRenderer.SetPosition(0, fishingRod.PoleTip.position);
 
-            // Line의 끝점을 미끼 위치로 업데이트
-            lineRenderer.SetPosition(1, fishingBait.transform.position);
-        }
     }
 }

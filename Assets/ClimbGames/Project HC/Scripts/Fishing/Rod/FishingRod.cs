@@ -26,23 +26,23 @@ namespace ClimbGames.Project_HC
 
         void FixedUpdate()
         {
-            if (baitBody == null)
-                return;
-
-            // poleTip velocity
-            poleTipVelocity = (PoleTip.position - lastPoleTipPosition) / Time.fixedDeltaTime;
-            lastPoleTipPosition = PoleTip.position;
-
-            // bait momentum
-            relativeBaitVelocity = baitBody.linearVelocity - poleTipVelocity;
-            Vector3 forwardDir = transform.forward;
-            baitMomentum = Vector3.Dot(relativeBaitVelocity, forwardDir);
+            //if (baitBody == null)
+            //    return;
+            //
+            //// poleTip velocity
+            //poleTipVelocity = (PoleTip.position - lastPoleTipPosition) / Time.fixedDeltaTime;
+            //lastPoleTipPosition = PoleTip.position;
+            //
+            //// bait momentum
+            //relativeBaitVelocity = baitBody.linearVelocity - poleTipVelocity;
+            //Vector3 forwardDir = transform.forward;
+            //baitMomentum = Vector3.Dot(relativeBaitVelocity, forwardDir);
         }
 
-        public void SetBait(FishingBait fishingBait)
-        {
-            baitBody = fishingBait.GetComponent<Rigidbody>();
-        }
+        //public void SetBait(FishingBait fishingBait)
+        //{
+        //    baitBody = fishingBait.GetComponent<Rigidbody>();
+        //}
 
         public virtual void CastingLoad()
         {

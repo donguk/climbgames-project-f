@@ -1,63 +1,58 @@
-﻿using UnityEngine;
+﻿using System.Threading;
+using Cysharp.Threading.Tasks;
+using Unity.Android.Gradle.Manifest;
+using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
     public class FishingCharacter : MonoBehaviour
     {
-        [SerializeField] private Transform head;
-        [SerializeField] private Transform arm;
-        [SerializeField] private Transform hand;
-        [SerializeField] private float rotationSensitivity = 0.02f;
-        [SerializeField] private Vector2 yawLimit = new Vector2(-10f, 10f);
-        [SerializeField] private Vector2 pitchLimit = new Vector2(0f, 10f);
+        [SerializeField] private Transform modelRoot;
+        [SerializeField] private Transform rodHandle;
 
-        private Quaternion baseRotation;
-        private Quaternion baseHeadRotation;
-        private Quaternion baseArmRotation;
-        private Quaternion baseHandRotation;
-        private float currentYaw, currentPitch;
+        private Animator _animator;
+        private int fishingLayer;
+        private CancellationTokenSource layerWeightTokenSource;
 
-        public Transform Head => head;
-        public Transform Hand => hand;
-        public Transform Arm => arm;
+        public Transform RodHandle => rodHandle;
+        public Transform ModelRoot => modelRoot;
+        public AnimatorStateInfo CurrentAnimatorStateInfo => _animator.GetCurrentAnimatorStateInfo(fishingLayer);
 
-        void Awake()
+        void Start()
         {
-            baseArmRotation = arm.localRotation;
-            baseHandRotation = hand.localRotation;
+            _animator = GetComponentInChildren<Animator>();
+            fishingLayer = _animator.GetLayerIndex("Fishing Layer");
         }
 
-        public void Setup(FishingPoint point)
+        public Animator PlayAnimation(string name, float weight = 1f)
         {
-            Vector3 angle = point.CharacterPoint.rotation.eulerAngles;
-
-            transform.SetPositionAndRotation(point.CharacterPoint.position, Quaternion.Euler(0f, angle.y, 0f));
-            head.rotation = point.CharacterPoint.rotation;
-
-            baseRotation = transform.rotation;
-            baseHeadRotation = head.localRotation;
-
-            arm.localRotation = baseArmRotation;
-            hand.localRotation = baseHandRotation;
-
-            currentYaw = currentPitch = 0f;
+            _animator.Play(name, fishingLayer);
+            _animator.SetLayerWeight(fishingLayer, weight);
+            return _animator;
         }
 
-        public void UpdateCastgAiming(Vector2 delta, float intensity)
+        public void FadeLayerWeight(float targetWeight, float duration = 0.2f)
         {
-            // 좌우 회전
-            currentYaw += delta.x * rotationSensitivity;
-            currentYaw = Mathf.Clamp(currentYaw, yawLimit.x, yawLimit.y);
-            transform.rotation = baseRotation * Quaternion.AngleAxis(currentYaw, Vector3.up);
+            layerWeightTokenSource?.Cancel();
+            layerWeightTokenSource?.Dispose();
 
-            // 상하 회전
-            currentPitch = Mathf.InverseLerp(0f, 0.5f, intensity - 0.5f) * pitchLimit.y;
-            head.localRotation = baseHeadRotation * Quaternion.AngleAxis(currentPitch, Vector3.right * -1f);
+            layerWeightTokenSource = new CancellationTokenSource();
+            UpdateLayerWeight(targetWeight, duration, layerWeightTokenSource.Token).Forget();
+        }
 
-            // arm 회전
-            float targetAngle = 30f/*default*/ + (20f/*additional*/ * intensity);
-            Quaternion targetRot = baseArmRotation * Quaternion.AngleAxis(targetAngle, Vector3.right * -1f);
-            arm.localRotation = Quaternion.Lerp(arm.localRotation, targetRot, Time.deltaTime * 5f);
+        async UniTaskVoid UpdateLayerWeight(float targetWeight, float duration, CancellationToken cancellationToken)
+        {
+            float startWeight = _animator.GetLayerWeight(fishingLayer);
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float weight = Mathf.Lerp(startWeight, targetWeight, elapsed / duration);
+                _animator.SetLayerWeight(fishingLayer, weight);
+                await UniTask.NextFrame(cancellationToken);
+            }
+            _animator.SetLayerWeight(fishingLayer, targetWeight);
         }
     }
 }

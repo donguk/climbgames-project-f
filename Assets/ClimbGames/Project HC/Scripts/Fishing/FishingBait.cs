@@ -8,8 +8,6 @@ namespace ClimbGames.Project_HC
         [SerializeField] private Rigidbody baitBody;
         [SerializeField] private ConfigurableJoint configurableJoint;
 
-        private FishingRod fishingRod;
-
         void Awake()
         {
             if (baitBody == null)
@@ -19,24 +17,30 @@ namespace ClimbGames.Project_HC
                 configurableJoint = GetComponent<ConfigurableJoint>();
         }
 
-        public void Setup(FishingRod fishingRod)
+        public void SetupHook(Transform hook)
         {
-            this.fishingRod = fishingRod;
-
-            // 미끼 위치를 초릿대 바로 아래로 강제 이동
-            float lineLength = 0.1f; // 원하는 낚시줄 길이
-            transform.position = fishingRod.PoleTip.position + (Vector3.down * lineLength);
+            transform.position = hook.position;
 
             baitBody.linearVelocity = Vector3.zero;
             baitBody.angularVelocity = Vector3.zero;
 
-            configurableJoint.connectedBody = fishingRod.PoleTip.GetComponent<Rigidbody>();
+            configurableJoint.connectedBody = hook.GetComponent<Rigidbody>();
+            configurableJoint.xMotion = ConfigurableJointMotion.Limited;
+            configurableJoint.yMotion = ConfigurableJointMotion.Limited;
+            configurableJoint.zMotion = ConfigurableJointMotion.Limited;
         }
 
-        public void Fire(Vector3 target, float angle)
+        public void Throw(Vector3 target, float angle)
         {
-            var temp = AssetManager.Instantiate<Rigidbody>("FishingBait_temp");
-            temp.transform.position = transform.position;
+            baitBody.isKinematic = false;
+            configurableJoint.connectedBody = null;
+            configurableJoint.xMotion = ConfigurableJointMotion.Free;
+            configurableJoint.yMotion = ConfigurableJointMotion.Free;
+            configurableJoint.zMotion = ConfigurableJointMotion.Free;
+
+
+            //var temp = AssetManager.Instantiate<Rigidbody>("FishingBait_temp");
+            //temp.transform.position = transform.position;
 
             Vector3 direction = target - transform.position;
             float h = direction.y; // 높이 차 (yOffset)
@@ -67,8 +71,8 @@ namespace ClimbGames.Project_HC
             finalVelocity.y = Mathf.Sin(a);
 
             // 3. 최종 속도 크기 곱하기
-            temp.linearVelocity = finalVelocity * v;
-            temp.angularVelocity = new Vector3(Random.Range(-5f, 5f), 0, 10f);
+            baitBody.linearVelocity = finalVelocity * v;
+            baitBody.angularVelocity = new Vector3(Random.Range(-5f, 5f), 0, 10f);
         }
     }
 }

@@ -58,8 +58,14 @@ namespace ClimbGames.Project_HC
             }
             await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
 
-            Transform character = SetupFishing(cinemachine, fishingPoint);
-            WorldCamera.Instance.ChangeCinemachine($"Fishing", character);
+            if (FishingActor.Instance != null)
+                await UniTask.NextFrame();
+            FishingActor.Instance.Setup(fishingPoint);
+            var brain = Camera.main.GetComponent<CinemachineBrain>();
+            brain.UpdateMethod = CinemachineBrain.UpdateMethods.FixedUpdate;
+
+            SetupFishing();
+            WorldCamera.Instance.ChangeCinemachine($"Fishing", FishingActor.Instance.CameraTarget);
             (DefaultTransition.Instance as ITransitionHandler).Complete();
         }
 
@@ -67,25 +73,25 @@ namespace ClimbGames.Project_HC
         {
             await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
             WorldCamera.Instance.ChangeCinemachine("World", player.transform);
+            var brain = Camera.main.GetComponent<CinemachineBrain>();
+            brain.UpdateMethod = CinemachineBrain.UpdateMethods.SmartUpdate;
 
             SetupWorld();
             (DefaultTransition.Instance as ITransitionHandler).Complete();
         }
 
-        Transform SetupFishing(CinemachineCamera cinemachineCamera, FishingPoint fishingPoint)
+        void SetupFishing()
         {
             player.gameObject.SetActive(false);
             joystick.gameObject.SetActive(false);
             UIManager.Instance.Hide<UIMenu>();
-            FishingManager.Instance.Setup(fishingPoint);
-            return FishingManager.Instance.CharacterHead;
         }
 
         void SetupWorld()
         {
             player.gameObject.SetActive(true);
             joystick.gameObject.SetActive(true);
-            FishingManager.Instance.Close();
+            FishingActor.Instance.Close();
         }
     }
 }

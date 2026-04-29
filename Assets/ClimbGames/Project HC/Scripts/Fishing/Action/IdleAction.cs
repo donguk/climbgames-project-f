@@ -1,17 +1,18 @@
-﻿namespace ClimbGames.Project_HC
+﻿using System.Runtime.CompilerServices;
+
+namespace ClimbGames.Project_HC
 {
-    public partial class FishingActor
+    public partial class FishingActionController
     {
         public class IdleAction : ActionBase
         {
-            public IdleAction(FishingActor actor) : base(actor)
+            public IdleAction(FishingActor actor, FishingActionController controller) : base(actor, controller)
             {
-
             }
 
-            protected override void OnUpdate()
+            protected override void OnEnter()
             {
-
+                //Actor.Character.PlayAnimation("Idle", 0.7f);
             }
         }
     }
