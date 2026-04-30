@@ -12,7 +12,7 @@ namespace ClimbGames.Project_HC
 
             protected override void OnEnter()
             {
-                //Actor.Character.PlayAnimation("Idle", 0.7f);
+                Actor.Character.PlayAnimation("Idle", 0.7f);
             }
         }
     }

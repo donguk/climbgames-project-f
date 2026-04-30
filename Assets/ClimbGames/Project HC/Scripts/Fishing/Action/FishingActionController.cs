@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
@@ -7,6 +8,7 @@ namespace ClimbGames.Project_HC
         Idle,
         CastingAim,
         CastingRelease,
+        WaitingBite
     }
 
     public partial class FishingActionController : FSM<FishingAction>
@@ -25,12 +27,15 @@ namespace ClimbGames.Project_HC
         {
         }
 
-        public void Initialize(FishingActor actor)
+        public void InitializeAndStart(FishingActor actor)
         {
             Initialize(
                 (FishingAction.Idle, new IdleAction(actor, this)),
                 (FishingAction.CastingAim, new CastingAimAction(actor, this)),
-                (FishingAction.CastingRelease, new CastingReleaseAction(actor, this)));
+                (FishingAction.CastingRelease, new CastingReleaseAction(actor, this)),
+                (FishingAction.WaitingBite, new CastingReleaseAction(actor, this)));
+
+            Start(FishingAction.Idle, actor.GetCancellationTokenOnDestroy());
         }
     }
 }

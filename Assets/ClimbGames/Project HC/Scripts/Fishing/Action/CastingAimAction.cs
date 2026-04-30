@@ -25,17 +25,11 @@ namespace ClimbGames.Project_HC
             protected override void OnEnter()
             {
                 castingInput = ((CastingAimActionParam)param).castingInput;
-                //Actor.Character.FadeLayerWeight(1f);
             }
 
             protected override void OnUpdate()
             {
                 Actor.CameraController.UpdateRotation(castingInput.delta);
-            }
-
-            protected override void OnFixedUpdate()
-            {
-                //Actor.Character.UpdateCastgAiming(castingInput.delta);
             }
         }
     }

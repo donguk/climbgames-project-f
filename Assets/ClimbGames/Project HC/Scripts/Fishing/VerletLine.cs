@@ -94,6 +94,8 @@ namespace ClimbGames.Project_HC
         {
             Simulate(deltaTime);
 
+            UpdateAnchor();
+
             for (int i = 0; i < constraintCount; ++i)
             {
                 ApplyConstraint();
@@ -103,7 +105,18 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        public void ManualUpdate(float deltaTime) => SimulateAndConstraints(deltaTime);
+        protected virtual void UpdateAnchor()
+        {
+            Transform anchorTransform = AnchorTransform;
+            if (lineSegments != null && lineSegments.Count > 0)
+            {
+                var segment = lineSegments[0];
+                segment.currentPosition = anchorTransform.position;
+                lineSegments[0] = segment;
+            }
+        }
+
+        public virtual void ManualUpdate(float deltaTime) => SimulateAndConstraints(deltaTime);
 
         void Simulate(float deltaTime)
         {
@@ -121,14 +134,6 @@ namespace ClimbGames.Project_HC
 
         void ApplyConstraint()
         {
-            Transform anchorTransform = AnchorTransform;
-            if (lineSegments != null && lineSegments.Count > 0)
-            {
-                var segment = lineSegments[0];
-                segment.currentPosition = anchorTransform.position;
-                lineSegments[0] = segment;
-            }
-
             for (int i = 0; i < lineSegments.Count - 1; ++i)
             {
                 LineSegment currentSegment = lineSegments[i];

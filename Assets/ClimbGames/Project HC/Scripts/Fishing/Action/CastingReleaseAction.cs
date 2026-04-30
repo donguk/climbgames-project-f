@@ -36,26 +36,29 @@ namespace ClimbGames.Project_HC
             {
                 throwHash = Animator.StringToHash("Throw");
                 isThrowBait = isApplyWeight = false;
-                //Actor.Character.PlayAnimation("Throw");
+                Actor.Character.PlayAnimation("Throw");
             }
 
             protected override void OnUpdate()
             {
-                //var stateInfo = Actor.Character.CurrentAnimatorStateInfo;
-                //if (stateInfo.shortNameHash == throwHash)
-                //{
-                //    if (stateInfo.normalizedTime > 0.5f && isThrowBait == false)
-                //    {
-                //        ((CastingReleaseActionParam)param).OnThrowBait();
-                //        isThrowBait = true;
-                //    }
-                //
-                //    if (stateInfo.normalizedTime > 0.7f && isApplyWeight == false)
-                //    {
-                //        Actor.Character.FadeLayerWeight(0.5f);
-                //        isApplyWeight = true;
-                //    }
-                //}
+                var stateInfo = Actor.Character.CurrentAnimatorStateInfo;
+                if (stateInfo.shortNameHash == throwHash)
+                {
+                    if (stateInfo.normalizedTime > 0.5f && isThrowBait == false)
+                    {
+                        ((CastingReleaseActionParam)param).OnThrowBait();
+                        isThrowBait = true;
+                    }
+
+                    if (stateInfo.normalizedTime > 0.7f && isApplyWeight == false)
+                    {
+                        Actor.Character.FadeLayerWeight(0.5f);
+                        isApplyWeight = true;
+                    }
+
+                    //if (stateInfo.normalizedTime > 0.98f)
+                    //    fsm.ChangeState();
+                }
             }
         }
     }

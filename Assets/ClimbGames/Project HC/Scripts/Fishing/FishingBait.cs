@@ -3,10 +3,19 @@ using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
+    public enum BaitState
+    {
+        Idle,
+        Flying,
+        Floating,
+    }
+
     public class FishingBait : MonoBehaviour
     {
         [SerializeField] private Rigidbody baitBody;
         [SerializeField] private ConfigurableJoint configurableJoint;
+
+        public BaitState State { get; private set; }
 
         void Awake()
         {
@@ -17,7 +26,7 @@ namespace ClimbGames.Project_HC
                 configurableJoint = GetComponent<ConfigurableJoint>();
         }
 
-        public void SetupHook(Transform hook)
+        public void SetHook(Transform hook)
         {
             transform.position = hook.position;
 
@@ -28,6 +37,8 @@ namespace ClimbGames.Project_HC
             configurableJoint.xMotion = ConfigurableJointMotion.Limited;
             configurableJoint.yMotion = ConfigurableJointMotion.Limited;
             configurableJoint.zMotion = ConfigurableJointMotion.Limited;
+
+            State = BaitState.Idle;
         }
 
         public void Throw(Vector3 target, float angle)
@@ -73,6 +84,8 @@ namespace ClimbGames.Project_HC
             // 3. 최종 속도 크기 곱하기
             baitBody.linearVelocity = finalVelocity * v;
             baitBody.angularVelocity = new Vector3(Random.Range(-5f, 5f), 0, 10f);
+
+            State = BaitState.Flying;
         }
     }
 }
