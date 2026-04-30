@@ -168,8 +168,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7eddf23e77789f1458827bc641b97717, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingLine
-  segmentCount: 10
-  segmentLength: 0.1
+  segmentCount: 50
+  segmentLength: 0.225
   updateMode: 2
   gravityForce: {x: 0, y: -2, z: 0}
   dampingFactor: 0.98
@@ -181,6 +181,7 @@ MonoBehaviour:
   collisionSegmentInterval: 2
   constraintCount: 50
   lineEnd: {fileID: 2336696598126068664}
+  lineResolution: 0.05
 --- !u!120 &1822681784042616916
 LineRenderer:
   serializedVersion: 3
@@ -241,7 +242,7 @@ LineRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.005
+        value: 0.002
         inSlope: 0
         outSlope: 0
         tangentMode: 0

@@ -32,8 +32,8 @@ namespace ClimbGames.Project_HC
 
         [Header("Physics")]
         [SerializeField] private VerletUpdateMode updateMode = VerletUpdateMode.FixedUpdate;
-        [SerializeField] private Vector3 gravityForce = new Vector3(0f, -2f, 0f);
-        [SerializeField][Range(0f, 1f)] private float dampingFactor = 0.98f;
+        [SerializeField] protected Vector3 gravityForce = new Vector3(0f, -2f, 0f);
+        [SerializeField][Range(0f, 1f)] protected float dampingFactor = 0.98f;
         [SerializeField] private LayerMask collisionMask;
         [SerializeField] private float collisionRadius = 0.1f;
         [SerializeField] private float bounceFactor = 0.1f;
@@ -53,13 +53,25 @@ namespace ClimbGames.Project_HC
             lineRenderer = GetComponent<LineRenderer>();
             lineRenderer.positionCount = segmentCount;
 
-            BuildSegment();
+            if (lineSegments == null)
+            {
+                lineSegments = new List<LineSegment>();
+                Vector3 position = transform.position;
+                for (int i = 0; i < segmentCount; ++i)
+                {
+                    lineSegments.Add(new LineSegment(position, position));
+                    position.y -= segmentLength;
+                }
+            }
         }
 
         void Update()
         {
             if (updateMode == VerletUpdateMode.Update)
-                SimulateAndConstraints(Mathf.Min(Time.deltaTime, Time.fixedDeltaTime));
+            {
+                Simulate(Mathf.Min(Time.deltaTime, Time.fixedDeltaTime));
+                ApplyConstraints();
+            }
 
             DrawLine();
         }
@@ -67,58 +79,21 @@ namespace ClimbGames.Project_HC
         public virtual void FixedUpdate()
         {
             if (updateMode == VerletUpdateMode.FixedUpdate)
-                SimulateAndConstraints(Time.fixedDeltaTime);
-        }
-
-        public void BuildSegment()
-        {
-            if (lineSegments == null)
-                lineSegments = new List<LineSegment>();
-            lineSegments.Clear();
-
-            Vector3 position = transform.position;
-            for (int i = 0; i < segmentCount; ++i)
             {
-                lineSegments.Add(new LineSegment(position, position));
-                position.y -= segmentLength;
+                Simulate(Time.fixedDeltaTime);
+                ApplyConstraints();
             }
         }
 
         void DrawLine()
         {
+            lineRenderer.positionCount = lineSegments.Count;
+
             for (int i = 0; i < lineSegments.Count; ++i)
                 lineRenderer.SetPosition(i, lineSegments[i].currentPosition);
         }
 
-        void SimulateAndConstraints(float deltaTime)
-        {
-            Simulate(deltaTime);
-
-            UpdateAnchor();
-
-            for (int i = 0; i < constraintCount; ++i)
-            {
-                ApplyConstraint();
-
-                if (i % collisionSegmentInterval == 0)
-                    HandleCollisions();
-            }
-        }
-
-        protected virtual void UpdateAnchor()
-        {
-            Transform anchorTransform = AnchorTransform;
-            if (lineSegments != null && lineSegments.Count > 0)
-            {
-                var segment = lineSegments[0];
-                segment.currentPosition = anchorTransform.position;
-                lineSegments[0] = segment;
-            }
-        }
-
-        public virtual void ManualUpdate(float deltaTime) => SimulateAndConstraints(deltaTime);
-
-        void Simulate(float deltaTime)
+        public void Simulate(float deltaTime)
         {
             for (int i = 0; i < lineSegments.Count; ++i)
             {
@@ -129,6 +104,26 @@ namespace ClimbGames.Project_HC
                 segment.currentPosition += velocity;
                 segment.currentPosition += gravityForce * deltaTime;
                 lineSegments[i] = segment;
+            }
+        }
+
+        public virtual void ApplyConstraints()
+        {
+            // update anchor
+            Transform anchorTransform = AnchorTransform;
+            if (lineSegments != null && lineSegments.Count > 0)
+            {
+                var segment = lineSegments[0];
+                segment.currentPosition = anchorTransform.position;
+                lineSegments[0] = segment;
+            }
+
+            for (int i = 0; i < constraintCount; ++i)
+            {
+                ApplyConstraint();
+
+                if (i % collisionSegmentInterval == 0)
+                    HandleCollisions();
             }
         }
 

@@ -58,9 +58,10 @@ namespace ClimbGames.Project_HC
             }
             await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
 
-            if (FishingActor.Instance != null)
-                await UniTask.NextFrame();
-            FishingActor.Instance.Setup(fishingPoint);
+            //if (FishingActor.Instance != null)
+            //    await UniTask.NextFrame();
+            await FishingActor.Instance.Initialize(fishingPoint);
+
             var brain = Camera.main.GetComponent<CinemachineBrain>();
             brain.UpdateMethod = CinemachineBrain.UpdateMethods.FixedUpdate;
 

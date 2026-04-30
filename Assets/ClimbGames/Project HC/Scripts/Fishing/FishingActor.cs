@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 
 namespace ClimbGames.Project_HC
@@ -35,16 +36,15 @@ namespace ClimbGames.Project_HC
 
             // line
             {
+                fishingLine.Simulate(Time.fixedDeltaTime);
+                fishingLine.ApplyConstraints();
 
-
-                fishingLine.ManualUpdate(Time.fixedDeltaTime);
+                if (fishingBait != null)
+                    fishingLine.ApplyBaitConstraint(fishingBait);
             }
-
-            // 
-
         }
 
-        public async void Setup(FishingPoint point)
+        public async UniTask Initialize(FishingPoint point)
         {
             fishingPoint = point;
             var eulerAngles = point.CharacterPoint.rotation.eulerAngles;
@@ -56,11 +56,10 @@ namespace ClimbGames.Project_HC
 
             actionController.InitializeAndStart(this);
             await UniTask.NextFrame();
+            fishingLine.BuildLine(fishingRod, 0.5f);
 
             if (fishingBait == null)
                 fishingBait = AssetManager.Instantiate<FishingBait>("FishingBait", transform);
-
-            fishingLine.Setup(fishingRod, fishingBait);
             fishingBait.SetHook(fishingLine.LineEnd);
 
             gameObject.SetActive(true);

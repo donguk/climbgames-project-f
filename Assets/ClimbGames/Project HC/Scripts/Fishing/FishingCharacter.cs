@@ -18,7 +18,7 @@ namespace ClimbGames.Project_HC
         public Transform ModelRoot => modelRoot;
         public AnimatorStateInfo CurrentAnimatorStateInfo => _animator.GetCurrentAnimatorStateInfo(fishingLayer);
 
-        void Start()
+        void Awake()
         {
             _animator = GetComponentInChildren<Animator>();
             fishingLayer = _animator.GetLayerIndex("Fishing Layer");
