@@ -1,117 +1,161 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
+    [RequireComponent(typeof(LineRenderer))]
     public class FishingLine : VerletLine
     {
-        [SerializeField] Transform lineEnd;
-        [SerializeField] private float lineResolution = 0.1f;
+        [Header("Fishing Line")]
+        [SerializeField] private Transform anchorEnd;
+        [SerializeField] private float lengthPerSegment = 1;
+        [SerializeField] private float totalLength;
+        [SerializeField] private float variableLength;
+        [Range(0f, 1f)]
+        [SerializeField] private float lineTension = 0f;
+
+        [Header("Spline")]
+        [SerializeField] private bool enableSpline;
+        [SerializeField] private int splineInterpolation = 5;
 
         private FishingRod rod;
+        private Vector3[] splinePositions;
+        private float targetTension;
 
-        public float CurrentLength { get; private set; }
-        public override Transform AnchorTransform => rod != null ? rod.PoleTip : transform;
-        public Transform LineEnd => lineEnd;
+        protected override Transform AnchorTransform => rod != null ? rod.PoleTip : base.AnchorTransform;
+        public float Length => totalLength;
+        public Transform End => anchorEnd;
 
-        public void BuildLine(FishingRod rod, float length)
+        public void Initialize(FishingRod rod, float length)
         {
             this.rod = rod;
 
             BuildLine(length);
+
+            anchorEnd.up = Vector3.up;
+            anchorEnd.position = GetPosition(positionCount - 1);
         }
 
         void BuildLine(float length)
         {
-            if (lineSegments == null)
-                lineSegments = new List<LineSegment>();
+            totalLength = Mathf.Max(0.1f, length);
 
-            CurrentLength = length;
-            segmentCount = Mathf.Max(2, Mathf.RoundToInt(length / lineResolution));
+            positionCount = segmentCount + 1;
+            segmentLength = totalLength / (positionCount - 1);
 
-            if (lineSegments.Count < segmentCount)
+            ResizePositionArray(positionCount);
+
+            Vector3 position = AnchorTransform.position;
+            for (int i = 0; i < positionCount; ++i)
             {
-                int diff = segmentCount - lineSegments.Count;
-                for (int i = 0; i < diff; ++i)
-                    lineSegments.Add(new LineSegment());
+                _positions[i] = position;
+                _prevPositions[i] = position;
+
+                position.y -= segmentLength;//i == 0 ? variableLength : lengthPerSegment;
+            }
+        }
+
+        protected override void FixedUpdate()
+        {
+            // manual update
+        }
+
+        protected override void DrawLine()
+        {
+            if (enableSpline)
+            {
+                // spline 변환
+                int positionCount = CatmullRomSpline.Evaluate(Positions, this.positionCount, ref splinePositions, splineInterpolation);
+
+                // draw line
+                lineRenderer.positionCount = positionCount;
+                lineRenderer.SetPositions(splinePositions);
             }
             else
             {
-                lineSegments.RemoveRange(segmentCount, lineSegments.Count - segmentCount);
+                base.DrawLine();
             }
-            segmentLength = length / (lineSegments.Count - 1);
+        }
 
-            Vector3 position = AnchorTransform.position;
-            for (int i = 0; i < lineSegments.Count; ++i)
+        public override void Constraints()
+        {
+            base.Constraints();
+
+            if (Positions != null)
             {
-                var segment = lineSegments[i];
-                segment.currentPosition = segment.beforePosition = position;
-                lineSegments[i] = segment;
+                var position = GetPosition(positionCount - 1);
 
-                if (i == lineSegments.Count - 1)
+                anchorEnd.position = position;
+                anchorEnd.up = (GetPosition(positionCount - 2) - position).normalized;
+            }
+        }
+
+        protected override void ApplyConstraint()
+        {
+            for (int i = 0; i < positionCount - 1; ++i)
+            {
+                Vector3 current = _positions[i];
+                Vector3 next = _positions[i + 1];
+
+                float distance = (current - next).magnitude;
+                float diff = distance - segmentLength;//(i == 0 ? variableLength : segmentLength);
+
+                Vector3 changeDir = (current - next).normalized;
+                Vector3 chagneVector = changeDir * diff;
+
+                if (i != 0)
                 {
-                    lineEnd.up = Vector3.up;
-                    lineEnd.position = position;
+                    current -= chagneVector * 0.5f;
+                    next += chagneVector * 0.5f;
+                }
+                else
+                {
+                    next += chagneVector;
                 }
 
-                position.y -= segmentLength;
+                _positions[i] = current;
+                _positions[i + 1] = next;
             }
         }
 
-        public override void ApplyConstraints()
+        public void CastBait()
         {
-            base.ApplyConstraints();
-
-            var endPosition = lineSegments[lineSegments.Count - 1].currentPosition;
-            if (lineSegments.Count > 1)
-            {
-                var beforePosition = lineSegments[lineSegments.Count - 2].currentPosition;
-                Vector3 up = beforePosition - endPosition;
-                lineEnd.up = up;
-            }
-
-            lineEnd.position = endPosition;
+            gravityForce.y = -4.5f;
+            dampingFactor = 0.8f;
         }
 
-        public void ApplyBaitConstraint(FishingBait bait)
+        public void PinBait(FishingBait bait)
         {
-            if (bait == null)
-                return;
+            SetPosition(positionCount - 1, bait.transform.position);
+            bait.transform.up = anchorEnd.up;
+        }
 
-            switch (bait.State)
+        public void Release(float amount)
+        {
+            if (amount > 0f)
             {
-                case BaitState.Flying:
-                    {
-                        var body = bait.GetComponent<Rigidbody>();
-                        if (body.linearVelocity.y > 0f)
-                            gravityForce.y = 0f;
-                        else
-                            gravityForce.y = -0.1f;
 
 
-                        // 라인 길이 조절
-                        float dist = Vector3.Distance(rod.PoleTip.position, bait.transform.position);
-                        if (CurrentLength < dist)
-                        {
-                            float diff = dist - CurrentLength;
-                            int count = Mathf.CeilToInt(diff / lineResolution);
-
-                            for (int i = 0; i < count; ++i)
-                                lineSegments.Insert(0, new LineSegment(rod.PoleTip.position, rod.PoleTip.position));
-
-                            CurrentLength = dist;
-                            segmentLength = dist / (lineSegments.Count - 1);
-                            segmentCount = lineSegments.Count;
-                        }
-
-                        var segment = lineSegments[^1];
-                        segment.beforePosition = segment.currentPosition;
-                        segment.currentPosition = bait.transform.position;
-                        lineSegments[^1] = segment;
-
-                        break;
-                    }
+                totalLength += amount;
+                segmentLength = totalLength / (positionCount - 1);
             }
+        }
+
+        public void Reeling(float amount)
+        {
+            if (amount > 0f)
+            {
+                totalLength = Mathf.Max(0.1f, totalLength - amount);
+                segmentLength = totalLength / (positionCount - 1);
+            }
+        }
+
+        public float CalculateTension(FishingBait bait)
+        {
+            float distance = Vector3.Distance(rod.PoleTip.position, bait.transform.position);
+            float straightSegmentLength = distance / (positionCount - 1);
+            float threshold = straightSegmentLength * 0.92f;
+
+            return Mathf.Clamp01((threshold - segmentLength) / threshold);
         }
     }
 }

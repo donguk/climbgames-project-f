@@ -24,16 +24,16 @@ namespace ClimbGames.Project_HC
             lastPoleTipPosition = PoleTip.position;
         }
 
-        void FixedUpdate()
+        void Update()
         {
             //if (baitBody == null)
             //    return;
-            //
-            //// poleTip velocity
-            //poleTipVelocity = (PoleTip.position - lastPoleTipPosition) / Time.fixedDeltaTime;
-            //lastPoleTipPosition = PoleTip.position;
-            //
-            //// bait momentum
+
+            // poleTip velocity
+            poleTipVelocity = (PoleTip.position - lastPoleTipPosition) / Time.deltaTime;
+            lastPoleTipPosition = PoleTip.position;
+
+            // bait momentum
             //relativeBaitVelocity = baitBody.linearVelocity - poleTipVelocity;
             //Vector3 forwardDir = transform.forward;
             //baitMomentum = Vector3.Dot(relativeBaitVelocity, forwardDir);

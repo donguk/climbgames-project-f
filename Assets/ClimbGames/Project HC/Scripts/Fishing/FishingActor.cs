@@ -1,6 +1,7 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace ClimbGames.Project_HC
 {
@@ -17,6 +18,9 @@ namespace ClimbGames.Project_HC
         private FishingBait fishingBait;
         private FishingActionController actionController = new FishingActionController();
 
+        bool isCasted;
+        private float reelingInput;
+
         public Transform CameraTarget => cameraController.TrackingTarget;
         public FishingCameraController CameraController => cameraController;
         public FishingCharacter Character => fishingCharacter;
@@ -29,24 +33,58 @@ namespace ClimbGames.Project_HC
             inputProvider.CastingInput.dragEnd += OnCastingRelease;
         }
 
+        void Update()
+        {
+            if (Mouse.current != null)
+                reelingInput = Mouse.current.rightButton.isPressed ? 1f : 0f;
+        }
+
         void FixedUpdate()
         {
             // character
             fishingCharacter.ModelRoot.rotation = cameraController.Pivot.rotation;
 
             // line
-            {
-                fishingLine.Simulate(Time.fixedDeltaTime);
-                fishingLine.ApplyConstraints();
+            fishingLine.Simulate(Time.fixedDeltaTime);
+            fishingLine.Constraints();
 
-                if (fishingBait != null)
-                    fishingLine.ApplyBaitConstraint(fishingBait);
+            if (fishingBait != null)
+            {
+                switch (fishingBait.State)
+                {
+                    case BaitState.Casting:
+                        {
+                            fishingLine.Release(fishingBait.Velocity.magnitude * Time.fixedDeltaTime * 1.1f);
+                            fishingLine.PinBait(fishingBait);
+                            break;
+                        }
+                    case BaitState.Located:
+                        {
+                            fishingLine.Reeling(reelingInput * Time.fixedDeltaTime);
+
+                            float tensionIntensity = fishingLine.CalculateTension(fishingBait);
+                            if (tensionIntensity > 0f)
+                                fishingBait.Drag(fishingLine.End.up, tensionIntensity);
+
+                            if (fishingLine.Length < 1f && (fishingBait.LocationFlag == 0 || tensionIntensity > 0.2f))
+                            {
+                                Debug.Log($"[FishingActor] Suspend Bait: lineLength({fishingLine.Length})/ baitLocation({fishingBait.LocationFlag})/ tensionIntensity({tensionIntensity})");
+                                fishingBait.Connect(fishingLine.End);
+                            }
+                            else
+                            {
+                                fishingLine.PinBait(fishingBait);
+                            }
+                            break;
+                        }
+                }
             }
         }
 
         public async UniTask Initialize(FishingPoint point)
         {
             fishingPoint = point;
+
             var eulerAngles = point.CharacterPoint.rotation.eulerAngles;
             transform.SetPositionAndRotation(point.CharacterPoint.position, Quaternion.AngleAxis(eulerAngles.y, Vector3.up));
             cameraController.Initialize();
@@ -56,13 +94,16 @@ namespace ClimbGames.Project_HC
 
             actionController.InitializeAndStart(this);
             await UniTask.NextFrame();
-            fishingLine.BuildLine(fishingRod, 0.5f);
 
             if (fishingBait == null)
                 fishingBait = AssetManager.Instantiate<FishingBait>("FishingBait", transform);
-            fishingBait.SetHook(fishingLine.LineEnd);
+
+            // 
+            fishingLine.Initialize(fishingRod, 0.5f);
+            fishingBait.Connect(fishingLine.End);
 
             gameObject.SetActive(true);
+            isCasted = false;
         }
 
         public void Close()
@@ -70,24 +111,26 @@ namespace ClimbGames.Project_HC
             gameObject.SetActive(false);
         }
 
-        public void ThrowBait()
+        public void CastBait()
         {
-            //
-            //
-            fishingBait.Throw(fishingPoint.CastPosition, 20f);
+            fishingBait.Cast(fishingPoint.CastPosition, 20f);
+            fishingLine.CastBait();
         }
 
         void OnCastingAim()
         {
-
-
             actionController.ChangeState(FishingAction.CastingAim, new FishingActionController.CastingAimActionParam(inputProvider.CastingInput));
         }
 
         void OnCastingRelease()
         {
+            if (isCasted)
+                return;
+
+            isCasted = true;
+
             var param = new FishingActionController.CastingReleaseActionParam(inputProvider.CastingInput);
-            param.onThrowBait += ThrowBait;
+            param.onThrowBait += CastBait;
             actionController.ChangeState(FishingAction.CastingRelease, param);
         }
     }

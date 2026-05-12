@@ -1,57 +1,113 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System;
 using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
     public enum BaitState
     {
-        Idle,
-        Flying,
-        Floating,
+        Hanging,
+        Casting,
+        Located,
     }
 
     public class FishingBait : MonoBehaviour
     {
-        [SerializeField] private Rigidbody baitBody;
+        [SerializeField] private Rigidbody body;
         [SerializeField] private ConfigurableJoint configurableJoint;
 
+        private int locationFlag;
+
         public BaitState State { get; private set; }
+        public int LocationFlag => locationFlag;
+        public Rigidbody Body => body;
+        public Vector3 Velocity => body.linearVelocity;
 
         void Awake()
         {
-            if (baitBody == null)
-                baitBody = GetComponent<Rigidbody>();
+            if (body == null)
+                body = GetComponent<Rigidbody>();
 
             if (configurableJoint == null)
                 configurableJoint = GetComponent<ConfigurableJoint>();
         }
 
-        public void SetHook(Transform hook)
+        void Update()
         {
-            transform.position = hook.position;
-
-            baitBody.linearVelocity = Vector3.zero;
-            baitBody.angularVelocity = Vector3.zero;
-
-            configurableJoint.connectedBody = hook.GetComponent<Rigidbody>();
-            configurableJoint.xMotion = ConfigurableJointMotion.Limited;
-            configurableJoint.yMotion = ConfigurableJointMotion.Limited;
-            configurableJoint.zMotion = ConfigurableJointMotion.Limited;
-
-            State = BaitState.Idle;
+            if ((locationFlag & 1 << FishingLayer.Water) != 0)
+                body.linearDamping = Mathf.MoveTowards(body.linearDamping, 1f, Time.deltaTime * 5f);
         }
 
-        public void Throw(Vector3 target, float angle)
+        void OnCollisionEnter(Collision collision)
         {
-            baitBody.isKinematic = false;
-            configurableJoint.connectedBody = null;
-            configurableJoint.xMotion = ConfigurableJointMotion.Free;
-            configurableJoint.yMotion = ConfigurableJointMotion.Free;
-            configurableJoint.zMotion = ConfigurableJointMotion.Free;
+            Debug.Log($"[FishingBait] <color=green>OnCollisionEnter</color>: {collision.gameObject.name}");
+            locationFlag |= 1 << collision.gameObject.layer;
 
+            SetState(BaitState.Located);
+        }
 
-            //var temp = AssetManager.Instantiate<Rigidbody>("FishingBait_temp");
-            //temp.transform.position = transform.position;
+        void OnCollisionExit(Collision collision)
+        {
+            Debug.Log($"[FishingBait] <color=red>OnCollisionExit</color>: {collision.gameObject.name}");
+            locationFlag &= ~(1 << collision.gameObject.layer);
+
+            if ((locationFlag & 1 << FishingLayer.Ground) != 0)
+                body.linearDamping = 5f;
+        }
+
+        public void SetState(BaitState state)
+        {
+            State = state;
+
+            switch (state)
+            {
+                case BaitState.Hanging:
+                    {
+                        body.linearVelocity = Vector3.zero;
+                        body.angularVelocity = Vector3.zero;
+                        body.linearDamping = 1f;
+                        body.excludeLayers |= 1 << FishingLayer.Water | 1 << FishingLayer.Ground;
+
+                        configurableJoint.xMotion = ConfigurableJointMotion.Limited;
+                        configurableJoint.yMotion = ConfigurableJointMotion.Limited;
+                        configurableJoint.zMotion = ConfigurableJointMotion.Limited;
+                        break;
+                    }
+                case BaitState.Casting:
+                    {
+                        body.excludeLayers = 0;
+                        body.linearDamping = 0f;
+
+                        configurableJoint.connectedBody = null;
+                        configurableJoint.xMotion = ConfigurableJointMotion.Free;
+                        configurableJoint.yMotion = ConfigurableJointMotion.Free;
+                        configurableJoint.zMotion = ConfigurableJointMotion.Free;
+                        break;
+                    }
+                case BaitState.Located:
+                    {
+                        // Y축 속도는 95% 제거, 수평 속도는 70% 제거
+                        Vector3 velocity = body.linearVelocity;
+                        body.linearVelocity = new Vector3(velocity.x * 0.5f, velocity.y * 0.05f, velocity.z * 0.5f);
+                        body.angularVelocity *= 0.1f;
+                        body.linearDamping = 5f;
+                        break;
+                    }
+            }
+        }
+
+        public void Connect(Transform lineEnd)
+        {
+            transform.position = lineEnd.position;
+            configurableJoint.connectedBody = lineEnd.GetComponent<Rigidbody>();
+            locationFlag = 0;
+            body.linearDamping = 1f;
+
+            SetState(BaitState.Hanging);
+        }
+
+        public void Cast(Vector3 target, float angle)
+        {
+            SetState(BaitState.Casting);
 
             Vector3 direction = target - transform.position;
             float h = direction.y; // 높이 차 (yOffset)
@@ -82,10 +138,32 @@ namespace ClimbGames.Project_HC
             finalVelocity.y = Mathf.Sin(a);
 
             // 3. 최종 속도 크기 곱하기
-            baitBody.linearVelocity = finalVelocity * v;
-            baitBody.angularVelocity = new Vector3(Random.Range(-5f, 5f), 0, 10f);
+            body.linearVelocity = finalVelocity * v;
+            //baitBody.angularVelocity = new Vector3(Random.Range(-5f, 5f), 0, 10f);
 
-            State = BaitState.Flying;
+            State = BaitState.Casting;
+        }
+
+        public void Drag(Vector3 lineDir, float tensionIntensity)
+        {
+            if (tensionIntensity <= 0) return;
+
+            if ((locationFlag & 1 << FishingLayer.Ground) != 0 && Physics.Raycast(transform.position, Vector3.down, out var hit, 0.5f, 1 << FishingLayer.Ground))
+            {
+                Vector3 surfaceDir = Vector3.ProjectOnPlane(lineDir, hit.normal).normalized;
+
+                float verticalScale = Mathf.Abs(lineDir.y);
+                Vector3 finalDir = Vector3.Slerp(surfaceDir, lineDir, verticalScale).normalized;
+
+                float force = 100f * tensionIntensity;
+                body.AddForce(finalDir * force, ForceMode.Acceleration);
+            }
+            else if ((locationFlag & 1 << FishingLayer.Water) != 0)
+            {
+                // 힘 적용 (ForceMode.Acceleration은 질량 무시하고 가속)
+                float force = 100f * tensionIntensity;
+                body.AddForce(lineDir * force, ForceMode.Acceleration);
+            }
         }
     }
 }

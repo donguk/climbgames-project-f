@@ -168,10 +168,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7eddf23e77789f1458827bc641b97717, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingLine
-  segmentCount: 50
+  segmentCount: 10
   segmentLength: 0.225
-  updateMode: 2
-  gravityForce: {x: 0, y: -2, z: 0}
+  positionCount: 0
+  endPoint: {fileID: 0}
+  gravityForce: {x: 0, y: -9.8, z: 0}
   dampingFactor: 0.98
   collisionMask:
     serializedVersion: 2
@@ -179,9 +180,14 @@ MonoBehaviour:
   collisionRadius: 0.1
   bounceFactor: 0.1
   collisionSegmentInterval: 2
-  constraintCount: 50
-  lineEnd: {fileID: 2336696598126068664}
-  lineResolution: 0.05
+  constraintCount: 10
+  anchorEnd: {fileID: 2336696598126068664}
+  lengthPerSegment: 1
+  totalLength: 0
+  variableLength: 0
+  lineTension: 0
+  enableSpline: 1
+  splineInterpolation: 5
 --- !u!120 &1822681784042616916
 LineRenderer:
   serializedVersion: 3
@@ -191,7 +197,7 @@ LineRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2967029144548805231}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
