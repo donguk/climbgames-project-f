@@ -117,10 +117,10 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        public void CastBait()
+        public void SetEnvironment(Vector3 force, float damping)
         {
-            gravityForce.y = -4.5f;
-            dampingFactor = 0.8f;
+            gravityForce = force;
+            dampingFactor = damping;
         }
 
         public void PinBait(FishingBait bait)

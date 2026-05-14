@@ -1,6 +1,5 @@
 ﻿using System.Threading;
 using Cysharp.Threading.Tasks;
-using Unity.Android.Gradle.Manifest;
 using UnityEngine;
 
 namespace ClimbGames.Project_HC

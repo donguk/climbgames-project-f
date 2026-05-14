@@ -2,7 +2,7 @@
 
 namespace ClimbGames.Project_HC
 {
-    public abstract class FishingRod : MonoBehaviour
+    public class FishingRod : MonoBehaviour
     {
         [SerializeField] private GameObject model;
         [SerializeField] private Transform poleTip;

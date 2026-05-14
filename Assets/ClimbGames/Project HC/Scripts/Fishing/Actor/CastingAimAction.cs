@@ -2,7 +2,7 @@
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishingActionController
+    public partial class FishingActorStateController
     {
         public struct CastingAimActionParam : IStateParam
         {
@@ -14,11 +14,11 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        public class CastingAimAction : ActionBase
+        public class CastingAimAction : FishingActorStateBase
         {
             private CastingInput castingInput;
 
-            public CastingAimAction(FishingActor actor, FishingActionController controller) : base(actor, controller)
+            public CastingAimAction(FishingActor actor, FishingActorStateController controller) : base(actor, controller)
             {
             }
 

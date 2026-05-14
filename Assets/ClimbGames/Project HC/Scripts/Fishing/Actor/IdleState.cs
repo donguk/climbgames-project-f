@@ -2,11 +2,11 @@
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishingActionController
+    public partial class FishingActorStateController
     {
-        public class IdleAction : ActionBase
+        public class IdleState : FishingActorStateBase
         {
-            public IdleAction(FishingActor actor, FishingActionController controller) : base(actor, controller)
+            public IdleState(FishingActor actor, FishingActorStateController controller) : base(actor, controller)
             {
             }
 

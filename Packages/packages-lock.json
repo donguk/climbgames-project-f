@@ -1,14 +1,14 @@
 {
   "dependencies": {
     "com.climbgames.framework": {
-      "version": "1.0.27",
+      "version": "1.0.29",
       "depth": 0,
       "source": "registry",
       "dependencies": {
         "com.cysharp.unitask": "2.5.10",
         "com.cysharp.r3": "1.3.0"
       },
-      "url": "http://192.168.0.10:4873"
+      "url": "http://localhost:4873"
     },
     "com.cysharp.r3": {
       "version": "1.3.0",

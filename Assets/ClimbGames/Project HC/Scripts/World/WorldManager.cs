@@ -57,9 +57,6 @@ namespace ClimbGames.Project_HC
                 await UniTask.WaitUntil(() => activeBlend.TimeInBlend > transitionTime);
             }
             await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
-
-            //if (FishingActor.Instance != null)
-            //    await UniTask.NextFrame();
             await FishingActor.Instance.Initialize(fishingPoint);
 
             var brain = Camera.main.GetComponent<CinemachineBrain>();

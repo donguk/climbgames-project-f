@@ -9,6 +9,7 @@ namespace ClimbGames.Project_HC
     {
         public float intensity;
         public Vector2 delta;
+        public bool isPressed;
 
         protected Action onDragStart;
         protected Action onDragEnd;
@@ -29,7 +30,6 @@ namespace ClimbGames.Project_HC
     {
         class CastingAction : CastingInput
         {
-            public bool isPressed;
             public Vector2 pressedPosition;
             public Vector2 dargDelta;
             public bool isDrag;
@@ -51,6 +51,7 @@ namespace ClimbGames.Project_HC
 
         private CastingAction castingAction = new CastingAction();
         public CastingInput CastingInput => castingAction;
+        public float ReelingValue { get; private set; }
 
         void Awake()
         {
@@ -66,6 +67,11 @@ namespace ClimbGames.Project_HC
 
         void Update()
         {
+            if (Mouse.current != null)
+            {
+                ReelingValue = Mouse.current.rightButton.isPressed ? 1f : 0f;
+            }
+
             if (touchAction != null)
             {
                 if (touchAction.WasPressedThisFrame())
