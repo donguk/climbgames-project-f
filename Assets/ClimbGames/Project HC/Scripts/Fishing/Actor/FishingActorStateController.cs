@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
@@ -23,9 +24,17 @@ namespace ClimbGames.Project_HC
             {
                 Actor = actor;
             }
+
+            protected override void OnFixedUpdate()
+            {
+                Actor.Character.UpdateRotation(Actor.CameraController);
+
+                Actor.Line.Simulate(Time.fixedDeltaTime);
+                Actor.Line.Constraints();
+            }
         }
 
-        public FishingActorStateController() : base("FishingState", true)
+        public FishingActorStateController() : base("ActorState", true)
         {
         }
 
@@ -36,7 +45,7 @@ namespace ClimbGames.Project_HC
                 (FishingActorState.Casting, new CastingState(actor, this)),
                 (FishingActorState.Waiting, new WaitingState(actor, this)));
 
-            Start(FishingActorState.Idle, actor.GetCancellationTokenOnDestroy());
+            Start(FishingActorState.Idle);
         }
     }
 }

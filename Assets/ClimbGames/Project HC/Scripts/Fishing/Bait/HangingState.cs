@@ -20,6 +20,8 @@ namespace ClimbGames.Project_HC
                 Bait.Joint.xMotion = ConfigurableJointMotion.Limited;
                 Bait.Joint.yMotion = ConfigurableJointMotion.Limited;
                 Bait.Joint.zMotion = ConfigurableJointMotion.Limited;
+
+                //Bait.Float.Stop();
             }
         }
     }

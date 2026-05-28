@@ -16,6 +16,8 @@ namespace ClimbGames.Project_HC
                 Bait.Body.linearVelocity = new Vector3(velocity.x * 0.5f, velocity.y * 0.05f, velocity.z * 0.5f);
                 Bait.Body.angularVelocity *= 0.1f;
                 Bait.Body.linearDamping = 5f;
+
+                //Bait.Float.Play();
             }
 
             protected override void OnFixedUpdate()

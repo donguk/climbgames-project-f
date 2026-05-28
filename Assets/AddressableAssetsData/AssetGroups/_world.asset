@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 11df4993b63a04c4f8adcb5f6cdece75
+    m_Address: UIFishing
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 32f9f52d44df09641a8a157ecb4e143c
     m_Address: UIFisingArea
     m_ReadOnly: 0
@@ -42,11 +47,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ec536a7718376554185e4a856d5ae230
     m_Address: PlayerJoystick
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: f54f3085995099647bf5cec5ef902a60
-    m_Address: FishingBait_temp
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

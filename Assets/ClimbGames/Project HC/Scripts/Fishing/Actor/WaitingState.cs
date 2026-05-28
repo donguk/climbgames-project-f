@@ -16,6 +16,8 @@ namespace ClimbGames.Project_HC
 
             protected override void OnFixedUpdate()
             {
+                base.OnFixedUpdate();
+
                 Actor.Line.Reeling(Actor.Input.ReelingValue * Time.fixedDeltaTime);
 
                 float tensionIntensity = Actor.Line.CalculateTension(Actor.Bait);

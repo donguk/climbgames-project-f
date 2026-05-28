@@ -83,6 +83,7 @@ namespace ClimbGames.Project_HC
             player.gameObject.SetActive(false);
             joystick.gameObject.SetActive(false);
             UIManager.Instance.Hide<UIMenu>();
+            UIManager.Instance.ShowUI<UIFishing>("UIFishing", UILayer.View);
         }
 
         void SetupWorld()
@@ -90,6 +91,7 @@ namespace ClimbGames.Project_HC
             player.gameObject.SetActive(true);
             joystick.gameObject.SetActive(true);
             FishingActor.Instance.Close();
+            UIManager.Instance.Hide<UIFishing>();
         }
     }
 }

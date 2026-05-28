@@ -61,6 +61,8 @@ namespace ClimbGames.Project_HC
 
             protected override void OnFixedUpdate()
             {
+                base.OnFixedUpdate();
+
                 switch (Actor.Bait.State)
                 {
                     case FishingBaitState.Flying:

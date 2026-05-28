@@ -12,4 +12,12 @@ namespace ClimbGames.Project_HC
     {
         public static int Throw = Animator.StringToHash("Throw");
     }
+
+
+    public enum CastingType
+    {
+        Pitching,
+        OverHead,
+    }
+
 }

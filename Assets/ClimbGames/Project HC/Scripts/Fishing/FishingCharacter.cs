@@ -7,13 +7,15 @@ namespace ClimbGames.Project_HC
     public class FishingCharacter : MonoBehaviour
     {
         [SerializeField] private Transform modelRoot;
-        [SerializeField] private Transform rodHandle;
+        [SerializeField] private Transform rightHandle;
+        [SerializeField] private Transform leftHandle;
 
         private Animator _animator;
         private int fishingLayer;
         private CancellationTokenSource layerWeightTokenSource;
 
-        public Transform RodHandle => rodHandle;
+        public Transform RodHandle => rightHandle;
+        public Transform LeftHandle => leftHandle;
         public Transform ModelRoot => modelRoot;
         public AnimatorStateInfo CurrentAnimatorStateInfo => _animator.GetCurrentAnimatorStateInfo(fishingLayer);
 
@@ -23,11 +25,20 @@ namespace ClimbGames.Project_HC
             fishingLayer = _animator.GetLayerIndex("Fishing Layer");
         }
 
-        public Animator PlayAnimation(string name, float weight = 1f)
+        public void UpdateRotation(FishingCameraController controller)
+        {
+            modelRoot.rotation = controller.Pivot.rotation;
+        }
+
+        public void PlayAnimation(string name, float weight = 1f)
         {
             _animator.Play(name, fishingLayer);
             _animator.SetLayerWeight(fishingLayer, weight);
-            return _animator;
+        }
+
+        public void PlayIdle(CastingType type)
+        {
+            _animator.SetInteger("CastingType", (int)type);
         }
 
         public void FadeLayerWeight(float targetWeight, float duration = 0.2f)

@@ -1,6 +1,5 @@
 using UnityEngine;
 using R3;
-using R3.Triggers;
 using System;
 
 namespace com.pickplay.carryons

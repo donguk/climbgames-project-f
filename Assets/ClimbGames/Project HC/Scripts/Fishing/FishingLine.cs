@@ -19,7 +19,6 @@ namespace ClimbGames.Project_HC
 
         private FishingRod rod;
         private Vector3[] splinePositions;
-        private float targetTension;
 
         protected override Transform AnchorTransform => rod != null ? rod.PoleTip : base.AnchorTransform;
         public float Length => totalLength;
@@ -50,7 +49,7 @@ namespace ClimbGames.Project_HC
                 _positions[i] = position;
                 _prevPositions[i] = position;
 
-                position.y -= segmentLength;//i == 0 ? variableLength : lengthPerSegment;
+                position.y -= segmentLength;
             }
         }
 
@@ -121,6 +120,11 @@ namespace ClimbGames.Project_HC
         {
             gravityForce = force;
             dampingFactor = damping;
+        }
+
+        public void PinEnd(Transform target)
+        {
+            SetPosition(positionCount - 1, target.position);
         }
 
         public void PinBait(FishingBait bait)

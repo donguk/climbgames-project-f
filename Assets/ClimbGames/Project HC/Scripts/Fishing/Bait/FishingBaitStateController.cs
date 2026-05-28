@@ -47,7 +47,7 @@ namespace ClimbGames.Project_HC
                 (FishingBaitState.Nibbling, new NibblingState(bait, this)),
                 (FishingBaitState.Hooked, new HookedState(bait, this)));
 
-            Start(FishingBaitState.None, bait.GetCancellationTokenOnDestroy());
+            Start(FishingBaitState.None);
         }
     }
 }

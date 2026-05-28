@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace ClimbGames.Project_HC
 {
@@ -11,12 +10,12 @@ namespace ClimbGames.Project_HC
         [SerializeField] private FishingCameraController cameraController;
         [SerializeField] private FishingCharacter fishingCharacter;
         [SerializeField] private FishingLine fishingLine;
+        [SerializeField] private FishingFloat fishingFloat;
 
         private FishingPoint fishingPoint;
         private FishingRod fishingRod;
         private FishingBait fishingBait;
         private FishingActorStateController stateController = new FishingActorStateController();
-        private float reelingInput;
 
         public FishingInputProvider Input => inputProvider;
         public Transform CameraTarget => cameraController.TrackingTarget;
@@ -25,6 +24,7 @@ namespace ClimbGames.Project_HC
         public FishingCharacter Character => fishingCharacter;
         public FishingBait Bait => fishingBait;
         public FishingLine Line => fishingLine;
+        public FishingActorState State => stateController.CurrentType;
 
         void Update()
         {
@@ -32,21 +32,14 @@ namespace ClimbGames.Project_HC
             if (inputProvider.CastingInput.isPressed)
                 cameraController.UpdateRotation(inputProvider.CastingInput.delta);
 
-            if (Mouse.current != null)
-            {
-                if (Mouse.current.leftButton.wasReleasedThisFrame)
-                    StartCasting();
-            }
-        }
-
-        void FixedUpdate()
-        {
-            // character
-            fishingCharacter.ModelRoot.rotation = cameraController.Pivot.rotation;
-
-            // line
-            fishingLine.Simulate(Time.fixedDeltaTime);
-            fishingLine.Constraints();
+            //if (Mouse.current != null)
+            //{
+            //    if (Mouse.current.leftButton.wasReleasedThisFrame)
+            //    {
+            //        if (EventSystem.current.IsPointerOverGameObject() == false)
+            //            StartCasting();
+            //    }
+            //}
         }
 
         public async UniTask Initialize(FishingPoint point)
@@ -60,17 +53,16 @@ namespace ClimbGames.Project_HC
             if (fishingRod == null)
                 fishingRod = AssetManager.Instantiate<FishingRod>("PhysicsRod", fishingCharacter.RodHandle);
 
-            stateController.InitializeAndStart(this);
-            await UniTask.NextFrame();
-
-            if (fishingBait == null)
-                fishingBait = AssetManager.Instantiate<FishingBait>("FishingBait", transform);
+            //if (fishingBait == null)
+            //    fishingBait = AssetManager.Instantiate<FishingBait>("FishingBait", transform);
 
             // 
             fishingLine.Initialize(fishingRod, 0.5f);
-            fishingBait.Attach(fishingLine.End);
+            //fishingBait.Attach(fishingLine.End);
 
             gameObject.SetActive(true);
+            await UniTask.NextFrame();
+            stateController.InitializeAndStart(this);
         }
 
         public void Close()

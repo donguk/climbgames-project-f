@@ -1,4 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿
+using System;
+using R3;
 
 namespace ClimbGames.Project_HC
 {
@@ -6,13 +8,29 @@ namespace ClimbGames.Project_HC
     {
         public class IdleState : FishingActorStateBase
         {
+            private IDisposable disposable;
+
             public IdleState(FishingActor actor, FishingActorStateController controller) : base(actor, controller)
             {
             }
 
             protected override void OnEnter()
             {
-                Actor.Character.PlayAnimation("Idle", 0.7f);
+                FishingModel.Instance.CastingType.AsObservable().Subscribe(_ => Actor.Character.PlayIdle(_));
+            }
+
+            protected override void OnFixedUpdate()
+            {
+                base.OnFixedUpdate();
+
+                switch (FishingModel.Instance.CastingType.CurrentValue)
+                {
+                    case CastingType.Pitching:
+                        {
+                            Actor.Line.PinEnd(Actor.Character.LeftHandle);
+                            break;
+                        }
+                }
             }
         }
     }
