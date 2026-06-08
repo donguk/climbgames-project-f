@@ -10,7 +10,7 @@ namespace ClimbGames.Project_HC
         [SerializeField] private FishingCameraController cameraController;
         [SerializeField] private FishingCharacter fishingCharacter;
         [SerializeField] private FishingLine fishingLine;
-        [SerializeField] private FishingFloat fishingFloat;
+        [SerializeField] private FishingBobber fishingBobber;
 
         private FishingPoint fishingPoint;
         private FishingRod fishingRod;
@@ -57,8 +57,9 @@ namespace ClimbGames.Project_HC
             //    fishingBait = AssetManager.Instantiate<FishingBait>("FishingBait", transform);
 
             // 
-            fishingLine.Initialize(fishingRod, 0.5f);
-            //fishingBait.Attach(fishingLine.End);
+            fishingLine.BuildLine(fishingRod.PoleTip, 0.5f);
+            fishingLine.SetBobberHeight(0.25f);
+            fishingBobber.Attach(fishingLine.Bobber);
 
             gameObject.SetActive(true);
             await UniTask.NextFrame();

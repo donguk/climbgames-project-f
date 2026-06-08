@@ -30,7 +30,7 @@ namespace ClimbGames.Project_HC
                 Actor.Character.UpdateRotation(Actor.CameraController);
 
                 Actor.Line.Simulate(Time.fixedDeltaTime);
-                Actor.Line.Constraints();
+                Actor.Line.ApplyConstraint();
             }
         }
 

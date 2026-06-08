@@ -7,19 +7,17 @@ namespace ClimbGames.Project_HC
     [Serializable]
     public class VerletLine : MonoBehaviour
     {
-        public struct Segment
+        public struct Point
         {
             public Vector3 current;
             public Vector3 previous;
         }
 
         [Header("Line")]
-        [SerializeField] protected int segmentCount = 50;
+        [SerializeField] protected int positionCount;
         [SerializeField] protected float segmentLength = 0.225f;
         [NonSerialized] protected Vector3[] _positions;
         protected Vector3[] _prevPositions;
-        [SerializeField] protected int positionCount;
-        [SerializeField] private Transform endPoint;
 
         [Header("Physics")]
         [SerializeField] protected Vector3 gravityForce = new Vector3(0f, -2f, 0f);
@@ -41,8 +39,6 @@ namespace ClimbGames.Project_HC
         void Awake()
         {
             lineRenderer = GetComponent<LineRenderer>();
-
-            positionCount = segmentCount + 1;
             ResizePositionArray(positionCount);
 
             Vector3 position = transform.position;
@@ -63,8 +59,7 @@ namespace ClimbGames.Project_HC
         protected virtual void FixedUpdate()
         {
             Simulate(Time.fixedDeltaTime);
-
-            Constraints();
+            ApplyConstraint();
         }
 
         protected void ResizePositionArray(int needSize)
@@ -93,13 +88,13 @@ namespace ClimbGames.Project_HC
 
         public void SetPosition(int index, Vector3 position)
         {
-            if (index >= 0 && index < _positions.Length)
+            if (_positions != null && index >= 0 && index < _positions.Length)
                 _positions[index] = position;
         }
 
         public Vector3 GetPosition(int index)
         {
-            if (index >= 0 && index < _positions.Length)
+            if (_positions != null && index >= 0 && index < _positions.Length)
                 return _positions[index];
 
             return Vector3.zero;
@@ -118,23 +113,23 @@ namespace ClimbGames.Project_HC
             positionCount++;
         }
 
-        public void InsertPositions(int index, List<Segment> segments)
+        public void InsertPositions(int index, List<Point> points)
         {
-            if (segments == null || segments.Count <= 0)
+            if (points == null || points.Count <= 0)
                 return;
 
-            ResizePositionArray(positionCount + segments.Count);
+            ResizePositionArray(positionCount + points.Count);
 
-            Array.Copy(_positions, index, _positions, index + segments.Count, positionCount - index);
-            Array.Copy(_prevPositions, index, _prevPositions, index + segments.Count, positionCount - index);
+            Array.Copy(_positions, index, _positions, index + points.Count, positionCount - index);
+            Array.Copy(_prevPositions, index, _prevPositions, index + points.Count, positionCount - index);
 
-            for (int i = 0; i < segments.Count; ++i)
+            for (int i = 0; i < points.Count; ++i)
             {
-                _positions[index + i] = segments[i].current;
-                _prevPositions[index + i] = segments[i].previous;
+                _positions[index + i] = points[i].current;
+                _prevPositions[index + i] = points[i].previous;
             }
 
-            positionCount += segments.Count;
+            positionCount += points.Count;
         }
 
         public void RemovePosition(int startIndex, int count = 1)
@@ -171,20 +166,20 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        public virtual void Constraints()
+        public virtual void ApplyConstraint()
         {
             SetPosition(0, AnchorTransform.position);
 
             for (int i = 0; i < constraintCount; ++i)
             {
-                ApplyConstraint();
+                ApplySegmentLength();
 
                 if (i % collisionSegmentInterval == 0)
                     HandleCollisions();
             }
         }
 
-        protected virtual void ApplyConstraint()
+        protected virtual void ApplySegmentLength()
         {
             for (int i = 0; i < positionCount - 1; ++i)
             {

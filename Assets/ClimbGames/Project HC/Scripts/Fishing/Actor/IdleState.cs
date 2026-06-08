@@ -8,29 +8,35 @@ namespace ClimbGames.Project_HC
     {
         public class IdleState : FishingActorStateBase
         {
-            private IDisposable disposable;
-
             public IdleState(FishingActor actor, FishingActorStateController controller) : base(actor, controller)
             {
             }
 
             protected override void OnEnter()
             {
-                FishingModel.Instance.CastingType.AsObservable().Subscribe(_ => Actor.Character.PlayIdle(_));
+                FishingModel.Instance.CastingType.Subscribe(_ =>
+                {
+                    Actor.Character.PlayIdle(_);
+                    switch (FishingModel.Instance.CastingType.CurrentValue)
+                    {
+                        case CastingType.Pitching:
+                            {
+                                Actor.Line.PinEnd(Actor.Character.LeftHandle);
+                                break;
+                            }
+                        case CastingType.OverHead:
+                            {
+                                Actor.Line.PinEnd(null);
+                                break;
+                            }
+                    }
+                }).AddTo(this);
             }
 
-            protected override void OnFixedUpdate()
+            protected override void OnUpdate()
             {
-                base.OnFixedUpdate();
-
-                switch (FishingModel.Instance.CastingType.CurrentValue)
-                {
-                    case CastingType.Pitching:
-                        {
-                            Actor.Line.PinEnd(Actor.Character.LeftHandle);
-                            break;
-                        }
-                }
+                base.OnUpdate();
+                Actor.Line.UpdateSegment();
             }
         }
     }

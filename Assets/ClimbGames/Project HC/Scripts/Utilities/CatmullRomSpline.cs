@@ -55,7 +55,7 @@ namespace ClimbGames.Project_HC
             }
 
             restuls[index++] = positions[positionCount - 1];
-            return totalPoints;
+            return index;
         }
 
         public static Vector3 Interpolate(float t, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3)
