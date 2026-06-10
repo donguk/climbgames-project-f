@@ -27,7 +27,7 @@ namespace ClimbGames.Project_HC
 
             protected override void OnFixedUpdate()
             {
-                Actor.Character.UpdateRotation(Actor.CameraController);
+                Actor.Character.UpdateRotation(Actor.Camera);
 
                 Actor.Line.Simulate(Time.fixedDeltaTime);
                 Actor.Line.ApplyConstraint();

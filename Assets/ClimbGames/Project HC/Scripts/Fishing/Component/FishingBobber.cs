@@ -2,29 +2,17 @@
 
 namespace ClimbGames.Project_HC
 {
-    public class FishingBobber : MonoBehaviour
+    public class FishingBobber : LineAdaptor
     {
-        [SerializeField] private Rigidbody body;
-        [SerializeField] private ConfigurableJoint configurableJoint;
-
         [SerializeField] float waterHeight = 1f;
         [SerializeField] AnimationCurve floatingHeight;
         [SerializeField] float loopTime = 1.5f;
         [SerializeField] Transform model;
 
-        void Awake()
-        {
-            if (body == null)
-                body = GetComponent<Rigidbody>();
-
-            if (configurableJoint == null)
-                configurableJoint = GetComponent<ConfigurableJoint>();
-        }
-
         public void Attach(Transform lineBobber)
         {
             transform.position = lineBobber.position;
-            configurableJoint.connectedBody = lineBobber.GetComponent<Rigidbody>();
+            Joint.connectedBody = lineBobber.GetComponent<Rigidbody>();
         }
 
         public void Stop()

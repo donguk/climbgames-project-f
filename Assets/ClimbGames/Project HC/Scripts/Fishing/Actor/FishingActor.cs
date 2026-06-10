@@ -7,7 +7,7 @@ namespace ClimbGames.Project_HC
     public class FishingActor : MonoSingleton<FishingActor>
     {
         [SerializeField] private FishingInputProvider inputProvider;
-        [SerializeField] private FishingCameraController cameraController;
+        [SerializeField] private FishingCamera fishingCamera;
         [SerializeField] private FishingCharacter fishingCharacter;
         [SerializeField] private FishingLine fishingLine;
         [SerializeField] private FishingBobber fishingBobber;
@@ -18,8 +18,7 @@ namespace ClimbGames.Project_HC
         private FishingActorStateController stateController = new FishingActorStateController();
 
         public FishingInputProvider Input => inputProvider;
-        public Transform CameraTarget => cameraController.TrackingTarget;
-        public FishingCameraController CameraController => cameraController;
+        public FishingCamera Camera => fishingCamera;
         public FishingPoint Point => fishingPoint;
         public FishingCharacter Character => fishingCharacter;
         public FishingBait Bait => fishingBait;
@@ -28,9 +27,8 @@ namespace ClimbGames.Project_HC
 
         void Update()
         {
-            // camera pivot
             if (inputProvider.CastingInput.isPressed)
-                cameraController.UpdateRotation(inputProvider.CastingInput.delta);
+                fishingCamera.UpdateRotation(inputProvider.CastingInput.delta);
 
             //if (Mouse.current != null)
             //{
@@ -48,7 +46,7 @@ namespace ClimbGames.Project_HC
 
             var eulerAngles = point.CharacterPoint.rotation.eulerAngles;
             transform.SetPositionAndRotation(point.CharacterPoint.position, Quaternion.AngleAxis(eulerAngles.y, Vector3.up));
-            cameraController.Initialize();
+            fishingCamera.Initialize();
 
             if (fishingRod == null)
                 fishingRod = AssetManager.Instantiate<FishingRod>("PhysicsRod", fishingCharacter.RodHandle);

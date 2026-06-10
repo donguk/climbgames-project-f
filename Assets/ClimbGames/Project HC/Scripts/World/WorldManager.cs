@@ -63,7 +63,7 @@ namespace ClimbGames.Project_HC
             brain.UpdateMethod = CinemachineBrain.UpdateMethods.FixedUpdate;
 
             SetupFishing();
-            WorldCamera.Instance.ChangeCinemachine($"Fishing", FishingActor.Instance.CameraTarget);
+            WorldCamera.Instance.ChangeCinemachine($"Fishing", FishingActor.Instance.Camera.TrackingTarget);
             (DefaultTransition.Instance as ITransitionHandler).Complete();
         }
 

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
-    [Serializable]
+    [RequireComponent(typeof(LineRenderer))]
     public class VerletLine : MonoBehaviour
     {
         public struct Point
