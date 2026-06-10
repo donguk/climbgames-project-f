@@ -9,12 +9,6 @@ namespace ClimbGames.Project_HC
         [SerializeField] float loopTime = 1.5f;
         [SerializeField] Transform model;
 
-        public void Attach(Transform lineBobber)
-        {
-            transform.position = lineBobber.position;
-            Joint.connectedBody = lineBobber.GetComponent<Rigidbody>();
-        }
-
         public void Stop()
         {
             transform.localRotation = Quaternion.identity;

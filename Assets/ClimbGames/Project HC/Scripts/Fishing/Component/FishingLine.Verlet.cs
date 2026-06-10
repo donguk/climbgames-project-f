@@ -8,6 +8,8 @@ namespace ClimbGames.Project_HC
         [SerializeField] private bool enableSpline;
         [SerializeField] private int splineInterpolation = 5;
 
+        private Vector3[] splinePositions;
+
         protected override void FixedUpdate()
         {
             // update by actor
@@ -42,8 +44,8 @@ namespace ClimbGames.Project_HC
         {
             base.ApplySegmentLength();
 
-            if (pinnedTarget != null)
-                SetPosition(positionCount - 1, pinnedTarget.position);
+            if (pinTarget != null)
+                SetPosition(positionCount - 1, pinTarget.position);
         }
 
         void ApplyTension()

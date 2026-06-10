@@ -21,12 +21,12 @@ namespace ClimbGames.Project_HC
                     {
                         case CastingType.Pitching:
                             {
-                                Actor.Line.PinEnd(Actor.Character.LeftHandle);
+                                Actor.Line.SetPinTarget(Actor.Character.LeftHandle);
                                 break;
                             }
                         case CastingType.OverHead:
                             {
-                                Actor.Line.PinEnd(null);
+                                Actor.Line.SetPinTarget(null);
                                 break;
                             }
                     }

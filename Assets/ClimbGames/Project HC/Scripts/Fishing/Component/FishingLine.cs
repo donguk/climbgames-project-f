@@ -13,14 +13,14 @@ namespace ClimbGames.Project_HC
         [SerializeField] private float bobberHeight;
 
         private Transform rodTip;
-        private Vector3[] splinePositions;
-        private Transform pinnedTarget;
+        private Transform pinTarget;
 
         protected override Transform AnchorTransform => rodTip != null ? rodTip : base.AnchorTransform;
         public float Length => totalLength;
-        public float VisualLength => pinnedTarget != null ? Vector3.Distance(AnchorTransform.position, pinnedTarget.position) : totalLength;
+        public float VisualLength => pinTarget != null ? Vector3.Distance(AnchorTransform.position, pinTarget.position) : totalLength;
         public Transform End => hookSocket.transform;
-        public Transform Bobber => bobberSocket.transform;
+        public LineSocket Bobber => bobberSocket;
+        public LineSocket Hook => hookSocket;
 
         void Start()
         {
@@ -94,9 +94,9 @@ namespace ClimbGames.Project_HC
             dampingFactor = damping;
         }
 
-        public void PinEnd(Transform target)
+        public void SetPinTarget(Transform target)
         {
-            pinnedTarget = target;
+            pinTarget = target;
             UpdateSegment();
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using NUnit.Framework;
 using UnityEngine;
 
 namespace ClimbGames.Project_HC
@@ -34,6 +35,7 @@ namespace ClimbGames.Project_HC
         private Collider[] collisionResults = new Collider[5];
 
         public Vector3[] Positions => _positions;
+        public int PositionCount => positionCount;
         protected virtual Transform AnchorTransform => transform;
 
         void Awake()

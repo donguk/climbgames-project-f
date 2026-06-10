@@ -15,10 +15,13 @@ namespace ClimbGames.Project_HC
 
         void OnDrawGizmos()
         {
-            Color origin = Gizmos.color;
-            Gizmos.color = gizmoColor;
-            Gizmos.DrawSphere(transform.position, 0.04f);
-            Gizmos.color = origin;
+            if (enabled)
+            {
+                Color origin = Gizmos.color;
+                Gizmos.color = gizmoColor;
+                Gizmos.DrawSphere(transform.position, 0.04f);
+                Gizmos.color = origin;
+            }
         }
     }
 }

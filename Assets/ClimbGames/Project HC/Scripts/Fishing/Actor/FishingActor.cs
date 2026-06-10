@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Triggers;
 using UnityEngine;
 
 namespace ClimbGames.Project_HC
@@ -11,6 +12,7 @@ namespace ClimbGames.Project_HC
         [SerializeField] private FishingCharacter fishingCharacter;
         [SerializeField] private FishingLine fishingLine;
         [SerializeField] private FishingBobber fishingBobber;
+        [SerializeField] private FishingHook fishingHook;
 
         private FishingPoint fishingPoint;
         private FishingRod fishingRod;
@@ -58,6 +60,7 @@ namespace ClimbGames.Project_HC
             fishingLine.BuildLine(fishingRod.PoleTip, 0.5f);
             fishingLine.SetBobberHeight(0.25f);
             fishingBobber.Attach(fishingLine.Bobber);
+            fishingHook.Attach(fishingLine.Hook);
 
             gameObject.SetActive(true);
             await UniTask.NextFrame();
