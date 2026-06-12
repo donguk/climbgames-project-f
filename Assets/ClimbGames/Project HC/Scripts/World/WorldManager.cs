@@ -45,9 +45,9 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        public async UniTaskVoid TransitionToFishing(FishingPoint fishingPoint)
+        public async UniTaskVoid TransitionToFishing(FishingArea area)
         {
-            var cinemachine = WorldCamera.Instance.ChangeCinemachine($"WorldToFishing", fishingPoint.CharacterPoint);
+            var cinemachine = WorldCamera.Instance.ChangeCinemachine($"WorldToFishing", area.CharacterPoint);
             await UniTask.NextFrame();
 
             var activeBlend = WorldCamera.Instance.ActiveBlend;
@@ -57,7 +57,7 @@ namespace ClimbGames.Project_HC
                 await UniTask.WaitUntil(() => activeBlend.TimeInBlend > transitionTime);
             }
             await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
-            await FishingActor.Instance.Initialize(fishingPoint);
+            await FishingActor.Instance.Initialize(area);
 
             var brain = Camera.main.GetComponent<CinemachineBrain>();
             brain.UpdateMethod = CinemachineBrain.UpdateMethods.FixedUpdate;

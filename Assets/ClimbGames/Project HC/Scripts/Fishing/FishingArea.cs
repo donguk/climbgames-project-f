@@ -5,7 +5,7 @@ using R3;
 
 namespace ClimbGames.Project_HC
 {
-    public class FishingPoint : MonoBehaviour
+    public class FishingArea : MonoBehaviour
     {
         [SerializeField] private Transform model;
         [SerializeField] private Transform characterPoint;

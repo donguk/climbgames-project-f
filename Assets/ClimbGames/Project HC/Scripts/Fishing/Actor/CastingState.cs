@@ -40,7 +40,7 @@ namespace ClimbGames.Project_HC
                             {
                                 if (stateInfo.normalizedTime > 0.5f)
                                 {
-                                    Actor.Bait.Throw(Actor.Point.CastPosition, 20f);
+                                    //Actor.Line.Throw(Actor.Area.CastPosition, 20f);
                                     Actor.Line.SetEnvironment(new Vector3(0f, -2f), 0.5f);
                                     animationState = AnimationState.Release;
                                 }
@@ -63,28 +63,28 @@ namespace ClimbGames.Project_HC
             {
                 base.OnFixedUpdate();
 
-                switch (Actor.Bait.State)
-                {
-                    case FishingBaitState.Flying:
-                        {
-                            Actor.Line.Release(Actor.Bait.Velocity.magnitude * Time.fixedDeltaTime);
-                            Actor.Line.PinBait(Actor.Bait);
-                            break;
-                        }
-                    case FishingBaitState.Floating:
-                        {
-                            Actor.Line.SetEnvironment(new Vector3(0f, -9.8f), 0.98f);
-
-                            float amount = Actor.Bait.Velocity.magnitude * Time.fixedDeltaTime;
-                            Actor.Line.Release(amount);
-                            Actor.Line.PinBait(Actor.Bait);
-
-                            addtionalTime += Time.fixedDeltaTime;
-                            if (addtionalTime > 0.2f)
-                                fsm.ChangeState(FishingActorState.Waiting);
-                            break;
-                        }
-                }
+                //switch (Actor.Bait.State)
+                //{
+                //    case FishingBaitState.Flying:
+                //        {
+                //            Actor.Line.Release(Actor.Bait.Velocity.magnitude * Time.fixedDeltaTime);
+                //            Actor.Line.PinBait(Actor.Bait);
+                //            break;
+                //        }
+                //    case FishingBaitState.Floating:
+                //        {
+                //            Actor.Line.SetEnvironment(new Vector3(0f, -9.8f), 0.98f);
+                //
+                //            float amount = Actor.Bait.Velocity.magnitude * Time.fixedDeltaTime;
+                //            Actor.Line.Release(amount);
+                //            Actor.Line.PinBait(Actor.Bait);
+                //
+                //            addtionalTime += Time.fixedDeltaTime;
+                //            if (addtionalTime > 0.2f)
+                //                fsm.ChangeState(FishingActorState.Waiting);
+                //            break;
+                //        }
+                //}
             }
         }
     }

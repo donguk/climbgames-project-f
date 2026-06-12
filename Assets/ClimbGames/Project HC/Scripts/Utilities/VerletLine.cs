@@ -36,6 +36,7 @@ namespace ClimbGames.Project_HC
 
         public Vector3[] Positions => _positions;
         public int PositionCount => positionCount;
+        public float SegmentLength => segmentLength;
         protected virtual Transform AnchorTransform => transform;
 
         void Awake()

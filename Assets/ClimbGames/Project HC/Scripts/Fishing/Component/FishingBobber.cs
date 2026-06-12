@@ -1,13 +1,28 @@
 ﻿using UnityEngine;
+using R3;
 
 namespace ClimbGames.Project_HC
 {
-    public class FishingBobber : LineAdaptor
+    public class FishingBobber : FishingEquipment
     {
         [SerializeField] float waterHeight = 1f;
         [SerializeField] AnimationCurve floatingHeight;
         [SerializeField] float loopTime = 1.5f;
         [SerializeField] Transform model;
+
+        void Start()
+        {
+            FishingModel.Instance.CastingType.Subscribe(_ =>
+            {
+                SetPinMode(_ == CastingType.Pitching);
+            }).AddTo(this);
+        }
+
+        void SetPinMode(bool value)
+        {
+            Joint.angularXMotion = value ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
+            Joint.angularZMotion = value ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
+        }
 
         public void Stop()
         {

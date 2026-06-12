@@ -100,8 +100,7 @@ namespace ClimbGames.Project_HC
                 case CastingState.Throw:
                     {
                         btn_casting.interactable = false;
-
-                        // nofity throw
+                        FishingModel.Instance.StartCasting(loadingValue);
                         break;
                     }
                 case CastingState.Landing:

@@ -5,31 +5,41 @@ namespace ClimbGames.Project_HC
     public partial class FishingLine : VerletLine
     {
         [Header("Fishing")]
-        [SerializeField] private LineSocket hookSocket;
-        [SerializeField] private LineSocket bobberSocket;
+        [SerializeField] private FishingLinePoint bobberPoint;
+        [SerializeField] private FishingLineHandle lineHandle;
+
         [SerializeField] private float totalLength;
         [Range(0f, 1f)]
         [SerializeField] private float lineTension = 0f;
+        [Range(0f, 1f)]
         [SerializeField] private float bobberHeight;
 
         private Transform rodTip;
-        private Transform pinTarget;
-
         protected override Transform AnchorTransform => rodTip != null ? rodTip : base.AnchorTransform;
         public float Length => totalLength;
-        public float VisualLength => pinTarget != null ? Vector3.Distance(AnchorTransform.position, pinTarget.position) : totalLength;
-        public Transform End => hookSocket.transform;
-        public LineSocket Bobber => bobberSocket;
-        public LineSocket Hook => hookSocket;
+        public float VisualLength => lineHandle.HasForce ? Vector3.Distance(AnchorTransform.position, lineHandle.transform.position) : totalLength;
+
+        public FishingLinePoint BobberPoint => bobberPoint;
+        public FishingLinePoint HookPoint => lineHandle;
 
         void Start()
         {
             enableSpline = false;
         }
 
-        public void BuildLine(Transform rodTip, float length)
+        public void Initialize(Transform rodTip, float length, float bobberHeight)
         {
             this.rodTip = rodTip;
+
+            bobberPoint.Initialize(this);
+            lineHandle.Initialize(this);
+
+            BuildLine(length);
+            bobberPoint.SetHeight(bobberHeight);
+        }
+
+        void BuildLine(float length)
+        {
             totalLength = Mathf.Max(0.1f, length);
 
             ResizePositionArray(positionCount);
@@ -45,47 +55,17 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        public void SetBobberHeight(float height)
-        {
-            bobberHeight = height;
-        }
-
         public void UpdateSegment()
         {
             segmentLength = VisualLength / (positionCount - 1);
         }
 
-        void UpdateSockets()
+        void UpdatePoints()
         {
-            float visualLength = VisualLength;
-            segmentLength = visualLength / (positionCount - 1);
+            UpdateSegment();
 
-            // bobber
-            float bobberLength = visualLength - (visualLength * (bobberHeight / totalLength));
-            for (int i = 0; i < positionCount - 1; ++i)
-            {
-                float diff = bobberLength - (segmentLength * i);
-                if ((diff >= 0f && diff <= segmentLength) || (i == 0 && diff < 0f) || (i == positionCount - 2))
-                {
-                    diff = Mathf.Clamp(diff, 0f, segmentLength);
-                    UpdateSocket(bobberSocket, i + 1, segmentLength - diff);
-                    break;
-                }
-            }
-
-            // end
-            UpdateSocket(hookSocket, positionCount - 1);
-        }
-
-        void UpdateSocket(LineSocket socket, int positionIndex, float distance = default)
-        {
-            if (positionIndex >= 0 && positionIndex < positionCount && positionCount > 1)
-            {
-                Vector3 position = GetPosition(positionIndex);
-
-                socket.transform.up = (GetPosition(positionIndex - 1) - position).normalized;
-                socket.transform.position = position + transform.up * distance;
-            }
+            bobberPoint.UpdatePosition();
+            lineHandle.UpdatePosition();
         }
 
         public void SetEnvironment(Vector3 force, float damping)
@@ -94,17 +74,17 @@ namespace ClimbGames.Project_HC
             dampingFactor = damping;
         }
 
-        public void SetPinTarget(Transform target)
+        public void SetHandleTarget(Transform target)
         {
-            pinTarget = target;
+            lineHandle.SetTarget(target);
             UpdateSegment();
         }
 
-        public void PinBait(FishingBait bait)
-        {
-            SetPosition(positionCount - 1, bait.transform.position);
-            bait.transform.up = hookSocket.transform.up;
-        }
+        //public void PinBait(FishingBait bait)
+        //{
+        //    SetPosition(positionCount - 1, bait.transform.position);
+        //    bait.transform.up = hookSocket.transform.up;
+        //}
 
         public void Release(float amount)
         {
@@ -124,7 +104,7 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        public float CalculateTension(FishingBait bait)
+        public float CalculateTension(FishingLineHandle bait)
         {
             float distance = Vector3.Distance(rodTip.position, bait.transform.position);
             float straightSegmentLength = distance / (positionCount - 1);

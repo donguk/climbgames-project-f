@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
-using Cysharp.Threading.Tasks.Triggers;
 using UnityEngine;
+using R3;
 
 namespace ClimbGames.Project_HC
 {
@@ -14,40 +14,34 @@ namespace ClimbGames.Project_HC
         [SerializeField] private FishingBobber fishingBobber;
         [SerializeField] private FishingHook fishingHook;
 
-        private FishingPoint fishingPoint;
+        private FishingArea fishingArea;
         private FishingRod fishingRod;
-        private FishingBait fishingBait;
         private FishingActorStateController stateController = new FishingActorStateController();
 
         public FishingInputProvider Input => inputProvider;
         public FishingCamera Camera => fishingCamera;
-        public FishingPoint Point => fishingPoint;
+        public FishingArea Area => fishingArea;
         public FishingCharacter Character => fishingCharacter;
-        public FishingBait Bait => fishingBait;
         public FishingLine Line => fishingLine;
         public FishingActorState State => stateController.CurrentType;
+
+        void Start()
+        {
+            FishingModel.Instance.OnStartCastingAsObservable().Subscribe(_ => StartCasting()).AddTo(this);
+        }
 
         void Update()
         {
             if (inputProvider.CastingInput.isPressed)
                 fishingCamera.UpdateRotation(inputProvider.CastingInput.delta);
-
-            //if (Mouse.current != null)
-            //{
-            //    if (Mouse.current.leftButton.wasReleasedThisFrame)
-            //    {
-            //        if (EventSystem.current.IsPointerOverGameObject() == false)
-            //            StartCasting();
-            //    }
-            //}
         }
 
-        public async UniTask Initialize(FishingPoint point)
+        public async UniTask Initialize(FishingArea area)
         {
-            fishingPoint = point;
+            fishingArea = area;
 
-            var eulerAngles = point.CharacterPoint.rotation.eulerAngles;
-            transform.SetPositionAndRotation(point.CharacterPoint.position, Quaternion.AngleAxis(eulerAngles.y, Vector3.up));
+            var eulerAngles = area.CharacterPoint.rotation.eulerAngles;
+            transform.SetPositionAndRotation(area.CharacterPoint.position, Quaternion.AngleAxis(eulerAngles.y, Vector3.up));
             fishingCamera.Initialize();
 
             if (fishingRod == null)
@@ -57,10 +51,9 @@ namespace ClimbGames.Project_HC
             //    fishingBait = AssetManager.Instantiate<FishingBait>("FishingBait", transform);
 
             // 
-            fishingLine.BuildLine(fishingRod.PoleTip, 0.5f);
-            fishingLine.SetBobberHeight(0.25f);
-            fishingBobber.Attach(fishingLine.Bobber);
-            fishingHook.Attach(fishingLine.Hook);
+            fishingLine.Initialize(fishingRod.PoleTip, 0.5f, 0.25f);
+            fishingBobber.Attach(fishingLine.BobberPoint);
+            fishingHook.Attach(fishingLine.HookPoint);
 
             gameObject.SetActive(true);
             await UniTask.NextFrame();

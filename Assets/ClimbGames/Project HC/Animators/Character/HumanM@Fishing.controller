@@ -377,7 +377,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95a8ddb21754f1f47a6e001ed8664116, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.AnimatorLayerWeightBehaviour
-  targetWeight: 0.7
+  targetWeight: 0.5
   durationTime: 0.2
 --- !u!1102 &3431414251251894074
 AnimatorState:

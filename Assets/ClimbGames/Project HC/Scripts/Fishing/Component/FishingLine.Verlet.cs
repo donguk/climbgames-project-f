@@ -37,16 +37,16 @@ namespace ClimbGames.Project_HC
             base.ApplyConstraint();
 
             ApplyTension();
-            UpdateSockets();
+            UpdatePoints();
         }
 
-        protected override void ApplySegmentLength()
-        {
-            base.ApplySegmentLength();
-
-            if (pinTarget != null)
-                SetPosition(positionCount - 1, pinTarget.position);
-        }
+        //protected override void ApplySegmentLength()
+        //{
+        //    base.ApplySegmentLength();
+        //
+        //    if (lineHandle.HasForce)
+        //        SetPosition(positionCount - 1, lineHandle.Target.transform.position);
+        //}
 
         void ApplyTension()
         {

@@ -9,9 +9,9 @@ namespace ClimbGames.Project_HC
         [SerializeField] private ConfigurableJoint configurableJoint;
 
         private int locationFlag;
-        private FishingBaitStateController stateController = new FishingBaitStateController();
+        private FishingLineHandleController stateController = new FishingLineHandleController();
 
-        public FishingBaitState State => stateController.CurrentType;
+        public FishingLineHandleState State => stateController.CurrentType;
         public int LocationFlag => locationFlag;
         public Rigidbody Body => body;
         public ConfigurableJoint Joint => configurableJoint;
@@ -24,8 +24,6 @@ namespace ClimbGames.Project_HC
 
             if (configurableJoint == null)
                 configurableJoint = GetComponent<ConfigurableJoint>();
-
-            stateController.InitializeAndStart(this);
         }
 
         void OnCollisionEnter(Collision collision)
@@ -33,7 +31,7 @@ namespace ClimbGames.Project_HC
             Debug.Log($"[FishingBait] <color=green>OnCollisionEnter</color>: {collision.gameObject.name}");
             locationFlag |= 1 << collision.gameObject.layer;
 
-            stateController.ChangeState(FishingBaitState.Floating);
+            stateController.ChangeState(FishingLineHandleState.Floating);
         }
 
         void OnCollisionExit(Collision collision)
@@ -48,17 +46,17 @@ namespace ClimbGames.Project_HC
             configurableJoint.connectedBody = lineEnd.GetComponent<Rigidbody>();
             locationFlag = 0;
 
-            stateController.ChangeState(FishingBaitState.Hanging);
+            stateController.ChangeState(FishingLineHandleState.Hanging);
         }
 
         public void Throw(Vector3 position, float angle)
         {
-            var param = new FishingBaitStateController.FlyingStateParam()
+            var param = new FishingLineHandleController.FlyingStateParam()
             {
                 position = position,
                 angle = angle,
             };
-            stateController.ChangeState(FishingBaitState.Flying, param);
+            stateController.ChangeState(FishingLineHandleState.Flying, param);
         }
 
         public void Drag(Vector3 lineDir, float tensionIntensity)

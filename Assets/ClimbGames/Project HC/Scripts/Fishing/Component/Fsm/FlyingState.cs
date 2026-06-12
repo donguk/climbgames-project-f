@@ -2,7 +2,7 @@
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishingBaitStateController
+    public partial class FishingLineHandleController
     {
         public struct FlyingStateParam : IStateParam
         {
@@ -10,27 +10,27 @@ namespace ClimbGames.Project_HC
             public float angle;
         }
 
-        public class FlyingState : FishingBaitStateBase<FlyingStateParam>
+        public class FlyingState : FishingLineHandleStateBase<FlyingStateParam>
         {
-            public FlyingState(FishingBait bait, FishingBaitStateController controller) : base(bait, controller)
+            public FlyingState(FishingLineHandle bait, FishingLineHandleController controller) : base(bait, controller)
             {
             }
 
             protected override void OnEnter(FlyingStateParam param = default)
             {
-                Bait.Body.linearVelocity = CalculateVelocity(param.position, param.angle);
-                Bait.Body.excludeLayers = 0;
-                Bait.Body.linearDamping = 0f;
+                Handle.Body.linearVelocity = CalculateVelocity(param.position, param.angle);
+                Handle.Body.excludeLayers = 0;
+                Handle.Body.linearDamping = 0f;
 
-                Bait.Joint.connectedBody = null;
-                Bait.Joint.xMotion = ConfigurableJointMotion.Free;
-                Bait.Joint.yMotion = ConfigurableJointMotion.Free;
-                Bait.Joint.zMotion = ConfigurableJointMotion.Free;
+                //Handle.Joint.connectedBody = null;
+                //Handle.Joint.xMotion = ConfigurableJointMotion.Free;
+                //Handle.Joint.yMotion = ConfigurableJointMotion.Free;
+                //Handle.Joint.zMotion = ConfigurableJointMotion.Free;
             }
 
             public Vector3 CalculateVelocity(Vector3 target, float angle)
             {
-                Vector3 direction = target - Bait.transform.position;
+                Vector3 direction = target - Handle.transform.position;
                 float h = direction.y; // 높이 차 (yOffset)
                 direction.y = 0; // 수평 거리 계산을 위해 y축 제거
                 float d = direction.magnitude; // 수평 거리 (distance)
