@@ -7,29 +7,32 @@ namespace ClimbGames.Project_HC
         [Header("Fishing")]
         [SerializeField] private FishingLinePoint bobberPoint;
         [SerializeField] private FishingLineHandle lineHandle;
-
         [SerializeField] private float totalLength;
         [Range(0f, 1f)]
         [SerializeField] private float lineTension = 0f;
-        [Range(0f, 1f)]
-        [SerializeField] private float bobberHeight;
 
+        private SplineDrawer splineDrawer;
         private Transform rodTip;
+        private LinearBlender segmentBlender = new LinearBlender(0.4f);
+
         protected override Transform AnchorTransform => rodTip != null ? rodTip : base.AnchorTransform;
         public float Length => totalLength;
-        public float VisualLength => lineHandle.HasForce ? Vector3.Distance(AnchorTransform.position, lineHandle.transform.position) : totalLength;
+        public float VisualLength => lineHandle.HasTarget ? Vector3.Distance(AnchorTransform.position, lineHandle.transform.position) : totalLength;
 
         public FishingLinePoint BobberPoint => bobberPoint;
         public FishingLinePoint HookPoint => lineHandle;
 
-        void Start()
+        protected override void Awake()
         {
-            enableSpline = false;
+            base.Awake();
+
+            splineDrawer = GetComponent<SplineDrawer>();
         }
 
         public void Initialize(Transform rodTip, float length, float bobberHeight)
         {
             this.rodTip = rodTip;
+            segmentBlender.Reset(true);
 
             bobberPoint.Initialize(this);
             lineHandle.Initialize(this);
@@ -55,17 +58,61 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        public void UpdateSegment()
+        protected override void DrawLine()
         {
-            segmentLength = VisualLength / (positionCount - 1);
+            if (splineDrawer == null || splineDrawer.enabled == false)
+                base.DrawLine();
         }
 
-        void UpdatePoints()
+        protected override void FixedUpdate()
         {
-            UpdateSegment();
+            // simulate is called by actor
+            //
+            segmentBlender.Update(Time.fixedDeltaTime);
+        }
 
-            bobberPoint.UpdatePosition();
+        public override void ApplyConstraint()
+        {
+            base.ApplyConstraint();
+
+            // 텐션 적용
+            ApplyTension();
+
+            // handle poistion 업데이트
             lineHandle.UpdatePosition();
+
+            // 세그먼트 계산
+            UpdateSegment();
+            bobberPoint.UpdatePosition();
+        }
+
+        void ApplyTension()
+        {
+            if (lineTension > 0f)
+            {
+                Vector3 startPos = _positions[0];
+                Vector3 endPos = _positions[positionCount - 1];
+
+                for (int i = 1; i < positionCount - 1; ++i)
+                {
+                    float t = (float)i / (positionCount - 1);
+                    Vector3 straightLinePos = Vector3.Lerp(startPos, endPos, t);
+                    _positions[i] = Vector3.Lerp(_positions[i], straightLinePos, lineTension);
+                }
+            }
+        }
+
+        public void UpdateSegment()
+        {
+            float lineLength = VisualLength;
+            float targetLength = lineLength / (positionCount - 1);
+            segmentLength = Mathf.Lerp(segmentLength, targetLength, segmentBlender.Value);
+        }
+
+        public void SetHandleTarget(Transform target)
+        {
+            lineHandle.SetTarget(target);
+            segmentBlender.Reset(target != null);
         }
 
         public void SetEnvironment(Vector3 force, float damping)
@@ -73,18 +120,6 @@ namespace ClimbGames.Project_HC
             gravityForce = force;
             dampingFactor = damping;
         }
-
-        public void SetHandleTarget(Transform target)
-        {
-            lineHandle.SetTarget(target);
-            UpdateSegment();
-        }
-
-        //public void PinBait(FishingBait bait)
-        //{
-        //    SetPosition(positionCount - 1, bait.transform.position);
-        //    bait.transform.up = hookSocket.transform.up;
-        //}
 
         public void Release(float amount)
         {

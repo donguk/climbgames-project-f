@@ -458,8 +458,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6778170814192907588}
-  - component: {fileID: 3964598790634156645}
   - component: {fileID: 1822681784042616916}
+  - component: {fileID: 8306676886582510841}
+  - component: {fileID: 3964598790634156645}
   m_Layer: 0
   m_Name: FishingLine
   m_TagString: Untagged
@@ -484,36 +485,6 @@ Transform:
   - {fileID: 2336696598126068664}
   m_Father: {fileID: 1660799581146449646}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3964598790634156645
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2967029144548805231}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7eddf23e77789f1458827bc641b97717, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingLine
-  positionCount: 5
-  segmentLength: 0.225
-  gravityForce: {x: 0, y: -9.8, z: 0}
-  dampingFactor: 0.98
-  collisionMask:
-    serializedVersion: 2
-    m_Bits: 0
-  collisionRadius: 0.07
-  bounceFactor: 0.1
-  collisionSegmentInterval: 2
-  constraintCount: 10
-  enableSpline: 0
-  splineInterpolation: 5
-  bobberPoint: {fileID: 8666444395038434717}
-  lineHandle: {fileID: 2469418528435698845}
-  totalLength: 0
-  lineTension: 0
-  bobberHeight: 0
 --- !u!120 &1822681784042616916
 LineRenderer:
   serializedVersion: 3
@@ -624,6 +595,48 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 1
+--- !u!114 &8306676886582510841
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2967029144548805231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adde87af1f7028a4c8465d4ae2cdd089, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.SplineDrawer
+  interpolation: 5
+--- !u!114 &3964598790634156645
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2967029144548805231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7eddf23e77789f1458827bc641b97717, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingLine
+  positionCount: 5
+  segmentLength: 0.225
+  gravityForce: {x: 0, y: -9.8, z: 0}
+  dampingFactor: 0.98
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 0
+  collisionRadius: 0.07
+  bounceFactor: 0.1
+  collisionSegmentInterval: 2
+  constraintCount: 10
+  enableSpline: 0
+  splineInterpolation: 5
+  bobberPoint: {fileID: 8666444395038434717}
+  lineHandle: {fileID: 2469418528435698845}
+  totalLength: 0
+  lineTension: 0
 --- !u!1 &5056331567691950992
 GameObject:
   m_ObjectHideFlags: 0
@@ -936,7 +949,7 @@ Rigidbody:
   m_GameObject: {fileID: 8416441094817619062}
   serializedVersion: 5
   m_Mass: 1
-  m_LinearDamping: 0.1
+  m_LinearDamping: 0.5
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}

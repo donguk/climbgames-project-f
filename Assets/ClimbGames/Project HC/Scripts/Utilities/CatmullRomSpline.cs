@@ -27,7 +27,7 @@ namespace ClimbGames.Project_HC
             this.positionCount = Evaluate(positions, positionCount, ref this.positions, interpolation);
         }
 
-        public static int Evaluate(Vector3[] positions, int positionCount, ref Vector3[] restuls, int interpolation)
+        public static int Evaluate(Vector3[] positions, int positionCount, ref Vector3[] results, int interpolation)
         {
             if (positions == null || positions.Length < 2 || positionCount < 2)
                 return 0;
@@ -35,8 +35,8 @@ namespace ClimbGames.Project_HC
             positionCount = Mathf.Min(positions.Length, positionCount);
             int totalPoints = (positionCount - 1) * interpolation + 1;
 
-            if (restuls == null || restuls.Length < totalPoints)
-                restuls = new Vector3[totalPoints];
+            if (results == null || results.Length < totalPoints)
+                results = new Vector3[totalPoints];
 
             int index = 0;
             for (int i = 0; i < positionCount - 1; ++i)
@@ -50,11 +50,11 @@ namespace ClimbGames.Project_HC
                 for (int j = 0; j < interpolation; j++)
                 {
                     float t = j / (float)interpolation;
-                    restuls[index++] = Interpolate(t, p0, p1, p2, p3);
+                    results[index++] = Interpolate(t, p0, p1, p2, p3);
                 }
             }
 
-            restuls[index++] = positions[positionCount - 1];
+            results[index++] = positions[positionCount - 1];
             return index;
         }
 

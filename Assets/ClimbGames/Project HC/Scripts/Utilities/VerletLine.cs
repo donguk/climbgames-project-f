@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using NUnit.Framework;
 using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
+    interface ILineComponent
+    {
+        Vector3[] Positions { get; }
+        int PositionCount { get; }
+    }
+
     [RequireComponent(typeof(LineRenderer))]
-    public class VerletLine : MonoBehaviour
+    public class VerletLine : MonoBehaviour, ILineComponent
     {
         public struct Point
         {
@@ -39,7 +44,7 @@ namespace ClimbGames.Project_HC
         public float SegmentLength => segmentLength;
         protected virtual Transform AnchorTransform => transform;
 
-        void Awake()
+        protected virtual void Awake()
         {
             lineRenderer = GetComponent<LineRenderer>();
             ResizePositionArray(positionCount);

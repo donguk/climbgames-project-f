@@ -32,12 +32,6 @@ namespace ClimbGames.Project_HC
                     }
                 }).AddTo(this);
             }
-
-            protected override void OnUpdate()
-            {
-                base.OnUpdate();
-                Actor.Line.UpdateSegment();
-            }
         }
     }
 }
