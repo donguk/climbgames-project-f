@@ -14,27 +14,38 @@ namespace ClimbGames.Project_HC
         Retrieving,         // 수확 없이 릴링으로 미끼만 회수 중
     }
 
-    public partial class FishingActorStateController : FSM<FishingActorState>
+    public partial class FishingActorController : FSM<FishingActorState>
     {
         public abstract class FishingActorStateBase : StateBase
         {
             protected FishingActor Actor { get; private set; }
 
-            protected FishingActorStateBase(FishingActor actor, FishingActorStateController controller) : base(controller)
+            protected FishingActorStateBase(FishingActor actor, FishingActorController controller) : base(controller)
             {
                 Actor = actor;
             }
 
             protected override void OnFixedUpdate()
             {
+                // 캐릭터 회전
                 Actor.Character.UpdateRotation(Actor.Camera);
 
+                // 라인 시뮬레이션
                 Actor.Line.Simulate(Time.fixedDeltaTime);
+
+                // 라인 제약 적용
                 Actor.Line.ApplyConstraint();
+
+                // 포지션 업데이트
+                Actor.Line.Handle.UpdatePosition();
+                Actor.Line.UpdateSegment();
+
+                Actor.Line.BobberPoint.UpdatePosition();
+                Actor.Hook.UpdatePosition();
             }
         }
 
-        public FishingActorStateController() : base("ActorState", true)
+        public FishingActorController() : base("Actor", true)
         {
         }
 

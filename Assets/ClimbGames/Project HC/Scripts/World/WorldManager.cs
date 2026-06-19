@@ -57,6 +57,8 @@ namespace ClimbGames.Project_HC
                 await UniTask.WaitUntil(() => activeBlend.TimeInBlend > transitionTime);
             }
             await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
+
+            FishingActor.Instance.gameObject.SetActive(true);
             await FishingActor.Instance.Initialize(area);
 
             var brain = Camera.main.GetComponent<CinemachineBrain>();
@@ -90,7 +92,7 @@ namespace ClimbGames.Project_HC
         {
             player.gameObject.SetActive(true);
             joystick.gameObject.SetActive(true);
-            FishingActor.Instance.Close();
+            FishingActor.Instance.gameObject.SetActive(false);
             UIManager.Instance.Hide<UIFishing>();
         }
     }

@@ -179,7 +179,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingBait
   body: {fileID: 0}
   configurableJoint: {fileID: 5159004165642782434}
-  fishingFloat: {fileID: 5163661336309348005}
 --- !u!1 &8057809258035952154
 GameObject:
   m_ObjectHideFlags: 0
@@ -189,7 +188,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6186694971001401338}
-  - component: {fileID: 5163661336309348005}
   m_Layer: 0
   m_Name: Float
   m_TagString: Untagged
@@ -213,72 +211,6 @@ Transform:
   - {fileID: 8568814384281041648}
   m_Father: {fileID: 5954344403394581621}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5163661336309348005
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8057809258035952154}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 60751be149890af45b2fc5b5c7b4128e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingFloat
-  waterHeight: 0.4
-  floatingHeight:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0.039798737
-      value: 0.5
-      inSlope: 0.0665976
-      outSlope: 0.0665976
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.5927157
-    - serializedVersion: 3
-      time: 0.20340957
-      value: 0.5431999
-      inSlope: 0.08117959
-      outSlope: 0.08117959
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.51648855
-      value: 0.5113656
-      inSlope: 0.57195246
-      outSlope: 0.57195246
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.6662663
-      outWeight: 0.17361064
-    - serializedVersion: 3
-      time: 0.9023832
-      value: 0.48727548
-      inSlope: 0.038448855
-      outSlope: 0.038448855
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.9937134
-      value: 0.5
-      inSlope: 0.13932437
-      outSlope: 0.13932437
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  loopTime: 5
-  model: {fileID: 8568814384281041648}
 --- !u!1 &9086714191947899069
 GameObject:
   m_ObjectHideFlags: 0

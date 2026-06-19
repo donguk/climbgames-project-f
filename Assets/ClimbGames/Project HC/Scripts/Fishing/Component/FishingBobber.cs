@@ -10,31 +10,13 @@ namespace ClimbGames.Project_HC
         [SerializeField] float loopTime = 1.5f;
         [SerializeField] Transform model;
 
-        void Start()
+        public void SetCastingType(CastingType type)
         {
-            FishingModel.Instance.CastingType.Subscribe(_ =>
-            {
-                SetPinMode(_ == CastingType.Pitching);
-            }).AddTo(this);
+            Joint.angularXMotion = type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
+            Joint.angularZMotion = type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
         }
 
-        void SetPinMode(bool value)
-        {
-            Joint.angularXMotion = value ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
-            Joint.angularZMotion = value ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
-        }
 
-        public void Stop()
-        {
-            transform.localRotation = Quaternion.identity;
-            model.localPosition = Vector3.zero;
-            enabled = false;
-        }
-
-        public void Play()
-        {
-            enabled = true;
-        }
 
         //void Update()
         //{

@@ -11,6 +11,7 @@ namespace ClimbGames.Project_HC
         protected FishingLine line;
 
         public Rigidbody Body => body;
+        public virtual Vector3 Up => transform.up;
 
         void Awake()
         {
@@ -29,7 +30,7 @@ namespace ClimbGames.Project_HC
 
         public virtual void UpdatePosition()
         {
-            float visualLength = line.VisualLength;
+            float visualLength = line.SegmentLength * (line.PositionCount - 1);// line.VisualLength;
             float lenght = visualLength - (visualLength * (height / line.Length));
 
             for (int i = 0; i < line.PositionCount - 1; ++i)

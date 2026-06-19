@@ -2,14 +2,14 @@
 
 namespace ClimbGames.Project_HC
 {
-    public class LinearBlender
+    public class LinearTween
     {
         public float Duration { get; set; }
         public float ElapsedTime { get; private set; }
         public float Value { get; private set; }
         public float SmoothValue => Mathf.SmoothStep(0f, 1f, Value);
 
-        public LinearBlender(float duration)
+        public LinearTween(float duration)
         {
             Duration = duration;
             Reset();

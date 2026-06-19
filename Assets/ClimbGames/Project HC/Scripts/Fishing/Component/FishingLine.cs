@@ -13,11 +13,11 @@ namespace ClimbGames.Project_HC
 
         private SplineDrawer splineDrawer;
         private Transform rodTip;
-        private LinearBlender segmentBlender = new LinearBlender(0.4f);
+        private LinearTween segmentTween = new LinearTween(0.4f);
 
         protected override Transform AnchorTransform => rodTip != null ? rodTip : base.AnchorTransform;
         public float Length => totalLength;
-        public float VisualLength => lineHandle.HasTarget ? Vector3.Distance(AnchorTransform.position, lineHandle.transform.position) : totalLength;
+        public FishingLineHandle Handle => lineHandle;
 
         public FishingLinePoint BobberPoint => bobberPoint;
         public FishingLinePoint HookPoint => lineHandle;
@@ -32,7 +32,6 @@ namespace ClimbGames.Project_HC
         public void Initialize(Transform rodTip, float length, float bobberHeight)
         {
             this.rodTip = rodTip;
-            segmentBlender.Reset(true);
 
             bobberPoint.Initialize(this);
             lineHandle.Initialize(this);
@@ -44,8 +43,9 @@ namespace ClimbGames.Project_HC
         void BuildLine(float length)
         {
             totalLength = Mathf.Max(0.1f, length);
-
             ResizePositionArray(positionCount);
+
+            segmentTween.Reset(true);
             UpdateSegment();
 
             Vector3 position = AnchorTransform.position;
@@ -68,7 +68,7 @@ namespace ClimbGames.Project_HC
         {
             // simulate is called by actor
             //
-            segmentBlender.Update(Time.fixedDeltaTime);
+            segmentTween.Update(Time.fixedDeltaTime);
         }
 
         public override void ApplyConstraint()
@@ -77,13 +77,6 @@ namespace ClimbGames.Project_HC
 
             // 텐션 적용
             ApplyTension();
-
-            // handle poistion 업데이트
-            lineHandle.UpdatePosition();
-
-            // 세그먼트 계산
-            UpdateSegment();
-            bobberPoint.UpdatePosition();
         }
 
         void ApplyTension()
@@ -104,15 +97,18 @@ namespace ClimbGames.Project_HC
 
         public void UpdateSegment()
         {
-            float lineLength = VisualLength;
-            float targetLength = lineLength / (positionCount - 1);
-            segmentLength = Mathf.Lerp(segmentLength, targetLength, segmentBlender.Value);
+            float visualLength = totalLength;
+            if (lineHandle.HasTarget)
+                visualLength = Vector3.Distance(AnchorTransform.position, lineHandle.transform.position);
+
+            float targetLength = visualLength / (positionCount - 1);
+            segmentLength = Mathf.Lerp(segmentLength, targetLength, segmentTween.Value);
         }
 
         public void SetHandleTarget(Transform target)
         {
             lineHandle.SetTarget(target);
-            segmentBlender.Reset(target != null);
+            segmentTween.Reset(target != null);
         }
 
         public void SetEnvironment(Vector3 force, float damping)
@@ -124,10 +120,7 @@ namespace ClimbGames.Project_HC
         public void Release(float amount)
         {
             if (amount > 0f)
-            {
                 totalLength += amount;
-                segmentLength = totalLength / (positionCount - 1);
-            }
         }
 
         public void Reeling(float amount)

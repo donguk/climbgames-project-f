@@ -8,9 +8,12 @@ namespace ClimbGames.Project_HC
         public static int Ground = LayerMask.NameToLayer("Ground");
     }
 
-    public static class FishingAnimationHash
+    public static class FishingAnimation
     {
-        public static int Throw = Animator.StringToHash("Throw");
+        public const string LayerName = "Fishing Layer";
+        public const string CastingThrow = "Casting_Throw";
+        public static int CastingThrowHash = Animator.StringToHash("Casting_Throw");
+        public static int WaitingHash = Animator.StringToHash("Waiting");
     }
 
     public enum CastingType

@@ -1,90 +1,58 @@
 
 using System;
 using UnityEngine;
+using R3;
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishingActorStateController
+    public partial class FishingActorController
     {
         public class CastingState : FishingActorStateBase
         {
-            enum AnimationState
-            {
-                None,
-                Throw,
-                Release,
-            }
-
-            private AnimationState animationState;
-            private float addtionalTime;
-
-            public CastingState(FishingActor actor, FishingActorStateController controller) : base(actor, controller)
+            public CastingState(FishingActor actor, FishingActorController controller) : base(actor, controller)
             {
             }
 
             protected override void OnEnter()
             {
-                Actor.Character.PlayAnimation("Throw");
-                animationState = AnimationState.Throw;
-                addtionalTime = 0f;
-            }
+                var animator = Actor.Character.PlayAnimation(FishingAnimation.CastingThrow);
+                int layerIndex = animator.GetLayerIndex(FishingAnimation.LayerName);
 
-            protected override void OnUpdate()
-            {
-                var stateInfo = Actor.Character.CurrentAnimatorStateInfo;
-                if (stateInfo.shortNameHash == FishingAnimationHash.Throw)
+                animator.OnNormalizedTimeReachedAsObservable(FishingAnimation.CastingThrow, 0.4f, layerIndex).Subscribe(_ =>
                 {
-                    switch (animationState)
-                    {
-                        case AnimationState.Throw:
-                            {
-                                if (stateInfo.normalizedTime > 0.5f)
-                                {
-                                    //Actor.Line.Throw(Actor.Area.CastPosition, 20f);
-                                    Actor.Line.SetEnvironment(new Vector3(0f, -2f), 0.5f);
-                                    animationState = AnimationState.Release;
-                                }
-                                break;
-                            }
-                        case AnimationState.Release:
-                            {
-                                if (stateInfo.normalizedTime > 0.7f)
-                                {
-                                    Actor.Character.FadeLayerWeight(0.5f);
-                                    animationState = AnimationState.None;
-                                }
-                                break;
-                            }
-                    }
-                }
+                    CastingType castingType = FishingModel.Instance.CastingType.CurrentValue;
+                    float angle = castingType == CastingType.OverHead ? 45f : 20f;
+
+                    Actor.Hook.CastingThrow();
+                    Actor.Line.Handle.CastingThrow(Actor.Area.CastPosition, angle);
+                }).AddTo(this);
             }
 
             protected override void OnFixedUpdate()
             {
                 base.OnFixedUpdate();
 
-                //switch (Actor.Bait.State)
-                //{
-                //    case FishingBaitState.Flying:
-                //        {
-                //            Actor.Line.Release(Actor.Bait.Velocity.magnitude * Time.fixedDeltaTime);
-                //            Actor.Line.PinBait(Actor.Bait);
-                //            break;
-                //        }
-                //    case FishingBaitState.Floating:
-                //        {
-                //            Actor.Line.SetEnvironment(new Vector3(0f, -9.8f), 0.98f);
-                //
-                //            float amount = Actor.Bait.Velocity.magnitude * Time.fixedDeltaTime;
-                //            Actor.Line.Release(amount);
-                //            Actor.Line.PinBait(Actor.Bait);
-                //
-                //            addtionalTime += Time.fixedDeltaTime;
-                //            if (addtionalTime > 0.2f)
-                //                fsm.ChangeState(FishingActorState.Waiting);
-                //            break;
-                //        }
-                //}
+                switch (Actor.Line.Handle.State)
+                {
+                    case FishingLineHandleState.Flying:
+                        {
+                            Actor.Line.Release(Actor.Line.Handle.Body.linearVelocity.magnitude * Time.fixedDeltaTime);
+                            break;
+                        }
+                    case FishingLineHandleState.Floating:
+                        {
+                            //Actor.Line.SetEnvironment(new Vector3(0f, -9.8f), 0.98f);
+                            //
+                            //float amount = Actor.Bait.Velocity.magnitude * Time.fixedDeltaTime;
+                            //Actor.Line.Release(amount);
+                            //Actor.Line.PinBait(Actor.Bait);
+                            //
+                            //addtionalTime += Time.fixedDeltaTime;
+                            //if (addtionalTime > 0.2f)
+                            //    fsm.ChangeState(FishingActorState.Waiting);
+                            break;
+                        }
+                }
             }
         }
     }

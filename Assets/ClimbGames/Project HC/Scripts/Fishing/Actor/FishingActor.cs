@@ -16,14 +16,25 @@ namespace ClimbGames.Project_HC
 
         private FishingArea fishingArea;
         private FishingRod fishingRod;
-        private FishingActorStateController stateController = new FishingActorStateController();
+        private FishingActorController controller = new FishingActorController();
 
         public FishingInputProvider Input => inputProvider;
         public FishingCamera Camera => fishingCamera;
         public FishingArea Area => fishingArea;
         public FishingCharacter Character => fishingCharacter;
         public FishingLine Line => fishingLine;
-        public FishingActorState State => stateController.CurrentType;
+        public FishingHook Hook => fishingHook;
+        public FishingActorState State => controller.CurrentType;
+
+        void OnEnable()
+        {
+            controller.Resume();
+        }
+
+        void OnDisable()
+        {
+            controller.Pause();
+        }
 
         void Start()
         {
@@ -47,28 +58,26 @@ namespace ClimbGames.Project_HC
             if (fishingRod == null)
                 fishingRod = AssetManager.Instantiate<FishingRod>("PhysicsRod", fishingCharacter.RodHandle);
 
-            //if (fishingBait == null)
-            //    fishingBait = AssetManager.Instantiate<FishingBait>("FishingBait", transform);
-
-            // 
             fishingLine.Initialize(fishingRod.PoleTip, 0.5f, 0.25f);
+            controller.InitializeAndStart(this);
+            await UniTask.Delay(100);
+
             fishingBobber.Attach(fishingLine.BobberPoint);
             fishingHook.Attach(fishingLine.HookPoint);
-
-            gameObject.SetActive(true);
-            await UniTask.NextFrame();
-            stateController.InitializeAndStart(this);
         }
 
-        public void Close()
+        public void ChangeCastingType(CastingType type)
         {
-            gameObject.SetActive(false);
+            fishingCharacter.SetCastingType(type);
+            fishingLine.SetHandleTarget(type == CastingType.Pitching ? fishingCharacter.LeftHandle : null);
+            fishingBobber.SetCastingType(type);
+            fishingHook.SetCastingType(type);
         }
 
         void StartCasting()
         {
-            if (stateController.CurrentType == FishingActorState.Idle)
-                stateController.ChangeState(FishingActorState.Casting);
+            if (controller.CurrentType == FishingActorState.Idle)
+                controller.ChangeState(FishingActorState.Casting);
         }
     }
 }

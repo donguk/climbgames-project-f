@@ -4,11 +4,11 @@ using R3;
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishingActorStateController
+    public partial class FishingActorController
     {
         public class IdleState : FishingActorStateBase
         {
-            public IdleState(FishingActor actor, FishingActorStateController controller) : base(actor, controller)
+            public IdleState(FishingActor actor, FishingActorController controller) : base(actor, controller)
             {
             }
 
@@ -16,20 +16,7 @@ namespace ClimbGames.Project_HC
             {
                 FishingModel.Instance.CastingType.Subscribe(_ =>
                 {
-                    Actor.Character.PlayIdle(_);
-                    switch (FishingModel.Instance.CastingType.CurrentValue)
-                    {
-                        case CastingType.Pitching:
-                            {
-                                Actor.Line.SetHandleTarget(Actor.Character.LeftHandle);
-                                break;
-                            }
-                        case CastingType.OverHead:
-                            {
-                                Actor.Line.SetHandleTarget(null);
-                                break;
-                            }
-                    }
+                    Actor.ChangeCastingType(_);
                 }).AddTo(this);
             }
         }

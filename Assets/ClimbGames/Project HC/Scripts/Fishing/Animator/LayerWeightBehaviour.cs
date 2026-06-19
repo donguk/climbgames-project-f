@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
-    public class FadeLayerWeightBehaviour : StateMachineBehaviour
+    public class LayerWeightBehaviour : StateMachineBehaviour
     {
         [SerializeField] float targetWeight;
         [SerializeField] float durationTime;
@@ -21,6 +21,7 @@ namespace ClimbGames.Project_HC
         {
             cts?.Cancel();
             cts?.Dispose();
+            cts = null;
         }
 
         async UniTaskVoid FadeLayerWeight(Animator animator, int layerIndex, float targetWeight, float durationTime, CancellationToken cancellationToken = default)
