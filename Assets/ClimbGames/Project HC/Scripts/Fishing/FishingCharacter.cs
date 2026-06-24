@@ -8,11 +8,11 @@ namespace ClimbGames.Project_HC
         [SerializeField] private Transform offset;
         [SerializeField] private Transform rightHandle;
         [SerializeField] private Transform leftHandle;
-        [SerializeField] private Vector2 pitchingTiltLimit = new Vector2(-10, 10);
+        [SerializeField] private Vector2 tiltLimit = new Vector2(-10, 10);
 
         private Animator _animator;
         private int fishingLayer;
-        private Vector2 tiltLimit;
+        private Vector2 currentTiltLimit;
 
         public Transform RodHandle => rightHandle;
         public Transform LeftHandle => leftHandle;
@@ -26,12 +26,14 @@ namespace ClimbGames.Project_HC
 
         public void UpdateRotation(FishingCamera camera)
         {
-            Vector3 targetTilt = camera.TiltLimit;
-            if (FishingModel.Instance.CastingType.CurrentValue == CastingType.Pitching && FishingActor.Instance.State == FishingActorState.Idle)
-                targetTilt = pitchingTiltLimit;
+            Vector3 targetTiltLimit = camera.TiltLimit;
 
-            tiltLimit = Vector3.Lerp(tiltLimit, targetTilt, Time.deltaTime * 5f);
-            float currentTilt = Mathf.Clamp(camera.CurrentTilt, tiltLimit.x, tiltLimit.y);
+            // 케스팅 피칭 모드시 캐릭터 틸트(상하) 제한
+            if (FishingModel.Instance.IsLimitedTilt)
+                targetTiltLimit = tiltLimit;
+
+            currentTiltLimit = Vector3.Lerp(currentTiltLimit, targetTiltLimit, Time.deltaTime * 5f);
+            float currentTilt = Mathf.Clamp(camera.CurrentTilt, currentTiltLimit.x, currentTiltLimit.y);
             root.localRotation = Quaternion.Euler(new Vector3(currentTilt, camera.CurrentPan));
         }
 
@@ -43,7 +45,12 @@ namespace ClimbGames.Project_HC
 
         public void SetCastingType(CastingType type)
         {
-            _animator.SetInteger("CastingType", (int)type);
+            _animator.SetInteger(FishingAnimationParam.CastingType, (int)type);
+        }
+
+        public void SetTrigger(string name)
+        {
+            _animator.SetTrigger(name);
         }
     }
 }

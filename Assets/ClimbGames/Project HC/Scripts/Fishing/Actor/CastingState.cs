@@ -20,11 +20,7 @@ namespace ClimbGames.Project_HC
 
                 animator.OnNormalizedTimeReachedAsObservable(FishingAnimation.CastingThrow, 0.4f, layerIndex).Subscribe(_ =>
                 {
-                    CastingType castingType = FishingModel.Instance.CastingType.CurrentValue;
-                    float angle = castingType == CastingType.OverHead ? 45f : 20f;
-
-                    Actor.Hook.CastingThrow();
-                    Actor.Line.Handle.CastingThrow(Actor.Area.CastPosition, angle);
+                    Actor.CastingThrow();
                 }).AddTo(this);
             }
 
@@ -36,20 +32,14 @@ namespace ClimbGames.Project_HC
                 {
                     case FishingLineHandleState.Flying:
                         {
-                            Actor.Line.Release(Actor.Line.Handle.Body.linearVelocity.magnitude * Time.fixedDeltaTime);
+                            Vector3 v = Actor.Line.Handle.Body.linearVelocity;
+                            v.y = Mathf.Max(0f, v.y);
+                            Actor.Line.Release(v.magnitude * Time.fixedDeltaTime);
                             break;
                         }
-                    case FishingLineHandleState.Floating:
+                    case FishingLineHandleState.Settled:
                         {
-                            //Actor.Line.SetEnvironment(new Vector3(0f, -9.8f), 0.98f);
-                            //
-                            //float amount = Actor.Bait.Velocity.magnitude * Time.fixedDeltaTime;
-                            //Actor.Line.Release(amount);
-                            //Actor.Line.PinBait(Actor.Bait);
-                            //
-                            //addtionalTime += Time.fixedDeltaTime;
-                            //if (addtionalTime > 0.2f)
-                            //    fsm.ChangeState(FishingActorState.Waiting);
+                            fsm.ChangeState(FishingActorState.Waiting);
                             break;
                         }
                 }

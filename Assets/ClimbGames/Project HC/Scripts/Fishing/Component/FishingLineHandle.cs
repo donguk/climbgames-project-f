@@ -29,8 +29,7 @@ namespace ClimbGames.Project_HC
         {
             base.Initialize(line);
 
-            Body.isKinematic = true;
-            controller.InitializeAndStart(this, FishingLineHandleState.Hanging);
+            Retrieve();
         }
 
         public void SetTarget(Transform target)
@@ -58,7 +57,13 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        public void CastingThrow(Vector3 position, float angle)
+        public void Retrieve()
+        {
+            Body.isKinematic = true;
+            controller.InitializeAndStart(this, FishingLineHandleState.Hanging);
+        }
+
+        public void Throw(Vector3 position, float angle)
         {
             if (TryGetThrowVelocity(position, angle, out var velocity))
             {
@@ -107,6 +112,27 @@ namespace ClimbGames.Project_HC
             // 3. 최종 속도 크기 곱하기
             result = finalVelocity * v;
             return true;
+        }
+
+        public void Drag(float lineTension)
+        {
+            Vector3 lineDir = Up;
+            if (Physics.Raycast(transform.position, Vector3.down, out var hit, 0.5f, 1 << FishingLayer.Ground))
+            {
+                Vector3 surfaceDir = Vector3.ProjectOnPlane(lineDir, hit.normal).normalized;
+
+                float verticalScale = Mathf.Abs(lineDir.y);
+                Vector3 finalDir = Vector3.Slerp(surfaceDir, lineDir, verticalScale).normalized;
+
+                float force = 100f * lineTension;
+                Body.AddForce(finalDir * force, ForceMode.Acceleration);
+            }
+            else
+            {
+                // 힘 적용 (ForceMode.Acceleration은 질량 무시하고 가속)
+                float force = 100f * lineTension;
+                Body.AddForce(lineDir * force, ForceMode.Acceleration);
+            }
         }
     }
 }

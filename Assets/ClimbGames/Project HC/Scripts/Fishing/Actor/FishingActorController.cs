@@ -33,13 +33,14 @@ namespace ClimbGames.Project_HC
                 // 라인 시뮬레이션
                 Actor.Line.Simulate(Time.fixedDeltaTime);
 
+                // 세그먼트 계산
+                Actor.Line.UpdateSegment();
+
                 // 라인 제약 적용
                 Actor.Line.ApplyConstraint();
 
                 // 포지션 업데이트
                 Actor.Line.Handle.UpdatePosition();
-                Actor.Line.UpdateSegment();
-
                 Actor.Line.BobberPoint.UpdatePosition();
                 Actor.Hook.UpdatePosition();
             }

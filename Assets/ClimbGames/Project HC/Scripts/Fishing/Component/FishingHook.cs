@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using R3;
 
 namespace ClimbGames.Project_HC
@@ -54,7 +54,7 @@ namespace ClimbGames.Project_HC
             lineHandle = point;
         }
 
-        public void CastingThrow()
+        public void Throw()
         {
             Joint.connectedBody = null;
             Body.isKinematic = true;

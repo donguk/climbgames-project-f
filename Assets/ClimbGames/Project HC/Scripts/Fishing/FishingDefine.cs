@@ -12,8 +12,15 @@ namespace ClimbGames.Project_HC
     {
         public const string LayerName = "Fishing Layer";
         public const string CastingThrow = "Casting_Throw";
+
         public static int CastingThrowHash = Animator.StringToHash("Casting_Throw");
         public static int WaitingHash = Animator.StringToHash("Waiting");
+    }
+
+    public static class FishingAnimationParam
+    {
+        public const string CastingType = "CastingType";
+        public const string RetrieveRod = "RetrieveRod";
     }
 
     public enum CastingType

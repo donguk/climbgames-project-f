@@ -5,7 +5,7 @@ using R3;
 namespace ClimbGames.Project_HC
 {
     [AssetPath("FishingActor")]
-    public class FishingActor : MonoSingleton<FishingActor>
+    public class FishingActor : MonoBehaviour
     {
         [SerializeField] private FishingInputProvider inputProvider;
         [SerializeField] private FishingCamera fishingCamera;
@@ -38,7 +38,8 @@ namespace ClimbGames.Project_HC
 
         void Start()
         {
-            FishingModel.Instance.OnStartCastingAsObservable().Subscribe(_ => StartCasting()).AddTo(this);
+            FishingModel.Instance.OnStartCastingAsObservable().Subscribe(_ => CastingRod()).AddTo(this);
+            controller.onChange += (_) => FishingModel.Instance.ChangeFishingState(_);
         }
 
         void Update()
@@ -58,10 +59,12 @@ namespace ClimbGames.Project_HC
             if (fishingRod == null)
                 fishingRod = AssetManager.Instantiate<FishingRod>("PhysicsRod", fishingCharacter.RodHandle);
 
+            // 라인 생성
             fishingLine.Initialize(fishingRod.PoleTip, 0.5f, 0.25f);
             controller.InitializeAndStart(this);
             await UniTask.Delay(100);
 
+            // 채비 설정
             fishingBobber.Attach(fishingLine.BobberPoint);
             fishingHook.Attach(fishingLine.HookPoint);
         }
@@ -74,10 +77,31 @@ namespace ClimbGames.Project_HC
             fishingHook.SetCastingType(type);
         }
 
-        void StartCasting()
+        void CastingRod()
         {
             if (controller.CurrentType == FishingActorState.Idle)
                 controller.ChangeState(FishingActorState.Casting);
+        }
+
+        public void CastingThrow()
+        {
+            CastingType castingType = FishingModel.Instance.CastingType.CurrentValue;
+            float angle = castingType == CastingType.OverHead ? 45f : 20f;
+
+            fishingLine.Handle.Throw(fishingArea.CastPosition, angle);
+            fishingHook.Throw();
+        }
+
+        public void RetrieveRod()
+        {
+            if (controller.CurrentType == FishingActorState.Waiting)
+            {
+                fishingCharacter.SetTrigger(FishingAnimationParam.RetrieveRod);
+                fishingLine.SetLength(0.5f);
+                fishingLine.Handle.Retrieve();
+                fishingHook.Attach(fishingLine.HookPoint);
+                controller.ChangeState(FishingActorState.Idle);
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.ComponentModel;
+using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
@@ -9,7 +10,10 @@ namespace ClimbGames.Project_HC
         [SerializeField] private FishingLineHandle lineHandle;
         [SerializeField] private float totalLength;
         [Range(0f, 1f)]
+        [ReadOnly(true)]
         [SerializeField] private float lineTension = 0f;
+        [Range(0f, 1f)]
+        [SerializeField] private float forcedTension = 0f;
 
         private SplineDrawer splineDrawer;
         private Transform rodTip;
@@ -17,6 +21,7 @@ namespace ClimbGames.Project_HC
 
         protected override Transform AnchorTransform => rodTip != null ? rodTip : base.AnchorTransform;
         public float Length => totalLength;
+        public float Tension => lineTension;
         public FishingLineHandle Handle => lineHandle;
 
         public FishingLinePoint BobberPoint => bobberPoint;
@@ -71,38 +76,31 @@ namespace ClimbGames.Project_HC
             segmentTween.Update(Time.fixedDeltaTime);
         }
 
-        public override void ApplyConstraint()
-        {
-            base.ApplyConstraint();
-
-            // 텐션 적용
-            ApplyTension();
-        }
-
-        void ApplyTension()
-        {
-            if (lineTension > 0f)
-            {
-                Vector3 startPos = _positions[0];
-                Vector3 endPos = _positions[positionCount - 1];
-
-                for (int i = 1; i < positionCount - 1; ++i)
-                {
-                    float t = (float)i / (positionCount - 1);
-                    Vector3 straightLinePos = Vector3.Lerp(startPos, endPos, t);
-                    _positions[i] = Vector3.Lerp(_positions[i], straightLinePos, lineTension);
-                }
-            }
-        }
-
         public void UpdateSegment()
         {
-            float visualLength = totalLength;
-            if (lineHandle.HasTarget)
-                visualLength = Vector3.Distance(AnchorTransform.position, lineHandle.transform.position);
+            float straightLength = Vector3.Distance(AnchorTransform.position, lineHandle.transform.position);
+            float defaultSegment = straightLength / (positionCount - 1);
 
-            float targetLength = visualLength / (positionCount - 1);
-            segmentLength = Mathf.Lerp(segmentLength, targetLength, segmentTween.Value);
+            float visualLength = lineHandle.HasTarget ? straightLength : totalLength;
+            float targetSegment = visualLength / (positionCount - 1);
+
+            lineTension = 0f;
+            if (lineHandle.HasForce)
+            {
+                float tensionLength = defaultSegment * 0.9f;
+                if (targetSegment > tensionLength)
+                    targetSegment = Mathf.Lerp(targetSegment, tensionLength, forcedTension);
+
+                lineTension = Mathf.Clamp01((defaultSegment - targetSegment) / (defaultSegment - tensionLength));
+            }
+
+            segmentLength = Mathf.Lerp(segmentLength, targetSegment, segmentTween.Value);
+        }
+
+        public void SetLength(float length)
+        {
+            totalLength = length;
+            segmentTween.Reset();
         }
 
         public void SetHandleTarget(Transform target)
@@ -126,19 +124,7 @@ namespace ClimbGames.Project_HC
         public void Reeling(float amount)
         {
             if (amount > 0f)
-            {
-                totalLength = Mathf.Max(0.1f, totalLength - amount);
-                segmentLength = totalLength / (positionCount - 1);
-            }
-        }
-
-        public float CalculateTension(FishingLineHandle bait)
-        {
-            float distance = Vector3.Distance(rodTip.position, bait.transform.position);
-            float straightSegmentLength = distance / (positionCount - 1);
-            float threshold = straightSegmentLength * 0.92f;
-
-            return Mathf.Clamp01((threshold - segmentLength) / threshold);
+                totalLength = Mathf.Max(0.5f, totalLength - amount);
         }
     }
 }

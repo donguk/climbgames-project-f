@@ -3,6 +3,7 @@ using ClimbGames.UI;
 using UnityEngine.UI;
 using TMPro;
 using R3;
+using R3.Triggers;
 
 namespace ClimbGames.Project_HC
 {
@@ -34,20 +35,14 @@ namespace ClimbGames.Project_HC
 
         void Start()
         {
-            btn_casting.OnClickAsObservable().Subscribe(_ =>
-            {
-                switch (castingState)
-                {
-                    case CastingState.None: SetCastingState(CastingState.Loading); break;
-                    case CastingState.Loading: SetCastingState(CastingState.Throw); break;
-                }
-            }).AddTo(this);
+            FishingModel.Instance.FishingState.Subscribe(_ => OnChangeFishingState(_)).AddTo(this);
+            btn_casting.OnClickAsObservable().Subscribe(_ => OnClickCasting()).AddTo(this);
 
             SetCastingType(FishingModel.Instance.CastingType.CurrentValue);
-            tgl_casting_type.OnValueChangedAsObservable().Subscribe(_ =>
-            {
-                SetCastingType(_ ? CastingType.OverHead : CastingType.Pitching);
-            }).AddTo(this);
+            tgl_casting_type.OnValueChangedAsObservable().Subscribe(_ => SetCastingType(_ ? CastingType.OverHead : CastingType.Pitching)).AddTo(this);
+
+            btn_reeling.OnPointerDownAsObservable().Subscribe(_ => FishingModel.Instance.SetReelingState(true)).AddTo(this);
+            btn_reeling.OnPointerUpAsObservable().Subscribe(_ => FishingModel.Instance.SetReelingState(false)).AddTo(this);
         }
 
         void Update()
@@ -68,7 +63,7 @@ namespace ClimbGames.Project_HC
                     }
                 case CastingState.Throw:
                     {
-                        if (FishingActor.Instance.State == FishingActorState.Waiting)
+                        if (FishingModel.Instance.FishingState.CurrentValue == FishingActorState.Waiting)
                             SetCastingState(CastingState.Landing);
                         break;
                     }
@@ -118,6 +113,34 @@ namespace ClimbGames.Project_HC
 
             tgl_casting_type.SetIsOnWithoutNotify(type == CastingType.OverHead);
             txt_casting_type.text = $"{type}";
+        }
+
+        void OnClickCasting()
+        {
+            switch (castingState)
+            {
+                case CastingState.None:
+                    {
+                        if (FishingModel.Instance.CastingType.CurrentValue == CastingType.OverHead)
+                            SetCastingState(CastingState.Loading);
+                        else
+                            SetCastingState(CastingState.Throw);
+                        break;
+                    }
+                case CastingState.Loading:
+                    {
+                        SetCastingState(CastingState.Throw);
+                        break;
+                    }
+            }
+        }
+
+        void OnChangeFishingState(FishingActorState state)
+        {
+            switch (state)
+            {
+                case FishingActorState.Idle: SetCastingState(CastingState.None); break;
+            }
         }
     }
 }
