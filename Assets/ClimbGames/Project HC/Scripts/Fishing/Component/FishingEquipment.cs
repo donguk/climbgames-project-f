@@ -2,10 +2,17 @@
 
 namespace ClimbGames.Project_HC
 {
+    public enum FishingEquipmentAttachType
+    {
+        Joint,
+        Transform,
+    }
+
     public class FishingEquipment : MonoBehaviour
     {
         public Rigidbody Body { get; private set; }
-        public ConfigurableJoint Joint { get; protected set; }
+        public ConfigurableJoint Joint { get; private set; }
+        public FishingLinePoint Point { get; private set; }
 
         protected virtual void Awake()
         {
@@ -13,23 +20,14 @@ namespace ClimbGames.Project_HC
             Joint = GetComponent<ConfigurableJoint>();
         }
 
-        //protected void ResetRotation()
-        //{
-        //    var connectedBody = Joint.connectedBody;
-        //    if (connectedBody != null)
-        //    {
-        //        Joint.connectedBody = null;
-        //        transform.rotation = connectedBody.transform.rotation;
-        //        Joint.connectedBody = connectedBody;
-        //    }
-        //}
-
         public virtual void Attach(FishingLinePoint point)
         {
             Joint.connectedBody = null;
             // 초기 회전 리셋(transform.up 회전과 다름)
             transform.rotation = point.Body.transform.rotation;
             Joint.connectedBody = point.Body;
+
+            Point = point;
         }
     }
 }

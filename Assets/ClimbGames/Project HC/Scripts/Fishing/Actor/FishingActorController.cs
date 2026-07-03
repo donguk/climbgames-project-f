@@ -30,18 +30,10 @@ namespace ClimbGames.Project_HC
                 // 캐릭터 회전
                 Actor.Character.UpdateRotation(Actor.Camera);
 
-                // 라인 시뮬레이션
-                Actor.Line.Simulate(Time.fixedDeltaTime);
+                // 라인 업데이트
+                Actor.Line.UpdateLine(Time.fixedDeltaTime);
 
-                // 세그먼트 계산
-                Actor.Line.UpdateSegment();
-
-                // 라인 제약 적용
-                Actor.Line.ApplyConstraint();
-
-                // 포지션 업데이트
-                Actor.Line.Handle.UpdatePosition();
-                Actor.Line.BobberPoint.UpdatePosition();
+                // 장비 업데이트
                 Actor.Hook.UpdatePosition();
             }
         }

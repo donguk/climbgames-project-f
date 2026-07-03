@@ -18,12 +18,12 @@ namespace ClimbGames.Project_HC
             {
                 base.OnFixedUpdate();
 
-                Actor.Line.Reeling(FishingModel.Instance.ReelingValue * Time.fixedDeltaTime);
-                if (Actor.Line.Tension > 0.2f)
-                    Actor.Line.Handle.Drag(Actor.Line.Tension);
-
-                if (Actor.Line.Length < 1f)
-                    Actor.RetrieveRod();
+                //Actor.Line.Reeling(FishingModel.Instance.ReelingValue * Time.fixedDeltaTime);
+                //if (Actor.Line.Tension > 0.2f)
+                //    Actor.Line.Handle.Drag(Actor.Line.Tension);
+                //
+                //if (Actor.Line.Length < 1f)
+                //    Actor.RetrieveRod();
             }
         }
     }

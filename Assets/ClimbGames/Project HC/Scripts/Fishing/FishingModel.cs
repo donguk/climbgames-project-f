@@ -4,7 +4,7 @@ namespace ClimbGames.Project_HC
 {
     public class FishingModel : Singleton<FishingModel>
     {
-        private ReactiveProperty<CastingType> castingType = new ReactiveProperty<CastingType>();
+        private ReactiveProperty<CastingType> castingType = new ReactiveProperty<CastingType>(Project_HC.CastingType.OverHead);
         private Subject<float> onStartCasting = new Subject<float>();
         private ReactiveProperty<FishingActorState> fishingState = new ReactiveProperty<FishingActorState>(FishingActorState.None);
 

@@ -4,14 +4,8 @@ using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
-    interface ILineComponent
-    {
-        Vector3[] Positions { get; }
-        int PositionCount { get; }
-    }
-
-    [RequireComponent(typeof(LineRenderer))]
-    public class VerletLine : MonoBehaviour, ILineComponent
+    [Serializable]
+    public class VerletLine
     {
         public struct Point
         {
@@ -20,7 +14,7 @@ namespace ClimbGames.Project_HC
         }
 
         [Header("Line")]
-        [SerializeField] protected int positionCount;
+        [SerializeField] protected int positionCount = 10;
         [SerializeField] protected float segmentLength = 0.225f;
         [NonSerialized] protected Vector3[] _positions;
         protected Vector3[] _prevPositions;
@@ -36,20 +30,17 @@ namespace ClimbGames.Project_HC
         [Header("Constraints")]
         [SerializeField] protected int constraintCount = 50;
 
-        protected LineRenderer lineRenderer;
         private Collider[] collisionResults = new Collider[5];
 
         public Vector3[] Positions => _positions;
         public int PositionCount => positionCount;
         public float SegmentLength => segmentLength;
-        protected virtual Transform AnchorTransform => transform;
 
-        protected virtual void Awake()
+        public void BuildLine(Vector3 anchorPosition)
         {
-            lineRenderer = GetComponent<LineRenderer>();
             ResizePositionArray(positionCount);
 
-            Vector3 position = transform.position;
+            Vector3 position = anchorPosition;
             for (int i = 0; i < positionCount; ++i)
             {
                 _positions[i] = position;
@@ -57,17 +48,6 @@ namespace ClimbGames.Project_HC
 
                 position.y -= segmentLength;
             }
-        }
-
-        protected virtual void Update()
-        {
-            DrawLine();
-        }
-
-        protected virtual void FixedUpdate()
-        {
-            Simulate(Time.fixedDeltaTime);
-            ApplyConstraint();
         }
 
         protected void ResizePositionArray(int needSize)
@@ -153,15 +133,6 @@ namespace ClimbGames.Project_HC
             positionCount -= count;
         }
 
-        protected virtual void DrawLine()
-        {
-            if (lineRenderer == null)
-                return;
-
-            lineRenderer.positionCount = positionCount;
-            lineRenderer.SetPositions(_positions);
-        }
-
         public void Simulate(float deltaTime)
         {
             for (int i = 0; i < positionCount; ++i)
@@ -176,8 +147,6 @@ namespace ClimbGames.Project_HC
 
         public virtual void ApplyConstraint()
         {
-            SetPosition(0, AnchorTransform.position);
-
             for (int i = 0; i < constraintCount; ++i)
             {
                 ApplySegmentLength();

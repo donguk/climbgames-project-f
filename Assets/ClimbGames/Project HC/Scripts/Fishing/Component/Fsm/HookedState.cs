@@ -1,10 +1,10 @@
 ﻿namespace ClimbGames.Project_HC
 {
-    public partial class FishingLineHandleController
+    public partial class FishingLineController
     {
-        public class HookedState : FishingLineHandleStateBase
+        public class HookedState : FishingLineStateBase
         {
-            public HookedState(FishingLineHandle bait, FishingLineHandleController controller) : base(bait, controller)
+            public HookedState(FishingLine manager, FishingLineController controller) : base(manager, controller)
             {
             }
         }

@@ -2,6 +2,13 @@
 
 namespace ClimbGames.Project_HC
 {
+    interface ILineComponent
+    {
+        Vector3[] Positions { get; }
+        int PositionCount { get; }
+    }
+
+
     [RequireComponent(typeof(LineRenderer))]
     public class SplineDrawer : MonoBehaviour
     {

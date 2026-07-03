@@ -28,16 +28,24 @@ namespace ClimbGames.Project_HC
             {
                 base.OnFixedUpdate();
 
-                switch (Actor.Line.Handle.State)
+
+                //float dist = Vector3.Distance(Actor.LineManager.RodTip.position, Actor.LineManager.Main.Handle.transform.position);
+                //if (Actor.LineManager.Length < dist)
+                //    Actor.LineManager.Release(0.05f);
+
+                switch (Actor.Line.LineState)
                 {
-                    case FishingLineHandleState.Flying:
+                    case FishingLineState.Flying:
                         {
-                            Vector3 v = Actor.Line.Handle.Body.linearVelocity;
+                            Vector3 v = Actor.Line.EndPoint.Body.linearVelocity;
                             v.y = Mathf.Max(0f, v.y);
                             Actor.Line.Release(v.magnitude * Time.fixedDeltaTime);
+
+
+
                             break;
                         }
-                    case FishingLineHandleState.Settled:
+                    case FishingLineState.Settled:
                         {
                             fsm.ChangeState(FishingActorState.Waiting);
                             break;

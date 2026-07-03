@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using R3;
+using UnityEngine.InputSystem;
 
 namespace ClimbGames.Project_HC
 {
@@ -24,6 +25,7 @@ namespace ClimbGames.Project_HC
         public FishingCharacter Character => fishingCharacter;
         public FishingLine Line => fishingLine;
         public FishingHook Hook => fishingHook;
+        public FishingBobber Bobber => fishingBobber;
         public FishingActorState State => controller.CurrentType;
 
         void OnEnable()
@@ -39,13 +41,24 @@ namespace ClimbGames.Project_HC
         void Start()
         {
             FishingModel.Instance.OnStartCastingAsObservable().Subscribe(_ => CastingRod()).AddTo(this);
-            controller.onChange += (_) => FishingModel.Instance.ChangeFishingState(_);
+            FishingModel.Instance.ChangeFishingState(FishingActorState.Idle);
+            controller.onChange += (_) =>
+            {
+                FishingModel.Instance.ChangeFishingState(_);
+            };
         }
 
         void Update()
         {
             if (inputProvider.CastingInput.isPressed)
                 fishingCamera.UpdateRotation(inputProvider.CastingInput.delta);
+
+            //
+            if (Keyboard.current.upArrowKey.isPressed)
+                fishingLine.Reeling(Time.deltaTime * 2f);
+
+            if (Keyboard.current.downArrowKey.isPressed)
+                fishingLine.Release(Time.deltaTime * 2f);
         }
 
         public async UniTask Initialize(FishingArea area)
@@ -66,15 +79,14 @@ namespace ClimbGames.Project_HC
 
             // 채비 설정
             fishingBobber.Attach(fishingLine.BobberPoint);
-            fishingHook.Attach(fishingLine.HookPoint);
+            fishingHook.Attach(fishingLine.EndPoint);
         }
 
         public void ChangeCastingType(CastingType type)
         {
             fishingCharacter.SetCastingType(type);
-            fishingLine.SetHandleTarget(type == CastingType.Pitching ? fishingCharacter.LeftHandle : null);
             fishingBobber.SetCastingType(type);
-            fishingHook.SetCastingType(type);
+            fishingLine.SetHandleTarget(type == CastingType.Pitching ? fishingCharacter.LeftHandle : null);
         }
 
         void CastingRod()
@@ -88,8 +100,7 @@ namespace ClimbGames.Project_HC
             CastingType castingType = FishingModel.Instance.CastingType.CurrentValue;
             float angle = castingType == CastingType.OverHead ? 45f : 20f;
 
-            fishingLine.Handle.Throw(fishingArea.CastPosition, angle);
-            fishingHook.Throw();
+            fishingLine.CastingThrow(fishingArea.CastPosition, angle);
         }
 
         public void RetrieveRod()
@@ -98,8 +109,8 @@ namespace ClimbGames.Project_HC
             {
                 fishingCharacter.SetTrigger(FishingAnimationParam.RetrieveRod);
                 fishingLine.SetLength(0.5f);
-                fishingLine.Handle.Retrieve();
-                fishingHook.Attach(fishingLine.HookPoint);
+                //fishingLine.Handle.Retrieve();
+
                 controller.ChangeState(FishingActorState.Idle);
             }
         }

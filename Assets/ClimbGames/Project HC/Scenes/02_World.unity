@@ -1144,6 +1144,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: World_Sample_00
       objectReference: {fileID: 0}
+    - target: {fileID: 9116946711422147387, guid: 925a5f105ff85db4c82cc68ab84d5242, type: 3}
+      propertyPath: m_Size.y
+      value: 0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 9116946711422147387, guid: 925a5f105ff85db4c82cc68ab84d5242, type: 3}
+      propertyPath: m_Center.y
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

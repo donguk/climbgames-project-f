@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using R3;
+using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
@@ -8,19 +9,26 @@ namespace ClimbGames.Project_HC
         [SerializeField] private float height;
         [SerializeField] private Color gizmoColor = Color.green;
 
-        protected FishingLine line;
+        private LinearTween targetTween = new LinearTween(0.5f);
+        private Subject<bool> onKinematicChanged = new Subject<bool>();
 
         public Rigidbody Body => body;
-        public virtual Vector3 Up => transform.up;
+        public float Height => height;
+        public Vector3 Up { get; private set; }
+        public Transform TrackingTarget { get; private set; }
+        public FishingLineBody.LinePoint PinnedPoint { get; private set; }
+        public bool HasTarget => TrackingTarget != null;
+        public bool HasForce => body.isKinematic == false || HasTarget;
+        public Observable<bool> OnKinematicChangedAsObservable() => onKinematicChanged.AsObservable();
 
         void Awake()
         {
             body = GetComponent<Rigidbody>();
         }
 
-        public virtual void Initialize(FishingLine line)
+        void FixedUpdate()
         {
-            this.line = line;
+            targetTween.Update(Time.fixedDeltaTime);
         }
 
         public void SetHeight(float height)
@@ -28,22 +36,61 @@ namespace ClimbGames.Project_HC
             this.height = height;
         }
 
-        public virtual void UpdatePosition()
+        public void SetTrackingTarget(Transform target, FishingLineBody.LinePoint linePoint = null)
         {
-            float visualLength = line.SegmentLength * (line.PositionCount - 1);// line.VisualLength;
-            float lenght = visualLength - (visualLength * (height / line.Length));
+            TrackingTarget = target;
+            PinnedPoint = linePoint;
+            targetTween.Reset();
+        }
 
-            for (int i = 0; i < line.PositionCount - 1; ++i)
+        public void SetThrowVelocity(Vector3 velocity, FishingLineBody.LinePoint linePoint = null)
+        {
+            body.isKinematic = false;
+            body.linearVelocity = velocity;
+            PinnedPoint = linePoint;
+
+            onKinematicChanged.OnNext(false);
+        }
+
+        public void UpdatePosition(FishingLine line)
+        {
+            if (HasForce)
             {
-                float diff = lenght - (line.SegmentLength * i);
-                if ((diff >= 0f && diff <= line.SegmentLength) || (i == 0 && diff < 0f) || (i == line.PositionCount - 2))
+                if (TrackingTarget != null)
                 {
-                    diff = Mathf.Clamp(diff, 0f, line.SegmentLength);
+                    Vector3 targetPosition = TrackingTarget.position;
+                    transform.position = Vector3.Lerp(transform.position, targetPosition, targetTween.Value);
+                }
 
-                    Vector3 position = line.GetPosition(i);
-                    transform.up = (position - line.GetPosition(i + 1)).normalized;
-                    transform.position = position + transform.up * diff * -1f;
-                    break;
+                if (PinnedPoint != null)
+                {
+                    line.Body.SetPosition(PinnedPoint.currentIndex, transform.position);
+
+                    int currentIndex = Mathf.Max(1, PinnedPoint.currentIndex);
+                    Up = line.Body.GetPosition(currentIndex - 1) - line.Body.GetPosition(currentIndex);
+                }
+            }
+            else
+            {
+                float visualLength = line.Body.VisualLength;
+                float targetHeight = visualLength * (height / line.Length);
+
+                float accumulatedHeight = 0f;
+                var linePoints = line.Body.Points;
+                for (int i = linePoints.Count - 2; i >= 0; --i)
+                {
+                    var linePoint = linePoints[i];
+                    if (targetHeight < accumulatedHeight + linePoint.segmentLength || i == 0)
+                    {
+                        Vector3 position = line.Body.GetPosition(i + 1);
+                        transform.up = Up = (line.Body.GetPosition(i) - position).normalized;
+
+                        float dist = Mathf.Clamp(targetHeight - accumulatedHeight, 0f, linePoint.segmentLength);
+                        transform.position = position + transform.up * dist;
+                        break;
+                    }
+
+                    accumulatedHeight += linePoint.segmentLength;
                 }
             }
         }
