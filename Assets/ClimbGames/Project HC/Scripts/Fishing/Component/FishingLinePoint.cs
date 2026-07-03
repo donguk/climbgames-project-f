@@ -1,4 +1,5 @@
 ﻿using R3;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace ClimbGames.Project_HC
@@ -31,6 +32,17 @@ namespace ClimbGames.Project_HC
             targetTween.Update(Time.fixedDeltaTime);
         }
 
+        public void Initialize()
+        {
+            Retrieve();
+        }
+
+        public void Initialize(float height)
+        {
+            Initialize();
+            SetHeight(height);
+        }
+
         public void SetHeight(float height)
         {
             this.height = height;
@@ -50,6 +62,12 @@ namespace ClimbGames.Project_HC
             PinnedPoint = linePoint;
 
             onKinematicChanged.OnNext(false);
+        }
+
+        public void Retrieve()
+        {
+            body.isKinematic = true;
+            onKinematicChanged.OnNext(body.isKinematic);
         }
 
         public void UpdatePosition(FishingLine line)

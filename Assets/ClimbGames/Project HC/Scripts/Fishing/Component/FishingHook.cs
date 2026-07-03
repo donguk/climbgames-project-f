@@ -24,11 +24,15 @@ namespace ClimbGames.Project_HC
         {
             base.Attach(point);
 
-            //
             disposable?.Dispose();
             disposable = point.OnKinematicChangedAsObservable().Subscribe(_ =>
             {
-                if (_ == false)
+                if (_)
+                {
+                    base.Attach(point);
+                    Body.isKinematic = false;
+                }
+                else
                 {
                     Joint.connectedBody = null;
                     Body.isKinematic = true;

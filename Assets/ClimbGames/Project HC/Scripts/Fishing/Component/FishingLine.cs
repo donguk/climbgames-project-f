@@ -21,8 +21,8 @@ namespace ClimbGames.Project_HC
         [SerializeField] private float forcedTension = 0f;
 
         private Transform rodTip;
-        private FishingLineController controller = new FishingLineController();
         private LinearTween lengthTween = new LinearTween(0.5f);
+        private FishingLineController controller = new FishingLineController();
 
         public FishingLineBody Body => lineBody;
         public float Length => totalLength;
@@ -32,21 +32,29 @@ namespace ClimbGames.Project_HC
         public FishingLinePoint EndPoint => endPoint;
         public FishingLineState LineState => controller.CurrentType;
 
+        void Awake()
+        {
+            endPoint.Body.OnCollisionEnterAsObservable().Subscribe(_ =>
+            {
+                controller.ChangeState(FishingLineState.Settled);
+            }).AddTo(this);
+        }
+
         public void Initialize(Transform rodTip, float length, float bobberHeight)
         {
             this.rodTip = rodTip;
 
             lineBody.BuildLine(rodTip.position, totalLength = Mathf.Max(0.5f, length));
+            bobberPoint.Initialize(bobberHeight);
+            endPoint.Initialize();
+            handlePoint.Initialize();
 
-            bobberPoint.SetHeight(bobberHeight);
             controller.InitializeAndStart(this, FishingLineState.Hanging);
-
-            //lineCore.Handle.Body.OnCollisionEnterAsObservable().Subscribe(_ => controller.ChangeState(FishingLineState.Settled)).AddTo(this);
         }
 
         void Update()
         {
-            // 부분 라인
+            // pinned 된 부분으로 나눠서 그리기
             int startIndex = 0, drawerIndex = 0;
             var linePoints = lineBody.Points;
             for (int i = 1; i < linePoints.Count; ++i)
@@ -72,13 +80,14 @@ namespace ClimbGames.Project_HC
 
         public void UpdateLine(float deltaTime)
         {
-            lengthTween.Update(deltaTime);
+            // 라인 길이 업데이트
             if (handlePoint.HasTarget)
             {
-                lineBody.SetLength(Vector3.Distance(transform.position, handlePoint.TrackingTarget.position));
+                lineBody.SetLength(Vector3.Distance(rodTip.position, handlePoint.transform.position));
             }
             else
             {
+                lengthTween.Update(deltaTime);
                 lineBody.SetLength(Mathf.Lerp(lineBody.VisualLength, totalLength, lengthTween.Value));
             }
 
@@ -86,7 +95,7 @@ namespace ClimbGames.Project_HC
             lineBody.Simulate(deltaTime);
             lineBody.ApplyConstraint(rodTip.position);
 
-            // 
+            // 컨트롤 포인트 업데이트
             bobberPoint.UpdatePosition(this);
             handlePoint.UpdatePosition(this);
             endPoint.UpdatePosition(this);
@@ -128,8 +137,8 @@ namespace ClimbGames.Project_HC
             if (target != null)
             {
                 // 물리 포인트 추가
-                FishingLineBody.LinePoint point = lineBody.AddPinPoint(handlePoint);
-                handlePoint.SetTrackingTarget(target, point);
+                FishingLineBody.LinePoint pinnedPoint = lineBody.AddPinPoint(handlePoint);
+                handlePoint.SetTrackingTarget(target, pinnedPoint);
                 lengthTween.Reset(true);
             }
             else
@@ -160,9 +169,9 @@ namespace ClimbGames.Project_HC
             if (TryGetThrowVelocity(endPoint.transform, position, angle, out var velocity))
             {
                 handlePoint.SetTrackingTarget(null);
-
                 var pinnedPoint = lineBody.AddPinPoint(endPoint);
                 endPoint.SetThrowVelocity(velocity, pinnedPoint);
+
                 controller.ChangeState(FishingLineState.Flying);
             }
         }

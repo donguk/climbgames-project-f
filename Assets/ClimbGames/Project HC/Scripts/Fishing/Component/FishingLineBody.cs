@@ -18,16 +18,16 @@ namespace ClimbGames.Project_HC
             public int currentIndex;
             public float segmentLength;
             public bool isDynamic;
-            public FishingLinePoint trackingTarget;
+            public Transform pinTarget;
 
-            public bool IsPinned => currentIndex == 0 || trackingTarget != null;
+            public bool IsPinned => currentIndex == 0 || pinTarget != null;
 
             public void Reset()
             {
                 currentIndex = -1;
                 segmentLength = 0f;
                 isDynamic = false;
-                trackingTarget = null;
+                pinTarget = null;
             }
         }
 
@@ -181,7 +181,7 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        public LinePoint AddPinPoint(FishingLinePoint trackingTarget)
+        public LinePoint AddPinPoint(FishingLinePoint pinTarget)
         {
             LinePoint pinnedPoint = null;
 
@@ -189,17 +189,17 @@ namespace ClimbGames.Project_HC
             for (int i = linePoints.Count - 2; i >= 0; --i)
             {
                 var currentPoint = linePoints[i];
-                if (trackingTarget.Height < accumulatedHeight + currentPoint.segmentLength || i == 0)
+                if (pinTarget.Height < accumulatedHeight + currentPoint.segmentLength || i == 0)
                 {
                     Vector3 position = GetPosition(i + 1);
                     Vector3 up = (GetPosition(i) - position).normalized;
 
-                    float dist = Mathf.Clamp(trackingTarget.Height - accumulatedHeight, 0f, currentPoint.segmentLength);
+                    float dist = Mathf.Clamp(pinTarget.Height - accumulatedHeight, 0f, currentPoint.segmentLength);
                     if (dist < pinEpsilon)
                     {
                         // 1. i + 1 번 점(아래쪽 점)과 거의 일치하는 경우
                         pinnedPoint = linePoints[i + 1];
-                        pinnedPoint.trackingTarget = trackingTarget;
+                        pinnedPoint.pinTarget = pinTarget.transform;
                         break;
                     }
 
@@ -207,7 +207,7 @@ namespace ClimbGames.Project_HC
                     {
                         // 2. i 번 점(위쪽 점)과 거의 일치하는 경우
                         pinnedPoint = currentPoint;
-                        pinnedPoint.trackingTarget = trackingTarget;
+                        pinnedPoint.pinTarget = pinTarget.transform;
                         break;
                     }
 
@@ -217,7 +217,7 @@ namespace ClimbGames.Project_HC
 
                     pinnedPoint = LinePoint.Get();
                     pinnedPoint.segmentLength = dist;
-                    pinnedPoint.trackingTarget = trackingTarget;
+                    pinnedPoint.pinTarget = pinTarget.transform;
                     pinnedPoint.isDynamic = true;
                     linePoints.Insert(i + 1, pinnedPoint);
 
@@ -235,13 +235,17 @@ namespace ClimbGames.Project_HC
 
         public void RemovePinPoint(int index)
         {
-            if (index > 0 && index < linePoints.Count - 1)
+            if (index >= 0 && index < linePoints.Count)
             {
                 var pinnedPoint = linePoints[index];
 
-                pinnedPoint.trackingTarget = null;
+                pinnedPoint.pinTarget = null;
                 if (pinnedPoint.isDynamic)
                 {
+                    // 시작, 끝 점 제외
+                    if (index > 0 && index < linePoints.Count - 1)
+                        linePoints[index - 1].segmentLength += pinnedPoint.segmentLength;
+
                     linePoints.RemoveAt(pinnedPoint.currentIndex);
                     RemovePosition(pinnedPoint.currentIndex);
                 }
