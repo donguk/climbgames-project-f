@@ -2,13 +2,13 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using R3;
 using UnityEngine.InputSystem;
+using NUnit.Framework;
 
 namespace ClimbGames.Project_HC
 {
     [AssetPath("FishingActor")]
     public class FishingActor : MonoBehaviour
     {
-        [SerializeField] private FishingInputProvider inputProvider;
         [SerializeField] private FishingCamera fishingCamera;
         [SerializeField] private FishingCharacter fishingCharacter;
         [SerializeField] private FishingLine fishingLine;
@@ -19,10 +19,10 @@ namespace ClimbGames.Project_HC
         private FishingRod fishingRod;
         private FishingActorController controller = new FishingActorController();
 
-        public FishingInputProvider Input => inputProvider;
         public FishingCamera Camera => fishingCamera;
         public FishingArea Area => fishingArea;
         public FishingCharacter Character => fishingCharacter;
+        public FishingRod Rod => fishingRod;
         public FishingLine Line => fishingLine;
         public FishingHook Hook => fishingHook;
         public FishingBobber Bobber => fishingBobber;
@@ -41,19 +41,17 @@ namespace ClimbGames.Project_HC
         void Start()
         {
             FishingModel.Instance.OnStartCastingAsObservable().Subscribe(_ => CastingRod()).AddTo(this);
+
             FishingModel.Instance.ChangeFishingState(FishingActorState.Idle);
-            controller.onChange += (_) =>
-            {
-                FishingModel.Instance.ChangeFishingState(_);
-            };
+            controller.onChange += (_) => FishingModel.Instance.ChangeFishingState(_);
         }
 
         void Update()
         {
-            if (inputProvider.CastingInput.isPressed)
-                fishingCamera.UpdateRotation(inputProvider.CastingInput.delta);
+            if (FishingInput.Instance.IsPressed)
+                fishingCamera.UpdateRotation(FishingInput.Instance.DragDelta);
 
-            //
+            // Test
             if (Keyboard.current.upArrowKey.isPressed)
                 fishingLine.Reeling(Time.deltaTime * 2f);
 
@@ -74,19 +72,20 @@ namespace ClimbGames.Project_HC
 
             // 라인 생성
             fishingLine.Initialize(fishingRod.PoleTip, 0.5f, 0.25f);
-            controller.InitializeAndStart(this);
-            await UniTask.Delay(100);
 
             // 채비 설정
-            fishingBobber.Attach(fishingLine.BobberPoint);
-            fishingHook.Attach(fishingLine.EndPoint);
+            fishingBobber.AttachToLine(fishingLine.BobberPoint);
+            fishingHook.AttachToLine(fishingLine.EndPoint);
+
+            await UniTask.Delay(100);
+            controller.InitializeAndStart(this);
         }
 
         public void ChangeCastingType(CastingType type)
         {
             fishingCharacter.SetCastingType(type);
             fishingBobber.SetCastingType(type);
-            fishingLine.SetHandleTarget(type == CastingType.Pitching ? fishingCharacter.LeftHandle : null);
+            fishingLine.SetCastingType(type, fishingCharacter.LeftHandle);
         }
 
         void CastingRod()
@@ -95,21 +94,14 @@ namespace ClimbGames.Project_HC
                 controller.ChangeState(FishingActorState.Casting);
         }
 
-        public void CastingThrow()
-        {
-            CastingType castingType = FishingModel.Instance.CastingType.CurrentValue;
-            float angle = castingType == CastingType.OverHead ? 45f : 20f;
-
-            fishingLine.CastingThrow(fishingArea.CastPosition, angle);
-        }
-
         public void RetrieveRod()
         {
             if (controller.CurrentType == FishingActorState.Waiting)
             {
                 fishingCharacter.SetTrigger(FishingAnimationParam.RetrieveRod);
                 fishingLine.SetLength(0.5f);
-                //fishingLine.Handle.Retrieve();
+                fishingBobber.AttachToLine(fishingLine.BobberPoint);
+                fishingHook.AttachToLine(fishingLine.EndPoint);
 
                 controller.ChangeState(FishingActorState.Idle);
             }

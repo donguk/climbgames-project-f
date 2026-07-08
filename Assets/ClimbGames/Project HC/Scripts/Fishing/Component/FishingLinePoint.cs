@@ -1,5 +1,4 @@
 ﻿using R3;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace ClimbGames.Project_HC
@@ -10,6 +9,7 @@ namespace ClimbGames.Project_HC
         [SerializeField] private float height;
         [SerializeField] private Color gizmoColor = Color.green;
 
+        private FishingLine line;
         private LinearTween targetTween = new LinearTween(0.5f);
         private Subject<bool> onKinematicChanged = new Subject<bool>();
 
@@ -17,9 +17,8 @@ namespace ClimbGames.Project_HC
         public float Height => height;
         public Vector3 Up { get; private set; }
         public Transform TrackingTarget { get; private set; }
-        public FishingLineBody.LinePoint PinnedPoint { get; private set; }
+        public FishingLineBody.LinePoint PinPoint { get; private set; }
         public bool HasTarget => TrackingTarget != null;
-        public bool HasForce => body.isKinematic == false || HasTarget;
         public Observable<bool> OnKinematicChangedAsObservable() => onKinematicChanged.AsObservable();
 
         void Awake()
@@ -32,14 +31,16 @@ namespace ClimbGames.Project_HC
             targetTween.Update(Time.fixedDeltaTime);
         }
 
-        public void Initialize()
+        public void Initialize(FishingLine line)
         {
             Retrieve();
+
+            this.line = line;
         }
 
-        public void Initialize(float height)
+        public void Initialize(FishingLine line, float height)
         {
-            Initialize();
+            Initialize(line);
             SetHeight(height);
         }
 
@@ -48,20 +49,22 @@ namespace ClimbGames.Project_HC
             this.height = height;
         }
 
-        public void SetTrackingTarget(Transform target, FishingLineBody.LinePoint linePoint = null)
+        public void SetTrackingTarget(Transform target, bool useTween = false)
         {
             TrackingTarget = target;
-            PinnedPoint = linePoint;
-            targetTween.Reset();
-        }
+            targetTween.Reset(useTween == false);
 
-        public void SetThrowVelocity(Vector3 velocity, FishingLineBody.LinePoint linePoint = null)
-        {
-            body.isKinematic = false;
-            body.linearVelocity = velocity;
-            PinnedPoint = linePoint;
-
-            onKinematicChanged.OnNext(false);
+            if (target != null)
+            {
+                // 물리 포인트 추가
+                PinPoint = line.Body.AddPinPoint(this);
+            }
+            else
+            {
+                // 추가된 물리 포인트 삭제
+                line.Body.RemovePinPoint(PinPoint);
+                PinPoint = null;
+            }
         }
 
         public void Retrieve()
@@ -70,22 +73,21 @@ namespace ClimbGames.Project_HC
             onKinematicChanged.OnNext(body.isKinematic);
         }
 
-        public void UpdatePosition(FishingLine line)
+        public void UpdatePosition()
         {
-            if (HasForce)
+            if (HasTarget)
             {
-                if (TrackingTarget != null)
-                {
-                    Vector3 targetPosition = TrackingTarget.position;
-                    transform.position = Vector3.Lerp(transform.position, targetPosition, targetTween.Value);
-                }
+                Vector3 targetPosition = TrackingTarget.position;
+                transform.position = Vector3.Lerp(transform.position, targetPosition, targetTween.Value);
 
-                if (PinnedPoint != null)
+                if (PinPoint != null)
                 {
-                    line.Body.SetPosition(PinnedPoint.currentIndex, transform.position);
+                    // 라인 방향 업데이트
+                    int index = Mathf.Max(1, PinPoint.currentIndex);
+                    Up = transform.up = line.Body.GetPosition(index - 1) - line.Body.GetPosition(index);
 
-                    int currentIndex = Mathf.Max(1, PinnedPoint.currentIndex);
-                    Up = line.Body.GetPosition(currentIndex - 1) - line.Body.GetPosition(currentIndex);
+                    // 고정된 점 설정
+                    line.Body.SetPosition(PinPoint.currentIndex, transform.position);
                 }
             }
             else
@@ -101,7 +103,7 @@ namespace ClimbGames.Project_HC
                     if (targetHeight < accumulatedHeight + linePoint.segmentLength || i == 0)
                     {
                         Vector3 position = line.Body.GetPosition(i + 1);
-                        transform.up = Up = (line.Body.GetPosition(i) - position).normalized;
+                        Up = transform.up = (line.Body.GetPosition(i) - position).normalized;
 
                         float dist = Mathf.Clamp(targetHeight - accumulatedHeight, 0f, linePoint.segmentLength);
                         transform.position = position + transform.up * dist;

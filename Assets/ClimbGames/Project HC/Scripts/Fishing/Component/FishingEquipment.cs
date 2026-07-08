@@ -2,32 +2,55 @@
 
 namespace ClimbGames.Project_HC
 {
-    public enum FishingEquipmentAttachType
-    {
-        Joint,
-        Transform,
-    }
-
     public class FishingEquipment : MonoBehaviour
     {
-        public Rigidbody Body { get; private set; }
-        public ConfigurableJoint Joint { get; private set; }
-        public FishingLinePoint Point { get; private set; }
+        private Rigidbody body;
+        private ConfigurableJoint joint;
+
+        public Rigidbody Body => body;
+        public ConfigurableJoint Joint => joint;
+        public FishingLinePoint AttachPoint { get; private set; }
 
         protected virtual void Awake()
         {
-            Body = GetComponent<Rigidbody>();
-            Joint = GetComponent<ConfigurableJoint>();
+            body = GetComponent<Rigidbody>();
+            joint = GetComponent<ConfigurableJoint>();
         }
 
-        public virtual void Attach(FishingLinePoint point)
+        public virtual void AttachToLine(FishingLinePoint point)
         {
-            Joint.connectedBody = null;
-            // 초기 회전 리셋(transform.up 회전과 다름)
-            transform.rotation = point.Body.transform.rotation;
-            Joint.connectedBody = point.Body;
+            body.isKinematic = false;
 
-            Point = point;
+            if (joint == null)
+            {
+                joint = gameObject.GetOrAddComponent<ConfigurableJoint>();
+                joint.autoConfigureConnectedAnchor = false;
+                joint.xMotion = ConfigurableJointMotion.Locked;
+                joint.yMotion = ConfigurableJointMotion.Locked;
+                joint.zMotion = ConfigurableJointMotion.Locked;
+            }
+            else
+            {
+                joint.connectedBody = null;
+            }
+
+            // 초기 회전 리셋
+            transform.rotation = point.transform.rotation;
+            joint.connectedBody = point.Body;
+
+            AttachPoint = point;
+            AttachPoint.SetTrackingTarget(null);
+        }
+
+        public virtual void CastingThrow(Vector3 velocity)
+        {
+            Destroy(joint);
+
+            body.isKinematic = false;
+            body.linearVelocity = velocity;
+            body.linearDamping = 0f;
+
+            AttachPoint.SetTrackingTarget(transform);
         }
     }
 }

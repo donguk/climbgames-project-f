@@ -41,8 +41,8 @@ namespace ClimbGames.Project_HC
             SetCastingType(FishingModel.Instance.CastingType.CurrentValue);
             tgl_casting_type.OnValueChangedAsObservable().Subscribe(_ => SetCastingType(_ ? CastingType.OverHead : CastingType.Pitching)).AddTo(this);
 
-            btn_reeling.OnPointerDownAsObservable().Subscribe(_ => FishingModel.Instance.SetReelingState(true)).AddTo(this);
-            btn_reeling.OnPointerUpAsObservable().Subscribe(_ => FishingModel.Instance.SetReelingState(false)).AddTo(this);
+            btn_reeling.OnPointerDownAsObservable().Subscribe(_ => FishingInput.Instance.SetReeling(true)).AddTo(this);
+            btn_reeling.OnPointerUpAsObservable().Subscribe(_ => FishingInput.Instance.SetReeling(false)).AddTo(this);
         }
 
         void Update()

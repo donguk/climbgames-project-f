@@ -8,7 +8,6 @@ namespace ClimbGames.Project_HC
         private Subject<float> onStartCasting = new Subject<float>();
         private ReactiveProperty<FishingActorState> fishingState = new ReactiveProperty<FishingActorState>(FishingActorState.None);
 
-        public float ReelingValue { get; private set; }
         public ReadOnlyReactiveProperty<CastingType> CastingType => castingType;
         public Observable<float> OnStartCastingAsObservable() => onStartCasting.AsObservable();
         public ReadOnlyReactiveProperty<FishingActorState> FishingState => fishingState;
@@ -22,11 +21,6 @@ namespace ClimbGames.Project_HC
         public void StartCasting(float power)
         {
             onStartCasting.OnNext(power);
-        }
-
-        public void SetReelingState(bool value)
-        {
-            ReelingValue = value ? 1f : 0f;
         }
 
         public void ChangeFishingState(FishingActorState state)

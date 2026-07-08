@@ -63,6 +63,15 @@ namespace ClimbGames.Project_HC
             }
         }
 
+        public float CalculateLength(int index)
+        {
+            float length = 0f;
+            int count = Mathf.Min(index, linePoints.Count);
+            for (int i = 0; i < count; ++i)
+                length += linePoints[i].segmentLength;
+            return length;
+        }
+
         public void ApplyConstraint(Vector3 anchorPosition)
         {
             SetPosition(0, anchorPosition);
@@ -183,7 +192,7 @@ namespace ClimbGames.Project_HC
 
         public LinePoint AddPinPoint(FishingLinePoint pinTarget)
         {
-            LinePoint pinnedPoint = null;
+            LinePoint pinPoint = null;
 
             float accumulatedHeight = 0f, pinEpsilon = segmentLength * 0.3f;
             for (int i = linePoints.Count - 2; i >= 0; --i)
@@ -198,16 +207,16 @@ namespace ClimbGames.Project_HC
                     if (dist < pinEpsilon)
                     {
                         // 1. i + 1 번 점(아래쪽 점)과 거의 일치하는 경우
-                        pinnedPoint = linePoints[i + 1];
-                        pinnedPoint.pinTarget = pinTarget.transform;
+                        pinPoint = linePoints[i + 1];
+                        pinPoint.pinTarget = pinTarget.transform;
                         break;
                     }
 
                     if (currentPoint.segmentLength - dist < pinEpsilon)
                     {
                         // 2. i 번 점(위쪽 점)과 거의 일치하는 경우
-                        pinnedPoint = currentPoint;
-                        pinnedPoint.pinTarget = pinTarget.transform;
+                        pinPoint = currentPoint;
+                        pinPoint.pinTarget = pinTarget.transform;
                         break;
                     }
 
@@ -215,11 +224,11 @@ namespace ClimbGames.Project_HC
                     InsertPosition(i + 1, position, position);
                     currentPoint.segmentLength -= dist;
 
-                    pinnedPoint = LinePoint.Get();
-                    pinnedPoint.segmentLength = dist;
-                    pinnedPoint.pinTarget = pinTarget.transform;
-                    pinnedPoint.isDynamic = true;
-                    linePoints.Insert(i + 1, pinnedPoint);
+                    pinPoint = LinePoint.Get();
+                    pinPoint.segmentLength = dist;
+                    pinPoint.pinTarget = pinTarget.transform;
+                    pinPoint.isDynamic = true;
+                    linePoints.Insert(i + 1, pinPoint);
 
                     for (int j = i + 1; j < linePoints.Count; ++j)
                         linePoints[j].currentIndex = j;
@@ -230,24 +239,33 @@ namespace ClimbGames.Project_HC
                 accumulatedHeight += currentPoint.segmentLength;
             }
 
-            return pinnedPoint;
+            return pinPoint;
         }
 
-        public void RemovePinPoint(int index)
+        public void RemovePinPoint(LinePoint pinPoint)
         {
-            if (index >= 0 && index < linePoints.Count)
-            {
-                var pinnedPoint = linePoints[index];
+            if (pinPoint != null)
+                RemovePinPoint(pinPoint.currentIndex);
+        }
 
-                pinnedPoint.pinTarget = null;
-                if (pinnedPoint.isDynamic)
+        public void RemovePinPoint(int pinIndex)
+        {
+            if (pinIndex >= 0 && pinIndex < linePoints.Count)
+            {
+                var pinPoint = linePoints[pinIndex];
+
+                pinPoint.pinTarget = null;
+                if (pinPoint.isDynamic)
                 {
                     // 시작, 끝 점 제외
-                    if (index > 0 && index < linePoints.Count - 1)
-                        linePoints[index - 1].segmentLength += pinnedPoint.segmentLength;
+                    if (pinIndex > 0 && pinIndex < linePoints.Count - 1)
+                        linePoints[pinIndex - 1].segmentLength += pinPoint.segmentLength;
 
-                    linePoints.RemoveAt(pinnedPoint.currentIndex);
-                    RemovePosition(pinnedPoint.currentIndex);
+                    linePoints.RemoveAt(pinIndex);
+                    RemovePosition(pinIndex);
+
+                    for (int i = pinIndex; i < linePoints.Count; ++i)
+                        linePoints[i].currentIndex = i;
                 }
             }
         }

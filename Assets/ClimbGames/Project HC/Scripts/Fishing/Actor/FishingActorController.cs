@@ -32,9 +32,6 @@ namespace ClimbGames.Project_HC
 
                 // 라인 업데이트
                 Actor.Line.UpdateLine(Time.fixedDeltaTime);
-
-                // 장비 업데이트
-                Actor.Hook.UpdatePosition();
             }
         }
 

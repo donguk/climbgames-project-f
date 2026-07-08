@@ -1,43 +1,33 @@
 using System;
 using R3;
+using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
     public class FishingHook : FishingEquipment
     {
-        private IDisposable disposable;
+        private Subject<Unit> onGround = new Subject<Unit>();
 
-        public void UpdatePosition()
+        public Observable<Unit> OnGroundAsObservable() => onGround.AsObservable();
+
+        void OnTriggerEnter(Collider other)
         {
-            if (Joint != null && Joint.connectedBody != null)
-            {
-
-            }
-            else if (Point != null)
-            {
-                transform.position = Point.transform.position;
-                transform.up = Point.Up;
-            }
+            if (other.gameObject.layer == FishingLayer.Water)
+                Body.linearDamping = 5f;
         }
 
-        public override void Attach(FishingLinePoint point)
+        void OnCollisionEnter(Collision collision)
         {
-            base.Attach(point);
+            if (collision.gameObject.layer == FishingLayer.Ground)
+                onGround.OnNext(Unit.Default);
+        }
 
-            disposable?.Dispose();
-            disposable = point.OnKinematicChangedAsObservable().Subscribe(_ =>
-            {
-                if (_)
-                {
-                    base.Attach(point);
-                    Body.isKinematic = false;
-                }
-                else
-                {
-                    Joint.connectedBody = null;
-                    Body.isKinematic = true;
-                }
-            }).AddTo(this);
+        public override void AttachToLine(FishingLinePoint point)
+        {
+            base.AttachToLine(point);
+
+            Joint.angularXMotion = ConfigurableJointMotion.Locked;
+            Joint.angularZMotion = ConfigurableJointMotion.Locked;
         }
     }
 }

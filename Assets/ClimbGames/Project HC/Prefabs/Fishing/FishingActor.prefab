@@ -89,7 +89,7 @@ Transform:
   m_GameObject: {fileID: 1052006763338980440}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.0617, z: 0}
+  m_LocalPosition: {x: 0, y: -0.04, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -108,7 +108,7 @@ SphereCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
@@ -142,7 +142,7 @@ Transform:
   m_GameObject: {fileID: 1261386809638799072}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.05, z: 0}
+  m_LocalPosition: {x: 0, y: -0.0304, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -371,6 +371,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   modelRoot: {fileID: 9118781878722574380}
+  scaleDistance: {x: 3, y: 5, z: 0}
+  maxScale: {x: 8, y: 8, z: 8}
 --- !u!1 &1855369321598724341
 GameObject:
   m_ObjectHideFlags: 0
@@ -998,7 +1000,8 @@ MonoBehaviour:
   bobberPoint: {fileID: 8666444395038434717}
   endPoint: {fileID: 8333694936421398241}
   handlePoint: {fileID: 2722746951955469620}
-  totalLength: 0
+  currentLength: 0
+  targetLength: 0
   lineTension: 0
   forcedTension: 0
 --- !u!1 &3188397222867896724
@@ -1074,7 +1077,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f438994fe88be5848ab72ac07721b603, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingLinePoint
-  body: {fileID: 0}
+  body: {fileID: 8085779083681033223}
   height: 0
   gizmoColor: {r: 1, g: 0.009791819, b: 0, a: 1}
 --- !u!1 &3274318018438745609
@@ -1133,7 +1136,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 0
@@ -1150,7 +1153,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f438994fe88be5848ab72ac07721b603, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingLinePoint
-  body: {fileID: 0}
+  body: {fileID: 6701303881292357232}
   height: 0.1
   gizmoColor: {r: 0.061599493, g: 1, b: 0, a: 1}
 --- !u!1 &3658595098449092541
@@ -1272,56 +1275,12 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5458371706010872479}
   m_Father: {fileID: 2403641997849806357}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &5762004751962311630
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2886316204771267091}
-  - component: {fileID: 5138938795586110276}
-  m_Layer: 0
-  m_Name: InputProvider
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2886316204771267091
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5762004751962311630}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1660799581146449646}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5138938795586110276
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5762004751962311630}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 564c4b989793aa547a4675ee3b1c2223, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingInputProvider
 --- !u!1 &5801081472674425226
 GameObject:
   m_ObjectHideFlags: 0
@@ -1395,7 +1354,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f438994fe88be5848ab72ac07721b603, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingLineSocket
-  body: {fileID: 0}
+  body: {fileID: 3120726651221845760}
   height: 0.25
   gizmoColor: {r: 0, g: 0.15520048, b: 1, a: 1}
 --- !u!1 &6726976476878256060
@@ -1428,7 +1387,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2886316204771267091}
   - {fileID: 5089144640933354010}
   - {fileID: 4928357035964796974}
   - {fileID: 6778170814192907588}
@@ -1448,7 +1406,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 420e10d867cc86f42b99335249b25918, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingManager
-  inputProvider: {fileID: 5138938795586110276}
   fishingCamera: {fileID: 2415500450369630590}
   fishingCharacter: {fileID: 8325462139175821564}
   fishingLine: {fileID: 3964598790634156645}
@@ -1532,7 +1489,7 @@ Rigidbody:
   serializedVersion: 5
   m_Mass: 1
   m_LinearDamping: 0.5
-  m_AngularDamping: 3.05
+  m_AngularDamping: 1.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -1548,7 +1505,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
 --- !u!153 &3155914402944256364
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -1765,7 +1722,7 @@ MonoBehaviour:
   tilt: {fileID: 9043182436516787866}
   target: {fileID: 4344610000913662067}
   sensitivity: 0.08
-  panLimit: {x: -30, y: 30}
+  panLimit: {x: -180, y: 180}
   tiltLimit: {x: -30, y: 35}
 --- !u!1 &9031030427352541037
 GameObject:
@@ -1904,15 +1861,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 36914881596009844, guid: d017939edce537d478b01ec5ef5caac7, type: 3}
       propertyPath: m_LocalScale.x
-      value: 4
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 36914881596009844, guid: d017939edce537d478b01ec5ef5caac7, type: 3}
       propertyPath: m_LocalScale.y
-      value: 4
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 36914881596009844, guid: d017939edce537d478b01ec5ef5caac7, type: 3}
       propertyPath: m_LocalScale.z
-      value: 4
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 36914881596009844, guid: d017939edce537d478b01ec5ef5caac7, type: 3}
       propertyPath: m_LocalPosition.x
