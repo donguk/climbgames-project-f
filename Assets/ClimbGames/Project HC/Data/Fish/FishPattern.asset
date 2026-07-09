@@ -1,0 +1,108 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ad50394c4cc9a947bef4e431a231aa6, type: 3}
+  m_Name: FishPattern
+  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishPattern
+  nibble:
+    bobberTween:
+      duration: 0.6
+      isLoop: 0
+      curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: -0.51321894
+          outSlope: -0.51321894
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0.33333334
+        - serializedVersion: 3
+          time: 0.19627507
+          value: -0.10073209
+          inSlope: -0.14267033
+          outSlope: -0.14267033
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0.33333334
+          outWeight: 0.33333334
+        - serializedVersion: 3
+          time: 0.51984876
+          value: -0.026996663
+          inSlope: -0.14955583
+          outSlope: -0.14955583
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0.33333334
+          outWeight: 0.33333334
+        - serializedVersion: 3
+          time: 0.74151254
+          value: -0.14381124
+          inSlope: 0.014683396
+          outSlope: 0.014683396
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0.33333334
+          outWeight: 0.33333334
+        - serializedVersion: 3
+          time: 1
+          value: 0
+          inSlope: 0.5563567
+          outSlope: 0.5563567
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0.33333334
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      offset: 1
+  bite:
+    bobberTween:
+      duration: 1
+      isLoop: 0
+      curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: -0.0007460317
+          inSlope: -0.05199222
+          outSlope: -0.05199222
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0.33333334
+        - serializedVersion: 3
+          time: 0.33674595
+          value: -0.018254202
+          inSlope: -1.6641736
+          outSlope: -1.6641736
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0.104217984
+          outWeight: 0.0726345
+        - serializedVersion: 3
+          time: 1
+          value: -0.4918566
+          inSlope: 0.10464468
+          outSlope: 0.10464468
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0.22246215
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      offset: 1.5

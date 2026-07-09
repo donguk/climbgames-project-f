@@ -142,7 +142,7 @@ Transform:
   m_GameObject: {fileID: 1261386809638799072}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.0304, z: 0}
+  m_LocalPosition: {x: 0, y: -0.01, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -346,33 +346,119 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60751be149890af45b2fc5b5c7b4128e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingFloat
-  floatingHeight:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
   modelRoot: {fileID: 9118781878722574380}
-  scaleDistance: {x: 3, y: 5, z: 0}
-  maxScale: {x: 8, y: 8, z: 8}
+  landingTween:
+    duration: 1
+    isLoop: 0
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: -1.1288413
+        outSlope: -1.1288413
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0.050143268
+      - serializedVersion: 3
+        time: 1
+        value: -0.1
+        inSlope: -0.22595245
+        outSlope: -0.22595245
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.07306588
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    offset: 2
+  floatingTween:
+    duration: 8
+    isLoop: 1
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: -0.1
+        inSlope: -0.3880348
+        outSlope: -0.3880348
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.14110428
+        value: -0.15475337
+        inSlope: 0.17107408
+        outSlope: 0.17107408
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.28456053
+        value: -0.05000407
+        inSlope: 0.08125308
+        outSlope: 0.08125308
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.4843977
+        value: -0.163447
+        inSlope: 0.08823794
+        outSlope: 0.08823794
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.61588925
+        value: -0.065597214
+        inSlope: 0.15587598
+        outSlope: 0.15587598
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.8208636
+        value: -0.15422827
+        inSlope: 0.42446923
+        outSlope: 0.42446923
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.8977383
+        value: -0.055725742
+        inSlope: 0.42419434
+        outSlope: 0.42419434
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 1
+        value: -0.1
+        inSlope: -0.43295047
+        outSlope: -0.43295047
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    offset: 0.8
+  scaleDistance: {x: 3, y: 5}
+  maxScale: {x: 3, y: 3, z: 3}
 --- !u!1 &1855369321598724341
 GameObject:
   m_ObjectHideFlags: 0
@@ -1000,8 +1086,7 @@ MonoBehaviour:
   bobberPoint: {fileID: 8666444395038434717}
   endPoint: {fileID: 8333694936421398241}
   handlePoint: {fileID: 2722746951955469620}
-  currentLength: 0
-  targetLength: 0
+  lineLength: 0
   lineTension: 0
   forcedTension: 0
 --- !u!1 &3188397222867896724
@@ -1275,7 +1360,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5458371706010872479}
@@ -1861,15 +1946,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 36914881596009844, guid: d017939edce537d478b01ec5ef5caac7, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 36914881596009844, guid: d017939edce537d478b01ec5ef5caac7, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 36914881596009844, guid: d017939edce537d478b01ec5ef5caac7, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 36914881596009844, guid: d017939edce537d478b01ec5ef5caac7, type: 3}
       propertyPath: m_LocalPosition.x

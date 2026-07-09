@@ -8,7 +8,7 @@ namespace ClimbGames.Project_HC
     {
         public class IdleState : FishingActorStateBase
         {
-            public IdleState(FishingActor actor, FishingActorController controller) : base(actor, controller)
+            public IdleState(FishingActor actor, FishController fish, FishingActorController fsm) : base(actor, fish, fsm)
             {
             }
 

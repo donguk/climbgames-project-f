@@ -1,20 +1,19 @@
 ﻿using UnityEngine;
+using R3;
 
 namespace ClimbGames.Project_HC
 {
     public partial class FishingActorController
     {
-        public class WaitingState : FishingActorStateBase
+        public class WaitForBiteState : FishingActorStateBase
         {
-            private Vector3 prevPoleTipPos;
-
-            public WaitingState(FishingActor actor, FishingActorController controller) : base(actor, controller)
+            public WaitForBiteState(FishingActor actor, FishController fish, FishingActorController fsm) : base(actor, fish, fsm)
             {
             }
 
             protected override void OnEnter()
             {
-                prevPoleTipPos = Actor.Rod.PoleTip.position;
+                Actor.Bobber.OnComplateLandingAsObservable().Subscribe(_ => Fish.ChangeState(FishState.Interest)).AddTo(this);
             }
 
             protected override void OnFixedUpdate()
@@ -27,6 +26,7 @@ namespace ClimbGames.Project_HC
 
                 if (reelingInput > 0f)
                 {
+                    // 릴 감기
                     Actor.Line.Reeling(reelingInput * Time.fixedDeltaTime);
 
                     if (Actor.Line.Length < 1f)
@@ -34,10 +34,11 @@ namespace ClimbGames.Project_HC
                 }
                 else
                 {
-                    if (Actor.Line.Tension > limitTension)
+                    if (Actor.Line.Tension > limitTension * 0.2f)
                         Actor.Line.Release(0.004f);
                 }
 
+                // 찌 컨트롤
                 if (Actor.Bobber.IsFloating)
                 {
                     // 회전 적용

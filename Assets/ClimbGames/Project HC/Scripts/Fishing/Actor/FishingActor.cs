@@ -96,7 +96,7 @@ namespace ClimbGames.Project_HC
 
         public void RetrieveRod()
         {
-            if (controller.CurrentType == FishingActorState.Waiting)
+            if (controller.CurrentType == FishingActorState.WaitForBite)
             {
                 fishingCharacter.SetTrigger(FishingAnimationParam.RetrieveRod);
                 fishingLine.SetLength(0.5f);

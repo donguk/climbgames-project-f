@@ -20,7 +20,6 @@ namespace ClimbGames.Project_HC
 
         private Transform rodTip;
         private LinearTween lengthTween = new LinearTween(1f);
-        private FishingLineController controller = new FishingLineController();
 
         public float Length => lineLength;
         public float Tension => lineTension;
@@ -29,7 +28,6 @@ namespace ClimbGames.Project_HC
         public FishingLinePoint BobberPoint => bobberPoint;
         public FishingLinePoint EndPoint => endPoint;
         public FishingLinePoint HandlePoint => handlePoint;
-        public FishingLineState State => controller.CurrentType;
 
         public void Initialize(Transform rodTip, float length, float bobberHeight)
         {
@@ -42,8 +40,6 @@ namespace ClimbGames.Project_HC
             bobberPoint.Initialize(this, bobberHeight);
             endPoint.Initialize(this);
             handlePoint.Initialize(this);
-
-            controller.InitializeAndStart(this, FishingLineState.Hanging);
         }
 
         void Update()

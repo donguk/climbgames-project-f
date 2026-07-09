@@ -14,7 +14,7 @@ namespace ClimbGames.Project_HC
 
             private LineState lineState;
 
-            public CastingState(FishingActor actor, FishingActorController controller) : base(actor, controller)
+            public CastingState(FishingActor actor, FishController fish, FishingActorController fsm) : base(actor, fish, fsm)
             {
             }
 
@@ -59,7 +59,7 @@ namespace ClimbGames.Project_HC
                         }
                     case LineState.Settled:
                         {
-                            fsm.ChangeState(FishingActorState.Waiting);
+                            fsm.ChangeState(FishingActorState.WaitForBite);
                             break;
                         }
                 }

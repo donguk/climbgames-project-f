@@ -63,7 +63,7 @@ namespace ClimbGames.Project_HC
                     }
                 case CastingState.Throw:
                     {
-                        if (FishingModel.Instance.FishingState.CurrentValue == FishingActorState.Waiting)
+                        if (FishingModel.Instance.FishingState.CurrentValue == FishingActorState.WaitForBite)
                             SetCastingState(CastingState.Landing);
                         break;
                     }

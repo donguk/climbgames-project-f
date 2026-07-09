@@ -6,12 +6,12 @@ namespace ClimbGames.Project_HC
     public enum FishingActorState
     {
         None,
-        Idle,               // 아이들 및 낚시 준비 (조작 가능)
-        Casting,            // 낚싯대를 휘두르는 캐스팅 동작 중 (조작 불가)
-        Waiting,            // 물고기 입질 기다림 (지루한 대기)
-        Fighting,           // 물고기와 힘겨루기 (밀당 손맛 루틴)
-        CatchSuccess,       // 물고기 잡음 연출 (승리 포즈 및 UI 출력)
-        Retrieving,         // 수확 없이 릴링으로 미끼만 회수 중
+        Idle,
+        Casting,            // 캐스팅 동작 중 (조작 불가)
+        WaitForBite,        // 물고기 입질 기다림
+        Fighting,           // 물고기와 힘겨루기
+        CatchSuccess,       // 물고기 잡음 연출
+        Retrieving,         // 릴링으로 미끼 회수
     }
 
     public partial class FishingActorController : FSM<FishingActorState>
@@ -19,10 +19,12 @@ namespace ClimbGames.Project_HC
         public abstract class FishingActorStateBase : StateBase
         {
             protected FishingActor Actor { get; private set; }
+            protected FishController Fish { get; private set; }
 
-            protected FishingActorStateBase(FishingActor actor, FishingActorController controller) : base(controller)
+            protected FishingActorStateBase(FishingActor actor, FishController fish, FishingActorController fsm) : base(fsm)
             {
                 Actor = actor;
+                Fish = fish;
             }
 
             protected override void OnFixedUpdate()
@@ -35,18 +37,35 @@ namespace ClimbGames.Project_HC
             }
         }
 
+        private FishController fishController = new FishController();
+
         public FishingActorController() : base("Actor", true)
         {
         }
 
         public void InitializeAndStart(FishingActor actor)
         {
+            // 
+            fishController.InitializeAndStart(actor);
+
             Initialize(
-                (FishingActorState.Idle, new IdleState(actor, this)),
-                (FishingActorState.Casting, new CastingState(actor, this)),
-                (FishingActorState.Waiting, new WaitingState(actor, this)));
+                (FishingActorState.Idle, new IdleState(actor, fishController, this)),
+                (FishingActorState.Casting, new CastingState(actor, fishController, this)),
+                (FishingActorState.WaitForBite, new WaitForBiteState(actor, fishController, this)));
 
             Start(FishingActorState.Idle);
+        }
+
+        public override void Pause()
+        {
+            base.Pause();
+            fishController.Pause();
+        }
+
+        public override void Resume()
+        {
+            base.Resume();
+            fishController.Resume();
         }
     }
 }
