@@ -6,34 +6,27 @@ namespace ClimbGames.Project_HC
     {
         public class BiteState : FishStateBase
         {
-            private FishPattern fishPattern;
-
-            public BiteState(FishingActor actor, FishController fsm) : base(actor, fsm)
+            public BiteState(FishController fsm) : base(fsm)
             {
             }
 
             protected override void OnEnter()
             {
-                fishPattern = AssetManager.LoadAsset<FishPattern>("Fish/FishPattern.asset");
-                fishPattern.bite.Reset();
-
-                Actor.Bobber.ApplyBiteMotion(fishPattern.bite);
+                FishData.bite.Reset();
+                Actor.Bobber.ApplyBiteMotion(FishData.bite);
             }
 
             protected override void OnExit()
             {
-                AssetManager.Release(fishPattern);
-                fishPattern = null;
-
                 Actor.Bobber.ApplyBiteMotion(null);
             }
 
             protected override void OnUpdate()
             {
-                fishPattern.bite.Update(Time.deltaTime);
+                FishData.bite.Update(Time.deltaTime);
 
-                //if (fishPattern.bite.IsCompleted)
-                //    fsm.ChangeState(FishState.Interest);
+                if (FishData.bite.IsCompleted)
+                    fsm.ChangeState(FishState.Struggle);
             }
         }
     }

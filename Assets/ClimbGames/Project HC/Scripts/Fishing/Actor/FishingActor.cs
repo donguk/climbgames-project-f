@@ -26,7 +26,6 @@ namespace ClimbGames.Project_HC
         public FishingLine Line => fishingLine;
         public FishingHook Hook => fishingHook;
         public FishingBobber Bobber => fishingBobber;
-        public FishingActorState State => controller.CurrentType;
 
         void OnEnable()
         {

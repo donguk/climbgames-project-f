@@ -13,7 +13,7 @@ namespace ClimbGames.Project_HC
 
             protected override void OnEnter()
             {
-                Actor.Bobber.OnComplateLandingAsObservable().Subscribe(_ => Fish.ChangeState(FishState.Interest)).AddTo(this);
+                Actor.Bobber.OnComplateLandingAsObservable().Subscribe(_ => Fish.ChangeState(FishState.Approach)).AddTo(this);
             }
 
             protected override void OnFixedUpdate()

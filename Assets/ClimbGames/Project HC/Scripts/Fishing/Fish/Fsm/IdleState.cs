@@ -4,7 +4,7 @@
     {
         public class IdleState : FishStateBase
         {
-            public IdleState(FishingActor actor, FishController fsm) : base(actor, fsm)
+            public IdleState(FishController fsm) : base(fsm)
             {
             }
         }

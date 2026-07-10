@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
-    [CreateAssetMenu(menuName = "Project HC/Fish Pattern")]
-    public class FishPattern : ScriptableObject
+    [CreateAssetMenu(menuName = "Project HC/Fish Data")]
+    public class FishData : ScriptableObject
     {
         [Serializable]
         public class BiteMotion

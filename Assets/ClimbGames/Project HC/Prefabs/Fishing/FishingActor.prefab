@@ -348,7 +348,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingFloat
   modelRoot: {fileID: 9118781878722574380}
   landingTween:
-    duration: 1
+    duration: 0.6
     isLoop: 0
     curve:
       serializedVersion: 2
@@ -356,20 +356,20 @@ MonoBehaviour:
       - serializedVersion: 3
         time: 0
         value: 0
-        inSlope: -1.1288413
-        outSlope: -1.1288413
+        inSlope: -0.89622116
+        outSlope: -0.89622116
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
-        outWeight: 0.050143268
+        outWeight: 0.039347727
       - serializedVersion: 3
         time: 1
         value: -0.1
-        inSlope: -0.22595245
-        outSlope: -0.22595245
+        inSlope: -0.035071548
+        outSlope: -0.035071548
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.07306588
+        inWeight: 0.070916116
         outWeight: 0
       m_PreInfinity: 2
       m_PostInfinity: 2

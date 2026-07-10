@@ -19,7 +19,7 @@ namespace ClimbGames.Project_HC
         private float rotationSpeed = 2f;
         private Subject<Unit> onFloating = new Subject<Unit>();
         private Subject<Unit> onCompleteLanding = new Subject<Unit>();
-        private FishPattern.BiteMotion biteMotion;
+        private FishData.BiteMotion biteMotion;
 
         public bool IsLanding => landingTween.IsCompleted == false;
         public bool IsFloating => Joint == null;
@@ -132,7 +132,7 @@ namespace ClimbGames.Project_HC
             floatingTween.Reset();
         }
 
-        public void ApplyBiteMotion(FishPattern.BiteMotion bitePattern)
+        public void ApplyBiteMotion(FishData.BiteMotion bitePattern)
         {
             this.biteMotion = bitePattern;
         }

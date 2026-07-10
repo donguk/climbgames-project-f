@@ -6,7 +6,7 @@ namespace ClimbGames.Project_HC
     {
         private ReactiveProperty<CastingType> castingType = new ReactiveProperty<CastingType>();
         private Subject<float> onStartCasting = new Subject<float>();
-        private ReactiveProperty<FishingActorState> fishingState = new ReactiveProperty<FishingActorState>(FishingActorState.None);
+        private ReactiveProperty<FishingActorState> fishingState = new ReactiveProperty<FishingActorState>(FishingActorState.Idle);
 
         public ReadOnlyReactiveProperty<CastingType> CastingType => castingType;
         public Observable<float> OnStartCastingAsObservable() => onStartCasting.AsObservable();

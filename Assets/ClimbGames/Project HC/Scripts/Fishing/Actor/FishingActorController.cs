@@ -5,7 +5,6 @@ namespace ClimbGames.Project_HC
 {
     public enum FishingActorState
     {
-        None,
         Idle,
         Casting,            // 캐스팅 동작 중 (조작 불가)
         WaitForBite,        // 물고기 입질 기다림
@@ -45,15 +44,14 @@ namespace ClimbGames.Project_HC
 
         public void InitializeAndStart(FishingActor actor)
         {
-            // 
-            fishController.InitializeAndStart(actor);
-
             Initialize(
                 (FishingActorState.Idle, new IdleState(actor, fishController, this)),
                 (FishingActorState.Casting, new CastingState(actor, fishController, this)),
                 (FishingActorState.WaitForBite, new WaitForBiteState(actor, fishController, this)));
 
             Start(FishingActorState.Idle);
+
+            fishController.InitializeAndStart(actor);
         }
 
         public override void Pause()
