@@ -2,7 +2,6 @@
 using System;
 using UnityEngine;
 using R3;
-using R3.Triggers;
 
 namespace ClimbGames.Project_HC
 {
@@ -22,6 +21,7 @@ namespace ClimbGames.Project_HC
             {
                 lineState = LineState.None;
 
+                // 케스팅 애니메이션
                 var animator = Actor.Character.PlayAnimation(FishingAnimation.CastingThrow);
                 int layerIndex = animator.GetLayerIndex(FishingAnimation.LayerName);
                 animator.OnNormalizedTimeReachedAsObservable(FishingAnimation.CastingThrow, 0.4f, layerIndex).Subscribe(_ =>
@@ -29,13 +29,13 @@ namespace ClimbGames.Project_HC
                     CastingThrow();
                 }).AddTo(this);
 
-                //
+                // 라인 끝이 땅에 닿았을 경우
                 Actor.Hook.OnGroundAsObservable().Subscribe(_ =>
                 {
                     lineState = LineState.Settled;
                 }).AddTo(this);
 
-                // 
+                // 찌가 물에 닿을 경우
                 Actor.Bobber.OnFloatingAsObservable().Subscribe(_ =>
                 {
                     Actor.Hook.AttachToLine(Actor.Line.EndPoint);
@@ -52,14 +52,14 @@ namespace ClimbGames.Project_HC
                     case LineState.Flying:
                         {
                             float dist = Vector3.Distance(Actor.Line.RodTip.position, Actor.Line.EndPoint.transform.position);
-                            if (Actor.Line.Length < dist)
+                            if (Actor.Line.TotalLength < dist)
                                 Actor.Line.SetLength(dist);
 
                             break;
                         }
                     case LineState.Settled:
                         {
-                            fsm.ChangeState(FishingActorState.WaitForBite);
+                            fsm.ChangeState(FishingActorState.Waiting);
                             break;
                         }
                 }
@@ -70,10 +70,12 @@ namespace ClimbGames.Project_HC
                 CastingType castingType = FishingModel.Instance.CastingType.CurrentValue;
                 float throwAngle = castingType == CastingType.OverHead ? 40f : 20f;
 
-                if (TryGetThrowVelocity(Actor.Hook.transform, Actor.Area.CastPosition, throwAngle, out var velocity))
+                if (TryGetThrowVelocity(Actor.Hook.transform, Actor.WaterArea.Center, throwAngle, out var velocity))
                 {
+                    // 피칭모드 일 경우 그립 풀기
                     Actor.Line.HandlePoint.SetTrackingTarget(null);
 
+                    // 
                     Actor.Hook.CastingThrow(velocity);
                     Actor.Bobber.CastingThrow(velocity);
 

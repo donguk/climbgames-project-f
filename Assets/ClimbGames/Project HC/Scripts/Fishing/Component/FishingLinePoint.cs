@@ -10,15 +10,16 @@ namespace ClimbGames.Project_HC
         [SerializeField] private Color gizmoColor = Color.green;
 
         private FishingLine line;
-        private LinearTween targetTween = new LinearTween(0.5f);
+        private NormalizedTimer targetTween = new NormalizedTimer(1f);
         private Subject<bool> onKinematicChanged = new Subject<bool>();
 
         public Rigidbody Body => body;
         public float Height => height;
-        public Vector3 Up { get; private set; }
+        public Vector3 LineDirection { get; private set; }
         public Transform TrackingTarget { get; private set; }
         public FishingLineBody.LinePoint PinPoint { get; private set; }
         public bool HasTarget => TrackingTarget != null;
+        public float TweenValue => targetTween.Value;
         public Observable<bool> OnKinematicChangedAsObservable() => onKinematicChanged.AsObservable();
 
         void Awake()
@@ -84,7 +85,7 @@ namespace ClimbGames.Project_HC
                 {
                     // 라인 방향 업데이트
                     int index = Mathf.Max(1, PinPoint.currentIndex);
-                    Up = transform.up = line.Body.GetPosition(index - 1) - line.Body.GetPosition(index);
+                    LineDirection = transform.up = line.Body.GetPosition(index - 1) - line.Body.GetPosition(index);
 
                     // 고정된 점 설정
                     line.Body.SetPosition(PinPoint.currentIndex, transform.position);
@@ -93,7 +94,7 @@ namespace ClimbGames.Project_HC
             else
             {
                 float visualLength = line.Body.VisualLength;
-                float targetHeight = visualLength * (height / line.Length);
+                float targetHeight = visualLength * (height / line.TotalLength);
 
                 float accumulatedHeight = 0f;
                 var linePoints = line.Body.Points;
@@ -103,7 +104,7 @@ namespace ClimbGames.Project_HC
                     if (targetHeight < accumulatedHeight + linePoint.segmentLength || i == 0)
                     {
                         Vector3 position = line.Body.GetPosition(i + 1);
-                        Up = transform.up = (line.Body.GetPosition(i) - position).normalized;
+                        LineDirection = transform.up = (line.Body.GetPosition(i) - position).normalized;
 
                         float dist = Mathf.Clamp(targetHeight - accumulatedHeight, 0f, linePoint.segmentLength);
                         transform.position = position + transform.up * dist;
@@ -117,13 +118,10 @@ namespace ClimbGames.Project_HC
 
         void OnDrawGizmos()
         {
-            if (enabled)
-            {
-                Color origin = Gizmos.color;
-                Gizmos.color = gizmoColor;
-                Gizmos.DrawSphere(transform.position, 0.04f);
-                Gizmos.color = origin;
-            }
+            Color origin = Gizmos.color;
+            Gizmos.color = gizmoColor;
+            Gizmos.DrawSphere(transform.position, 0.04f);
+            Gizmos.color = origin;
         }
     }
 }

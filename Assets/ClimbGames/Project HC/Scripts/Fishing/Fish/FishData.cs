@@ -7,25 +7,18 @@ namespace ClimbGames.Project_HC
     public class FishData : ScriptableObject
     {
         [Serializable]
-        public class BiteMotion
+        public class BiteClip
         {
-            [SerializeField] private WaterOffsetTween bobberTween;
-
-            public float BobberOffset => bobberTween.Value;
-            public bool IsCompleted => bobberTween.IsCompleted;
-
-            public void Update(float deltaTime)
-            {
-                bobberTween.Update(deltaTime);
-            }
-
-            public void Reset()
-            {
-                bobberTween.Reset();
-            }
+            public AnimationCurve bobberHeight;
+            public AnimationCurve bobberRotation;
+            public float duration;
         }
 
-        public BiteMotion nibble;
-        public BiteMotion bite;
+        public BiteClip nibbleClip;
+        public BiteClip biteClip;
+
+        public float lifeTime = 5f;
+        public float struggleRange = 1f;
+        public float moveSpeed = 2f;
     }
 }

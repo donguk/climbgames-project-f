@@ -4,23 +4,21 @@ using UnityEngine;
 namespace ClimbGames.Project_HC
 {
     [Serializable]
-    public class LinearTween
+    public class NormalizedTimer
     {
-        [SerializeField] private float duration;
-        [SerializeField] private bool isLoop;
+        protected float duration;
         private float elapsedTime;
 
         public virtual float Value => duration > 0f ? Mathf.Clamp01(elapsedTime / duration) : 0f;
         public bool IsCompleted => elapsedTime >= duration;
 
-        public LinearTween()
+        public NormalizedTimer() : this(1f)
         {
         }
 
-        public LinearTween(float duration)
+        public NormalizedTimer(float duration)
         {
-            this.duration = duration;
-            Reset();
+            Reset(duration);
         }
 
         public void Update(float deltaTime)
@@ -30,14 +28,17 @@ namespace ClimbGames.Project_HC
 
             if (elapsedTime < duration)
                 elapsedTime += deltaTime;
-
-            if (elapsedTime >= duration && isLoop)
-                elapsedTime = 0;
         }
 
         public void Reset(bool reverse = false)
         {
             elapsedTime = reverse ? duration : 0f;
+        }
+
+        public void Reset(float duration)
+        {
+            this.duration = duration;
+            Reset();
         }
     }
 }

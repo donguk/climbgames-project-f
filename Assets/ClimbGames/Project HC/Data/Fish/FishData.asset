@@ -12,97 +12,133 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ad50394c4cc9a947bef4e431a231aa6, type: 3}
   m_Name: FishData
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishPattern
-  nibble:
-    bobberTween:
-      duration: 0.6
-      isLoop: 0
-      curve:
-        serializedVersion: 2
-        m_Curve:
-        - serializedVersion: 3
-          time: 0
-          value: 0
-          inSlope: -0.51321894
-          outSlope: -0.51321894
-          tangentMode: 34
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0.33333334
-        - serializedVersion: 3
-          time: 0.19627507
-          value: -0.10073209
-          inSlope: -0.14267033
-          outSlope: -0.14267033
-          tangentMode: 34
-          weightedMode: 0
-          inWeight: 0.33333334
-          outWeight: 0.33333334
-        - serializedVersion: 3
-          time: 0.51984876
-          value: -0.026996663
-          inSlope: -0.14955583
-          outSlope: -0.14955583
-          tangentMode: 34
-          weightedMode: 0
-          inWeight: 0.33333334
-          outWeight: 0.33333334
-        - serializedVersion: 3
-          time: 0.74151254
-          value: -0.14381124
-          inSlope: 0.014683396
-          outSlope: 0.014683396
-          tangentMode: 34
-          weightedMode: 0
-          inWeight: 0.33333334
-          outWeight: 0.33333334
-        - serializedVersion: 3
-          time: 1
-          value: 0
-          inSlope: 0.5563567
-          outSlope: 0.5563567
-          tangentMode: 34
-          weightedMode: 0
-          inWeight: 0.33333334
-          outWeight: 0
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-      offset: 1
-  bite:
-    bobberTween:
-      duration: 1
-      isLoop: 0
-      curve:
-        serializedVersion: 2
-        m_Curve:
-        - serializedVersion: 3
-          time: 0
-          value: -0.0007460317
-          inSlope: 0.02041593
-          outSlope: 0.02041593
-          tangentMode: 34
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0.33333334
-        - serializedVersion: 3
-          time: 0.2548746
-          value: 0.00445747
-          inSlope: -1.1823554
-          outSlope: -1.1823554
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0.124750175
-          outWeight: 0.0726345
-        - serializedVersion: 3
-          time: 1
-          value: -0.4918566
-          inSlope: 0.10464468
-          outSlope: 0.10464468
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0.22246215
-          outWeight: 0
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-      offset: 1.5
+  nibbleClip:
+    bobberHeight:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: -0.51321894
+        outSlope: -0.51321894
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.19627507
+        value: -0.10073209
+        inSlope: -0.14267033
+        outSlope: -0.14267033
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.51984876
+        value: -0.026996663
+        inSlope: -0.14955583
+        outSlope: -0.14955583
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.74151254
+        value: -0.14381124
+        inSlope: 0.014683396
+        outSlope: 0.014683396
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0.5563567
+        outSlope: 0.5563567
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    bobberRotation:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.40213782
+        value: 0.21427916
+        inSlope: 0.012826727
+        outSlope: 0.012826727
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.20451948
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: -0.19299226
+        outSlope: -0.19299226
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.1134996
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    duration: 0.4
+  biteClip:
+    bobberHeight:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: -0.0007460317
+        inSlope: 0.02041593
+        outSlope: 0.02041593
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.2548746
+        value: 0.00445747
+        inSlope: -1.1823554
+        outSlope: -1.1823554
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.124750175
+        outWeight: 0.0726345
+      - serializedVersion: 3
+        time: 1
+        value: -0.4958239
+        inSlope: 0.10464468
+        outSlope: 0.10464468
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.22246215
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    bobberRotation:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    duration: 0.8
+  lifeTime: 5
+  struggleRange: 1
+  moveSpeed: 2

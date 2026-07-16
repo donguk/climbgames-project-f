@@ -20,7 +20,7 @@ namespace ClimbGames.Project_HC
         private FishingActorController controller = new FishingActorController();
 
         public FishingCamera Camera => fishingCamera;
-        public FishingArea Area => fishingArea;
+        public FishingWaterArea WaterArea => fishingArea.WaterArea;
         public FishingCharacter Character => fishingCharacter;
         public FishingRod Rod => fishingRod;
         public FishingLine Line => fishingLine;
@@ -95,7 +95,7 @@ namespace ClimbGames.Project_HC
 
         public void RetrieveRod()
         {
-            if (controller.CurrentType == FishingActorState.WaitForBite)
+            if (controller.CurrentType == FishingActorState.Waiting)
             {
                 fishingCharacter.SetTrigger(FishingAnimationParam.RetrieveRod);
                 fishingLine.SetLength(0.5f);

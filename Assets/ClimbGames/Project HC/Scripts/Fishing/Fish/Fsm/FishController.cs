@@ -31,6 +31,8 @@ namespace ClimbGames.Project_HC
         private FishData targetData;
         private HookedFish targetFish;
 
+        public bool IsHooked => targetFish != null;
+
         public FishController() : base("Fish", true)
         {
         }
@@ -65,7 +67,7 @@ namespace ClimbGames.Project_HC
             dir.y = 0f;
             targetFish.transform.forward = dir;
 
-            targetFish.Initialize(this);
+            targetFish.Initialize(this, targetData);
             return targetFish;
         }
     }

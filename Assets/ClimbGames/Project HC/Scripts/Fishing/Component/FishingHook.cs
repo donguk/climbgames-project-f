@@ -28,6 +28,15 @@ namespace ClimbGames.Project_HC
 
             Joint.angularXMotion = ConfigurableJointMotion.Locked;
             Joint.angularZMotion = ConfigurableJointMotion.Locked;
+
+            Body.excludeLayers |= 1 << FishingLayer.Ground;
+        }
+
+        public override void CastingThrow(Vector3 velocity)
+        {
+            base.CastingThrow(velocity);
+
+            Body.excludeLayers &= ~(1 << FishingLayer.Ground);
         }
     }
 }

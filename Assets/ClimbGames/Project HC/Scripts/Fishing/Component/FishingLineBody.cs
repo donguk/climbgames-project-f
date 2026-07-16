@@ -19,6 +19,7 @@ namespace ClimbGames.Project_HC
             public float segmentLength;
             public bool isDynamic;
             public Transform pinTarget;
+            public float forcedTension;
 
             public bool IsPinned => currentIndex == 0 || pinTarget != null;
 
@@ -63,13 +64,10 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        public float CalculateLength(int index)
+        public void SetForcedTension(float tension)
         {
-            float length = 0f;
-            int count = Mathf.Min(index, linePoints.Count);
-            for (int i = 0; i < count; ++i)
-                length += linePoints[i].segmentLength;
-            return length;
+            for (int i = 0; i < linePoints.Count; ++i)
+                linePoints[i].forcedTension = tension;
         }
 
         public void ApplyConstraint(Vector3 anchorPosition)
@@ -89,7 +87,8 @@ namespace ClimbGames.Project_HC
                 LinePoint nextPoint = linePoints[i + 1];
 
                 float distance = (current - next).magnitude;
-                float diff = distance - currentPoint.segmentLength;
+                float segmentLength = currentPoint.segmentLength * (1f - currentPoint.forcedTension);
+                float diff = distance - segmentLength;
 
                 Vector3 changeDir = (current - next).normalized;
                 Vector3 chagneVector = changeDir * diff;
@@ -128,6 +127,27 @@ namespace ClimbGames.Project_HC
             {
                 RemoveLength(visualLength - length);
             }
+        }
+
+        public float GetLength(int index)
+        {
+            float length = 0f;
+            int count = Mathf.Min(index, linePoints.Count);
+            for (int i = 0; i < count; ++i)
+                length += linePoints[i].segmentLength;
+            return length;
+        }
+
+        public bool TryGetPinnedLength(out float length)
+        {
+            length = 0f;
+            for (int i = 0; i < linePoints.Count; ++i)
+            {
+                length += linePoints[i].segmentLength;
+                if (i > 0 && linePoints[i].IsPinned)
+                    return true;
+            }
+            return false;
         }
 
         void AddLength(float amount)

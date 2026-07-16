@@ -32,9 +32,9 @@ namespace ClimbGames.Project_HC
                     //    fsm.ChangeState(FishState.Nibble);
                     //}
                     //else
-                    {
-                        fsm.ChangeState(FishState.Bite);
-                    }
+                    //{
+                    //    fsm.ChangeState(FishState.Bite);
+                    //}
                 }
             }
         }

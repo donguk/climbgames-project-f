@@ -101,6 +101,7 @@ Transform:
   - {fileID: 3082590962477274670}
   - {fileID: 5387700401126488499}
   - {fileID: 1000443587119131825}
+  - {fileID: 8179391364413850583}
   m_Father: {fileID: 713904009642500311}
   m_LocalEulerAnglesHint: {x: 0, y: -132.5, z: 0}
 --- !u!1 &3336730952213897383
@@ -201,6 +202,54 @@ MonoBehaviour:
   m_MinRegionArea: 2
   m_NavMeshData: {fileID: 23800000, guid: f29fa717b21b9f645b827243ad0ce1ff, type: 2}
   m_BuildHeightMesh: 0
+--- !u!1 &3850859326557142136
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8179391364413850583}
+  - component: {fileID: 3423942504650187749}
+  m_Layer: 0
+  m_Name: WaterArea
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8179391364413850583
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3850859326557142136}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 19.29, y: 0, z: -9.27}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1144874576145904974}
+  m_Father: {fileID: 5364323970867644667}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3423942504650187749
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3850859326557142136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3aca56139b1e8a44ca6bbfa293a0338e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.WaterArea
+  radius: 3.4
+  strugglePoint: {fileID: 1144874576145904974}
+  struggleRange: 1
 --- !u!1 &4011820419519183010
 GameObject:
   m_ObjectHideFlags: 0
@@ -443,6 +492,37 @@ Transform:
   - {fileID: 7333873808260542518}
   m_Father: {fileID: 5364323970867644667}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6389208403426041928
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1144874576145904974}
+  m_Layer: 0
+  m_Name: struggle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1144874576145904974
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6389208403426041928}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.012887955, y: 0, z: -0.0062294006}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8179391364413850583}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6706881187368382990
 GameObject:
   m_ObjectHideFlags: 0
@@ -579,13 +659,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6904845140774258931}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.98027116, z: 0, w: 0.19765742}
+  m_LocalRotation: {x: 0, y: 0.99042535, z: 0, w: 0.13804956}
   m_LocalPosition: {x: -2.42, y: 0, z: -0.58}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2649791942905605046}
-  m_LocalEulerAnglesHint: {x: 0, y: 157.2, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 164.13, z: 0}
 --- !u!1 &7001329877192263619
 GameObject:
   m_ObjectHideFlags: 0
@@ -732,7 +812,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingPoint
   model: {fileID: 4164897094857161904}
   characterPoint: {fileID: 4868305174733118473}
-  castArea: {fileID: 9199511616517983929}
+  waterArea: {fileID: 3423942504650187749}
 --- !u!65 &6965767381245694050
 BoxCollider:
   m_ObjectHideFlags: 0

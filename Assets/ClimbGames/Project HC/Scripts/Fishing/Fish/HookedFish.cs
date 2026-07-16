@@ -9,16 +9,29 @@ namespace ClimbGames.Project_HC
         [SerializeField] private float steerAngleThreshold = 180f;
         [SerializeField] private float closeDistanceThreshold = 0.1f;
         [SerializeField] private Vector2 heightLimit = new Vector2(0f, 0.2f);
+        [SerializeField] private float lifeTime;
 
         private FishController controller;
+        private FishData fishData;
         private float biteHeight;
         private Vector3 movePosition;
 
-        public void Initialize(FishController controller)
+        public float LifeRate => fishData != null && fishData.lifeTime > 0f ? lifeTime / fishData.lifeTime : 0f;
+
+        public void Initialize(FishController controller, FishData data)
         {
             this.controller = controller;
+            fishData = data;
+
             biteHeight = transform.position.y;
+            lifeTime = data.lifeTime;
         }
+
+        //void Update()
+        //{
+        //    if (lifeTime > 0f)
+        //        lifeTime -= Time.deltaTime;
+        //}
 
         void FixedUpdate()
         {
@@ -66,7 +79,7 @@ namespace ClimbGames.Project_HC
             transform.position += transform.forward * moveSpeed * Time.fixedDeltaTime;
         }
 
-        public void SetMovePosition(Vector3 position)
+        public void MovePosition(Vector3 position)
         {
             movePosition = position;
 

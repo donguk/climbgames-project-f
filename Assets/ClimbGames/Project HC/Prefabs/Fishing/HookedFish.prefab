@@ -159,7 +159,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b070b91e725a822408ab0e88157bac62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.HookedFish
-  moveSpeed: 3
+  moveSpeed: 2
   rotationSpeed: 6
   steerAngleThreshold: 180
   closeDistanceThreshold: 0.1

@@ -24,6 +24,11 @@ namespace ClimbGames.Project_HC
             lineRenderer = GetComponent<LineRenderer>();
         }
 
+        void OnDisable()
+        {
+            lineRenderer.positionCount = 0;
+        }
+
         void Update()
         {
             if (lineComponent != null)

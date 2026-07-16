@@ -6,46 +6,49 @@ namespace ClimbGames.Project_HC
 {
     public class FishingBobber : FishingEquipment
     {
-        [SerializeField] Transform modelRoot;
-        [SerializeField] WaterOffsetTween landingTween;
-        [SerializeField] WaterOffsetTween floatingTween;
+        [Serializable]
+        public class FloatingClip
+        {
+            public AnimationCurve height;
+            public float duration;
+        }
 
-        [SerializeField] Vector2 scaleDistance = new Vector3(3f, 5f);
-        [SerializeField] Vector3 maxScale = new Vector3(8f, 8f, 8f);
+        [SerializeField] private Transform modelRoot;
+        [SerializeField] private FloatingClip landingClip;
+        [SerializeField] private FloatingClip floatingClip;
 
-        private Vector3 originScale = Vector3.one;
+        [SerializeField] private float pullStrength = 6f;
+        [SerializeField] private float maxPullSpeed = 2.5f;
+        [SerializeField] private float acceleration = 4f;
+        [SerializeField] private float sensitivity = 2f;
+        [SerializeField] private float rotationSpeed = 2f;
+        [SerializeField] private float tensionMaxAngle = 80f;
+        [SerializeField] private float biteMaxAngle = 90f;
+
         private float waterHeight;
-        private Quaternion targetRotation;
-        private float rotationSpeed = 2f;
+        private Vector3 currentVelocity;
+        private NormalizedTimer landingTimer = new NormalizedTimer();
+        private NormalizedTimer floatingTimer = new NormalizedTimer();
         private Subject<Unit> onFloating = new Subject<Unit>();
         private Subject<Unit> onCompleteLanding = new Subject<Unit>();
-        private FishData.BiteMotion biteMotion;
+        private LineTensionInfo tensionInfo;
+        private FishBiteInfo biteInfo;
 
-        public bool IsLanding => landingTween.IsCompleted == false;
+        public bool IsLanding => landingTimer.IsCompleted == false;
         public bool IsFloating => Joint == null;
-
         public Observable<Unit> OnFloatingAsObservable() => onFloating.AsObservable();
         public Observable<Unit> OnComplateLandingAsObservable() => onCompleteLanding.AsObservable();
 
-        protected override void Awake()
+        void FixedUpdate()
         {
-            base.Awake();
-            originScale = modelRoot.localScale;
-        }
-
-        void Update()
-        {
-            // 스케일 적용
-            UpdateSacle();
-
             if (IsFloating)
             {
-                UpdateHeight();
+                SimulatePull();
+                SimulateRotation();
+                SimulateHeight();
 
-                // update rotation
-                {
-                    modelRoot.rotation = Quaternion.Slerp(modelRoot.rotation, targetRotation, Time.deltaTime * rotationSpeed);
-                }
+                tensionInfo.Reset();
+                biteInfo.Reset();
             }
         }
 
@@ -58,38 +61,40 @@ namespace ClimbGames.Project_HC
                 {
                     Destroy(Joint);
 
-                    Vector3 position = transform.position;
-                    waterHeight = position.y;
-                    targetRotation = Quaternion.identity;
-
+                    waterHeight = other.transform.position.y;
                     Body.isKinematic = true;
                     Body.excludeLayers = 1 << FishingLayer.Water;
                     AttachPoint.SetTrackingTarget(transform);
 
+                    landingTimer.Reset(landingClip.duration);
                     onFloating.OnNext(Unit.Default);
                 }
             }
         }
 
-        void UpdateHeight()
+        void SimulateHeight()
         {
             float targetHeight = waterHeight;
             if (IsLanding)
             {
-                landingTween.Update(Time.deltaTime);
-                targetHeight += landingTween.Value;
+                landingTimer.Update(Time.deltaTime);
+                targetHeight += landingClip.height.Evaluate(landingTimer.Value);
 
-                if (landingTween.IsCompleted)
+                if (landingTimer.IsCompleted)
+                {
                     onCompleteLanding.OnNext(Unit.Default);
+                    floatingTimer.Reset(floatingClip.duration);
+                }
             }
             else
             {
-                floatingTween.Update(Time.deltaTime);
-                targetHeight += floatingTween.Value;
+                floatingTimer.Update(Time.deltaTime);
+                targetHeight += floatingClip.height.Evaluate(floatingTimer.Value);
 
-                // 입질 모션
-                if (biteMotion != null)
-                    targetHeight += biteMotion.BobberOffset;
+                if (floatingTimer.IsCompleted)
+                    floatingTimer.Reset();
+
+                targetHeight += biteInfo.bobberHeight;
             }
 
             Vector3 position = transform.position;
@@ -97,11 +102,40 @@ namespace ClimbGames.Project_HC
             transform.position = position;
         }
 
-        void UpdateSacle()
+        void SimulatePull()
         {
-            float dist = Vector3.Distance(transform.position, Framework.MainCamera.transform.position);
-            float ratio = Mathf.InverseLerp(scaleDistance.x, scaleDistance.y, dist);
-            modelRoot.localScale = Vector3.Lerp(originScale, maxScale, ratio);
+            Vector3 lineDir = tensionInfo.lineDirection;
+            lineDir.y = 0f;
+
+            if (lineDir.sqrMagnitude < 0.0001f)
+                return;
+
+            lineDir.Normalize();
+
+            float targetSpeed = Mathf.Min(tensionInfo.PullDistance * pullStrength, maxPullSpeed);
+            Vector3 targetVelocity = lineDir * targetSpeed;
+            currentVelocity = Vector3.MoveTowards(currentVelocity, targetVelocity, acceleration * Time.fixedDeltaTime);
+            transform.position += currentVelocity * Time.fixedDeltaTime;
+        }
+
+        void SimulateRotation()
+        {
+            Quaternion tensionRotation = Quaternion.identity;
+            Vector3 lineDir = tensionInfo.lineDirection;
+            lineDir.y = 0f;
+            if (lineDir.sqrMagnitude > 0.0001f)
+            {
+                lineDir.Normalize();
+                Vector3 tiltAxis = Vector3.Cross(Vector3.up, lineDir);
+                float tensionAngle = Mathf.Lerp(0f, tensionMaxAngle, tensionInfo.TensionValue * sensitivity);
+                tensionRotation = Quaternion.AngleAxis(tensionAngle, tiltAxis);
+            }
+
+            float biteAngle = biteMaxAngle * Mathf.Clamp01(biteInfo.bobberRotation);
+            Quaternion biteRotation = Quaternion.AngleAxis(biteAngle, biteInfo.angleAxis);
+
+            Quaternion targetRotation = tensionRotation * biteRotation;
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
         }
 
         public void SetCastingType(CastingType type)
@@ -114,6 +148,9 @@ namespace ClimbGames.Project_HC
         {
             base.AttachToLine(point);
 
+            Joint.angularXMotion = ConfigurableJointMotion.Locked;
+            Joint.angularZMotion = ConfigurableJointMotion.Locked;
+
             Joint.lowAngularXLimit = new SoftJointLimit() { limit = -30f };
             Joint.highAngularXLimit = new SoftJointLimit() { limit = 30f };
             Joint.angularZLimit = new SoftJointLimit() { limit = 30 };
@@ -121,49 +158,24 @@ namespace ClimbGames.Project_HC
             Joint.angularYZDrive = new JointDrive() { positionDamper = 1, maximumForce = float.MaxValue };
 
             Body.excludeLayers = 1 << FishingLayer.Water;
-            modelRoot.localRotation = Quaternion.identity;
         }
 
         public override void CastingThrow(Vector3 velocity)
         {
+            Joint.angularXMotion = ConfigurableJointMotion.Locked;
+            Joint.angularZMotion = ConfigurableJointMotion.Locked;
+
             Body.excludeLayers = 0;
-
-            landingTween.Reset();
-            floatingTween.Reset();
         }
 
-        public void ApplyBiteMotion(FishData.BiteMotion bitePattern)
+        public void SetTensionInfo(LineTensionInfo tensionInfo)
         {
-            this.biteMotion = bitePattern;
+            this.tensionInfo = tensionInfo;
         }
 
-        public void ApplyLineTension(float tensionValue)
+        public void SetBiteInfo(FishBiteInfo biteInfo)
         {
-            Vector3 lineDir = AttachPoint.Up;
-            lineDir.y = 0f;
-            lineDir.Normalize();
-
-            if (tensionValue > 0f && lineDir != Vector3.zero)
-            {
-                // 회전축 계산 (당겨지는 방향의 오른쪽 축)
-                Vector3 tiltAxis = Vector3.Cross(Vector3.up, lineDir).normalized;
-                targetRotation = Quaternion.AngleAxis(80f * tensionValue, tiltAxis);
-                rotationSpeed = 3f;
-            }
-            else
-            {
-                targetRotation = Quaternion.identity;
-                rotationSpeed = 2f;
-            }
-        }
-
-        public void MovePosition(float amount)
-        {
-            Vector3 lineDir = AttachPoint.Up;
-            lineDir.y = 0f;
-            lineDir.Normalize();
-
-            transform.position += lineDir * amount;
+            this.biteInfo = biteInfo;
         }
     }
 }

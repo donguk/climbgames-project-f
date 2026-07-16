@@ -1,6 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
-using Unity.Cinemachine;
 using UnityEngine;
 
 namespace ClimbGames.Project_HC
@@ -8,21 +6,22 @@ namespace ClimbGames.Project_HC
     public partial class FishingLine : MonoBehaviour
     {
         [SerializeField] private FishingLineBody lineBody;
-        [SerializeField] private FishingLineDrawer[] lineDrawers;
         [SerializeField] private FishingLinePoint bobberPoint;
         [SerializeField] private FishingLinePoint endPoint;
         [SerializeField] private FishingLinePoint handlePoint;
-        [SerializeField] private float lineLength;
-        [ReadOnly(true)]
-        [SerializeField] private float lineTension = 0f;
+        [SerializeField] public float slackDistance = 1f;
+        [SerializeField] public float maxPullDistance = 0.5f;
+        [SerializeField] private float totalLength;
         [Range(0f, 1f)]
         [SerializeField] private float forcedTension = 0f;
 
+        private FishingLineDrawer[] lineDrawers;
         private Transform rodTip;
-        private LinearTween lengthTween = new LinearTween(1f);
+        private float targetLength;
+        private NormalizedTimer targetLengthTimer = new NormalizedTimer(1f);
 
-        public float Length => lineLength;
-        public float Tension => lineTension;
+        public float TotalLength => totalLength;
+        public float TensionLength { get; private set; }
         public FishingLineBody Body => lineBody;
         public Transform RodTip => rodTip;
         public FishingLinePoint BobberPoint => bobberPoint;
@@ -32,10 +31,11 @@ namespace ClimbGames.Project_HC
         public void Initialize(Transform rodTip, float length, float bobberHeight)
         {
             this.rodTip = rodTip;
+            lineDrawers = GetComponentsInChildren<FishingLineDrawer>();
 
-            lengthTween.Reset(true);
+            targetLengthTimer.Reset(true);
             SetLength(Mathf.Max(0.5f, length));
-            lineBody.BuildLine(rodTip.position, Length);
+            lineBody.BuildLine(rodTip.position, TotalLength);
 
             bobberPoint.Initialize(this, bobberHeight);
             endPoint.Initialize(this);
@@ -70,11 +70,9 @@ namespace ClimbGames.Project_HC
 
         public void UpdateLine(float deltaTime)
         {
-            // 라인 길이 업데이트
-            lengthTween.Update(deltaTime);
-            float targetLength = handlePoint.HasTarget ? Vector3.Distance(rodTip.position, handlePoint.transform.position) : lineLength;
-            lineBody.SetLength(Mathf.Lerp(lineBody.VisualLength, targetLength, lengthTween.Value));
-            UpdateTension();
+            // 길이 업데이트
+            targetLengthTimer.Update(deltaTime);
+            lineBody.SetLength(Mathf.Lerp(lineBody.VisualLength, targetLength, targetLengthTimer.Value));
 
             // 물리 업데이트
             lineBody.Simulate(deltaTime);
@@ -86,64 +84,76 @@ namespace ClimbGames.Project_HC
             endPoint.UpdatePosition();
         }
 
-        public void UpdateTension()
+        public LineTensionInfo GetTensionInfo(Transform target)
         {
-            lineTension = 0f;
-            FishingLinePoint tensionPoint = GetTensionPoint();
-            if (tensionPoint.HasTarget)
+            // 직선 길이
+            float straightLength = Vector3.Distance(rodTip.position, target.position);
+            float lineLength = 0f;
+            Vector3 lineDirection = Vector3.zero;
+
+            var points = lineBody.Points;
+            for (int i = 0; i < points.Count; ++i)
             {
-                // 직선 길이
-                float straightLength = Vector3.Distance(rodTip.position, tensionPoint.transform.position);
-                // 라인
-                float lineLength = lineBody.CalculateLength(tensionPoint.PinPoint.currentIndex);
-                // 텐션 길이
-                float tensionLength = straightLength * 0.9f/*TensionFactor*/;
-                lineTension = Mathf.Max(0f, (straightLength - lineLength) / (straightLength - tensionLength));
-                lineTension /= 5f/*MaxTension*/;
+                lineLength += points[i].segmentLength;
+                if (i > 0)
+                {
+                    lineDirection = lineBody.GetPosition(points[i - 1].currentIndex) - lineBody.GetPosition(points[i].currentIndex);
+                    if (points[i].IsPinned)
+                        break;
+                }
             }
+
+            return new LineTensionInfo(straightLength, lineLength, lineDirection, slackDistance, maxPullDistance);
         }
 
         public void SetLength(float length, bool useTween = false)
         {
-            lineLength = length;
-            lengthTween.Reset(useTween == false);
-        }
-
-        public FishingLinePoint GetTensionPoint()
-        {
-            FishingLinePoint tensionTarget = endPoint;
-            if (bobberPoint.HasTarget && bobberPoint.Height > tensionTarget.Height)
-                tensionTarget = bobberPoint;
-
-            if (handlePoint.HasTarget && handlePoint.Height > tensionTarget.Height)
-                tensionTarget = handlePoint;
-
-            return tensionTarget;
+            targetLength = totalLength = length;
+            targetLengthTimer.Reset(useTween == false);
         }
 
         public void SetCastingType(CastingType type, Transform target)
         {
+            targetLengthTimer.Reset();
             if (type == CastingType.Pitching)
             {
                 handlePoint.SetTrackingTarget(target, true);
+                targetLength = Vector3.Distance(rodTip.position, target.position);
             }
             else
             {
                 handlePoint.SetTrackingTarget(null);
-                lengthTween.Reset();
+                targetLength = totalLength;
             }
         }
 
-        public void Release(float amount)
+        public float Release(float amount)
         {
             if (amount > 0f)
-                lineLength += amount;
+                totalLength += amount;
+
+            return targetLength = totalLength;
         }
 
-        public void Reeling(float amount)
+        public float Reeling(float amount)
         {
             if (amount > 0f)
-                lineLength = Mathf.Max(0.5f, lineLength - amount);
+                totalLength = Mathf.Max(0.5f, totalLength - amount);
+
+            return targetLength = totalLength;
+        }
+
+        public void HookFish(HookedFish targetFish)
+        {
+            endPoint.SetTrackingTarget(targetFish.transform);
+
+            forcedTension = 1f;
+            //tensionTween.Reset();
+
+
+            //tensionTween.Update(Time.deltaTime);
+            //currentTension = Mathf.Lerp(currentTension, forcedTension, tensionTween.Value);
+            //lineBody.SetForcedTension(currentTension);
         }
     }
 }

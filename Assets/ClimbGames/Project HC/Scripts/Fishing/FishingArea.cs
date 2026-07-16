@@ -9,13 +9,13 @@ namespace ClimbGames.Project_HC
     {
         [SerializeField] private Transform model;
         [SerializeField] private Transform characterPoint;
-        [SerializeField] private Transform castArea;
+        [SerializeField] private FishingWaterArea waterArea;
 
         private UIBase uiIndicator;
         private UIMenu uiMenu;
 
         public Transform CharacterPoint => characterPoint;
-        public Vector3 CastPosition => castArea.position;
+        public FishingWaterArea WaterArea => waterArea;
 
         void Awake()
         {
