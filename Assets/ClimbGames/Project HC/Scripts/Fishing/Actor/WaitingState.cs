@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using R3;
-using UnityEngine.InputSystem;
 
 namespace ClimbGames.Project_HC
 {

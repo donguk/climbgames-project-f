@@ -19,7 +19,6 @@ namespace ClimbGames.Project_HC
             public float segmentLength;
             public bool isDynamic;
             public Transform pinTarget;
-            public float forcedTension;
 
             public bool IsPinned => currentIndex == 0 || pinTarget != null;
 
@@ -33,9 +32,11 @@ namespace ClimbGames.Project_HC
         }
 
         private List<LinePoint> linePoints = new List<LinePoint>();
+        private float forcedTension = 0f;
 
         public IReadOnlyList<LinePoint> Points => linePoints;
         public float VisualLength => linePoints.Sum(x => x.segmentLength);
+        public float ForcedTension => forcedTension;
 
         public void BuildLine(Vector3 anchorPosition, float length)
         {
@@ -66,8 +67,7 @@ namespace ClimbGames.Project_HC
 
         public void SetForcedTension(float tension)
         {
-            for (int i = 0; i < linePoints.Count; ++i)
-                linePoints[i].forcedTension = tension;
+            forcedTension = tension;
         }
 
         public void ApplyConstraint(Vector3 anchorPosition)
@@ -87,7 +87,7 @@ namespace ClimbGames.Project_HC
                 LinePoint nextPoint = linePoints[i + 1];
 
                 float distance = (current - next).magnitude;
-                float segmentLength = currentPoint.segmentLength * (1f - currentPoint.forcedTension);
+                float segmentLength = currentPoint.segmentLength * (1f - forcedTension);
                 float diff = distance - segmentLength;
 
                 Vector3 changeDir = (current - next).normalized;

@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using R3;
 using R3.Triggers;
+using System;
 
 namespace ClimbGames.Project_HC
 {
@@ -23,10 +24,13 @@ namespace ClimbGames.Project_HC
         [SerializeField] private Button btn_reeling;
         [SerializeField] private Toggle tgl_casting_type;
         [SerializeField] private TMP_Text txt_casting_type;
+        [SerializeField] private Slider sld_tension_gauge;
+        [SerializeField] private TMP_Text txt_tension_value;
 
         private CastingState castingState = CastingState.None;
         private int loadingDirection = 1;
         private float loadingValue;
+        private IDisposable tensionValueUpdater;
 
         void OnEnable()
         {
@@ -140,6 +144,22 @@ namespace ClimbGames.Project_HC
             switch (state)
             {
                 case FishingActorState.Idle: SetCastingState(CastingState.None); break;
+            }
+
+            if (state == FishingActorState.Fighting)
+            {
+                sld_tension_gauge.gameObject.SetActive(true);
+                tensionValueUpdater?.Dispose();
+                tensionValueUpdater = FishingModel.Instance.TensionValue.Subscribe(_ =>
+                {
+                    sld_tension_gauge.value = _;
+                    txt_tension_value.text = $"{_:0.##}";
+                }).AddTo(this);
+            }
+            else
+            {
+                tensionValueUpdater?.Dispose();
+                sld_tension_gauge.gameObject.SetActive(false);
             }
         }
     }

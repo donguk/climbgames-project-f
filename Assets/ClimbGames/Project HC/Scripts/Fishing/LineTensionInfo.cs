@@ -17,6 +17,11 @@ namespace ClimbGames.Project_HC
         public readonly float lineLength;
 
         /// <summary>
+        /// 늘어난 길이
+        /// </summary>
+        public readonly float StretchLength => straightLength - lineLength;
+
+        /// <summary>
         /// 직선거리보다 이만큼 짧아져야 텐션 시작
         /// </summary>
         public readonly float slackDistance;

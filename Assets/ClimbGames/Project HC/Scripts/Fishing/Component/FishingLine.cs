@@ -17,8 +17,9 @@ namespace ClimbGames.Project_HC
 
         private FishingLineDrawer[] lineDrawers;
         private Transform rodTip;
-        private float targetLength;
+        private float targetLength, targetTension;
         private NormalizedTimer targetLengthTimer = new NormalizedTimer(1f);
+        private NormalizedTimer forcedTensionTimer = new NormalizedTimer(1f);
 
         public float TotalLength => totalLength;
         public float TensionLength { get; private set; }
@@ -74,6 +75,10 @@ namespace ClimbGames.Project_HC
             targetLengthTimer.Update(deltaTime);
             lineBody.SetLength(Mathf.Lerp(lineBody.VisualLength, targetLength, targetLengthTimer.Value));
 
+            // 강제 텐션
+            forcedTensionTimer.Update(deltaTime);
+            lineBody.SetForcedTension(Mathf.Lerp(lineBody.ForcedTension, targetTension, forcedTensionTimer.Value));
+
             // 물리 업데이트
             lineBody.Simulate(deltaTime);
             lineBody.ApplyConstraint(rodTip.position);
@@ -97,9 +102,11 @@ namespace ClimbGames.Project_HC
                 lineLength += points[i].segmentLength;
                 if (i > 0)
                 {
-                    lineDirection = lineBody.GetPosition(points[i - 1].currentIndex) - lineBody.GetPosition(points[i].currentIndex);
                     if (points[i].IsPinned)
+                    {
+                        lineDirection = (rodTip.transform.position - lineBody.GetPosition(points[i].currentIndex)).normalized;
                         break;
+                    }
                 }
             }
 
@@ -143,17 +150,11 @@ namespace ClimbGames.Project_HC
             return targetLength = totalLength;
         }
 
-        public void HookFish(HookedFish targetFish)
+        public void SetHookedFish(HookedFish targetFish)
         {
-            endPoint.SetTrackingTarget(targetFish.transform);
-
-            forcedTension = 1f;
-            //tensionTween.Reset();
-
-
-            //tensionTween.Update(Time.deltaTime);
-            //currentTension = Mathf.Lerp(currentTension, forcedTension, tensionTween.Value);
-            //lineBody.SetForcedTension(currentTension);
+            endPoint.SetTrackingTarget(targetFish.ModelRoot);
+            forcedTension = targetTension = 1f;
+            forcedTensionTimer.Reset();
         }
     }
 }

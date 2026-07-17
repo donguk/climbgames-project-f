@@ -12,14 +12,26 @@ namespace ClimbGames.Project_HC
         Flee,
     }
 
+    public class FishStatus
+    {
+        public float stamina;          // 0~1
+        public float noiseSeed;
+
+        public void Initialize(FishData data)
+        {
+            stamina = 1f;
+            noiseSeed = Random.Range(0f, 1000f);
+        }
+    }
+
     public partial class FishController : FSM<FishState>
     {
         public class FishStateBase : StateBase
         {
             protected FishController Controller { get; private set; }
             protected FishingActor Actor => Controller.actor;
-            protected FishData FishData => Controller.targetData;
-            protected HookedFish HookedFish => Controller.targetFish;
+            protected FishData FishData => Controller.fishData;
+            protected HookedFish HookedFish => Controller.hookedFish;
 
             public FishStateBase(FishController fsm) : base(fsm)
             {
@@ -28,10 +40,14 @@ namespace ClimbGames.Project_HC
         }
 
         private FishingActor actor;
-        private FishData targetData;
-        private HookedFish targetFish;
+        private FishData fishData;
+        private HookedFish hookedFish;
+        private FishStatus fishStatus = new FishStatus();
 
-        public bool IsHooked => targetFish != null;
+        public bool IsHooked => hookedFish != null;
+        public FishData Data => fishData;
+        public HookedFish Target => hookedFish;
+        public FishStatus Status => fishStatus;
 
         public FishController() : base("Fish", true)
         {
@@ -53,22 +69,20 @@ namespace ClimbGames.Project_HC
 
         public void FetchData()
         {
-            if (targetData == null)
-                targetData = AssetManager.LoadAsset<FishData>("Fish/FishData.asset");
+            if (fishData == null)
+                fishData = AssetManager.LoadAsset<FishData>("Fish/FishData.asset");
+
+            fishStatus.Initialize(fishData);
         }
 
         public HookedFish CreateHookedFish()
         {
-            if (targetFish == null)
-                targetFish = AssetManager.Instantiate<HookedFish>("HookedFish");
+            if (hookedFish == null)
+                hookedFish = AssetManager.Instantiate<HookedFish>("HookedFish");
 
-            targetFish.transform.position = actor.Hook.transform.position;
-            Vector3 dir = actor.transform.position - actor.Hook.transform.position;
-            dir.y = 0f;
-            targetFish.transform.forward = dir;
-
-            targetFish.Initialize(this, targetData);
-            return targetFish;
+            hookedFish.transform.position = actor.Hook.transform.position;
+            hookedFish.Initialize(this, fishData);
+            return hookedFish;
         }
     }
 }
