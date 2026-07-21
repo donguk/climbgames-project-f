@@ -105,29 +105,29 @@ MonoBehaviour:
       - serializedVersion: 3
         time: 0
         value: -0.0007460317
-        inSlope: -0.34165624
-        outSlope: -0.34165624
-        tangentMode: 34
+        inSlope: 0.33553708
+        outSlope: 0.33553708
+        tangentMode: 0
         weightedMode: 0
         inWeight: 0
-        outWeight: 0.33333334
+        outWeight: 0.09636667
       - serializedVersion: 3
         time: 0.4235523
         value: -0.14545532
-        inSlope: -3.141137
-        outSlope: -3.141137
+        inSlope: -3.7166822
+        outSlope: -3.7166822
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.034529895
+        inWeight: 0.038340896
         outWeight: 0.05005929
       - serializedVersion: 3
         time: 1
-        value: -0.4958239
-        inSlope: -0.034598928
-        outSlope: -0.034598928
+        value: -0.7
+        inSlope: 0.08368305
+        outSlope: 0.08368305
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.15024926
+        inWeight: 0.06122712
         outWeight: 0
       m_PreInfinity: 2
       m_PostInfinity: 2
@@ -138,8 +138,46 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    duration: 0.8
+    duration: 1.4
   struggleRange: 1
+  tensionSensitivity: 0.5
+  tensionJitterIntensity: 0.05
+  tensionJitterFrequency: 10
+  tensionThreshold: 0.92
+  tensionCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.2
+      inSlope: 1.5272857
+      outSlope: 1.5272857
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.19328076
+      value: 0.49519494
+      inSlope: 0.6614938
+      outSlope: 0.6614938
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.17365666
+      outWeight: 0.0597678
+    - serializedVersion: 3
+      time: 1
+      value: 0.2
+      inSlope: -0.36592028
+      outSlope: -0.36592028
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  staminaDrainDuration: 10
   staminaCurve:
     serializedVersion: 2
     m_Curve:
@@ -164,5 +202,3 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  minTension: 0.2
-  tensionAcceleration: 1

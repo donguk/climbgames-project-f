@@ -465,7 +465,7 @@ MonoBehaviour:
   pullStrength: 6
   maxPullSpeed: 2.5
   acceleration: 4
-  sensitivity: 2
+  sensitivity: 1
   rotationSpeed: 2
   tensionMaxAngle: 80
   biteMaxAngle: 90

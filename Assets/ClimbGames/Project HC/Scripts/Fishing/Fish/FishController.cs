@@ -22,6 +22,12 @@ namespace ClimbGames.Project_HC
             stamina = 1f;
             noiseSeed = Random.Range(0f, 1000f);
         }
+
+        public void DecreaseStamina(float value)
+        {
+            stamina = Mathf.Clamp01(stamina - value);
+        }
+
     }
 
     public partial class FishController : FSM<FishState>
@@ -48,6 +54,7 @@ namespace ClimbGames.Project_HC
         public FishData Data => fishData;
         public HookedFish Target => hookedFish;
         public FishStatus Status => fishStatus;
+        public float CurrentStamina => fishData.staminaCurve.Evaluate(1f - fishStatus.stamina);
 
         public FishController() : base("Fish", true)
         {
@@ -81,8 +88,15 @@ namespace ClimbGames.Project_HC
                 hookedFish = AssetManager.Instantiate<HookedFish>("HookedFish");
 
             hookedFish.transform.position = actor.Hook.transform.position;
-            hookedFish.Initialize(this, fishData);
+            hookedFish.Initialize(this);
             return hookedFish;
+        }
+
+        public float GetTensionNoise()
+        {
+            float currentJitter = fishData.tensionJitterIntensity * CurrentStamina;
+            float noise = (Mathf.PerlinNoise(Time.time * fishData.tensionJitterFrequency + fishStatus.noiseSeed, 0f) * 2f) - 1f;
+            return noise * currentJitter;
         }
     }
 }

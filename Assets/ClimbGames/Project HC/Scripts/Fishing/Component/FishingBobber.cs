@@ -17,12 +17,11 @@ namespace ClimbGames.Project_HC
         [SerializeField] private FloatingClip landingClip;
         [SerializeField] private FloatingClip floatingClip;
 
-        [SerializeField] private float pullStrength = 6f;
-        [SerializeField] private float maxPullSpeed = 2.5f;
-        [SerializeField] private float acceleration = 4f;
-        [SerializeField] private float sensitivity = 2f;
+        [SerializeField] private float pullAcceleration = 4f;
+        [Range(0f, 1f)]
+        [SerializeField] private float sensitivity = 1f;
         [SerializeField] private float rotationSpeed = 2f;
-        [SerializeField] private float tensionMaxAngle = 80f;
+        [SerializeField] private float pullMaxAngle = 80f;
         [SerializeField] private float biteMaxAngle = 90f;
 
         private float waterHeight;
@@ -31,7 +30,7 @@ namespace ClimbGames.Project_HC
         private NormalizedTimer floatingTimer = new NormalizedTimer();
         private Subject<Unit> onFloating = new Subject<Unit>();
         private Subject<Unit> onCompleteLanding = new Subject<Unit>();
-        private LineTensionInfo tensionInfo;
+        private LineLengthInfo lengthInfo;
         private FishBiteInfo biteInfo;
 
         public bool IsLanding => landingTimer.IsCompleted == false;
@@ -47,7 +46,7 @@ namespace ClimbGames.Project_HC
                 SimulateRotation();
                 SimulateHeight();
 
-                tensionInfo.Reset();
+                lengthInfo.Reset();
                 biteInfo.Reset();
             }
         }
@@ -104,30 +103,30 @@ namespace ClimbGames.Project_HC
 
         void SimulatePull()
         {
-            Vector3 lineDir = tensionInfo.lineDirection;
+            Vector3 lineDir = lengthInfo.direction;
             lineDir.y = 0f;
 
-            if (lineDir.sqrMagnitude < 0.0001f)
-                return;
-
-            lineDir.Normalize();
-
-            float targetSpeed = Mathf.Min(tensionInfo.PullDistance * pullStrength, maxPullSpeed);
-            Vector3 targetVelocity = lineDir * targetSpeed;
-            currentVelocity = Vector3.MoveTowards(currentVelocity, targetVelocity, acceleration * Time.fixedDeltaTime);
-            transform.position += currentVelocity * Time.fixedDeltaTime;
+            if (lineDir.sqrMagnitude > 0.0001f)
+            {
+                Vector3 targetVelocity = lineDir.normalized * lengthInfo.PullSpeed;
+                currentVelocity = Vector3.MoveTowards(currentVelocity, targetVelocity, pullAcceleration * Time.fixedDeltaTime);
+                transform.position += targetVelocity * Time.fixedDeltaTime;
+            }
         }
 
         void SimulateRotation()
         {
             Quaternion tensionRotation = Quaternion.identity;
-            Vector3 lineDir = tensionInfo.lineDirection;
+            Vector3 lineDir = lengthInfo.direction;
             lineDir.y = 0f;
+
             if (lineDir.sqrMagnitude > 0.0001f)
             {
                 lineDir.Normalize();
                 Vector3 tiltAxis = Vector3.Cross(Vector3.up, lineDir);
-                float tensionAngle = Mathf.Lerp(0f, tensionMaxAngle, tensionInfo.TensionValue * sensitivity);
+                float stretchThreshold = Mathf.Lerp(0.2f, 0.05f, sensitivity);
+
+                float tensionAngle = Mathf.Lerp(0f, pullMaxAngle, lengthInfo.TensionLength / stretchThreshold);
                 tensionRotation = Quaternion.AngleAxis(tensionAngle, tiltAxis);
             }
 
@@ -168,9 +167,9 @@ namespace ClimbGames.Project_HC
             Body.excludeLayers = 0;
         }
 
-        public void SetTensionInfo(LineTensionInfo tensionInfo)
+        public void SetLengthInfo(LineLengthInfo lengthInfo)
         {
-            this.tensionInfo = tensionInfo;
+            this.lengthInfo = lengthInfo;
         }
 
         public void SetBiteInfo(FishBiteInfo biteInfo)

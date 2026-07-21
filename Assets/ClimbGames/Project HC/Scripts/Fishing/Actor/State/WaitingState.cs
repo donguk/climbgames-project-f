@@ -20,13 +20,6 @@ namespace ClimbGames.Project_HC
                 }).AddTo(this);
             }
 
-            //protected override void OnUpdate()
-            //{
-            //    // 테스트
-            //    if (Keyboard.current.bKey.wasReleasedThisFrame)
-            //        Fish.ChangeState(FishState.Nibble);
-            //}
-
             protected override void OnFixedUpdate()
             {
                 base.OnFixedUpdate();
@@ -41,22 +34,22 @@ namespace ClimbGames.Project_HC
                         Actor.RetrieveRod();
                 }
 
-                LineTensionInfo tensionInfo = LineTensionInfo.Default;
+                LineLengthInfo lengthInfo = LineLengthInfo.Default;
                 if (Actor.Bobber.IsFloating)
                 {
-                    tensionInfo = Actor.Line.GetTensionInfo(Actor.Bobber.transform);
-                    Actor.Bobber.SetTensionInfo(tensionInfo);
+                    lengthInfo = Actor.Line.GetLengthInfo(Actor.Bobber.transform);
+                    Actor.Bobber.SetLengthInfo(lengthInfo);
                 }
 
                 // 인풋이 없는 경우
-                if (reelingInput == 0f && dragInput <= 0f)
-                {
-                    if (tensionInfo.PullDistance < 0.001f && tensionInfo.lineLength < tensionInfo.IdleSlackLength)
-                        Actor.Line.Release(0.001f);
-                }
+                //if (reelingInput <= 0f && dragInput <= 0f)
+                //{
+                //    if (lengthInfo.PullDistance < 0.001f && lengthInfo.lineLength < lengthInfo.IdleSlackLength)
+                //        Actor.Line.Release(0.001f);
+                //}
 
                 if (Fish.IsHooked)
-                    fsm.ChangeState(FishingActorState.Fighting);
+                    fsm.ChangeState(FishingActorState.Fight);
             }
         }
     }

@@ -89,7 +89,7 @@ namespace ClimbGames.Project_HC
             endPoint.UpdatePosition();
         }
 
-        public LineTensionInfo GetTensionInfo(Transform target)
+        public LineLengthInfo GetLengthInfo(Transform target)
         {
             // 직선 길이
             float straightLength = Vector3.Distance(rodTip.position, target.position);
@@ -110,7 +110,12 @@ namespace ClimbGames.Project_HC
                 }
             }
 
-            return new LineTensionInfo(straightLength, lineLength, lineDirection, slackDistance, maxPullDistance);
+            return new LineLengthInfo()
+            {
+                straightLength = straightLength,
+                lineLength = lineLength,
+                direction = lineDirection,
+            };
         }
 
         public void SetLength(float length, bool useTween = false)

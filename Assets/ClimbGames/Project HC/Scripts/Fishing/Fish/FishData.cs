@@ -16,20 +16,19 @@ namespace ClimbGames.Project_HC
 
         public BiteClip nibbleClip;
         public BiteClip biteClip;
-        public float struggleRange = 1f;
-
+        public float moveRange = 1f;
+        public float moveSpeed = 3f;
         [Range(0f, 1f)]
         public float tensionSensitivity = 0.5f;
-        public float StretchThreshold => Mathf.Lerp(2f/*전체 난이도*/, 0.2f/*최대 릴링 길이보다는 커야함*/, tensionSensitivity);
+        public float StretchThreshold => Mathf.Lerp(2f, 0.2f/*최대 릴링 길이보다는 커야함*/, tensionSensitivity);
         [Range(0f, 0.2f)]
         public float tensionJitterIntensity = 0.05f;
         public float tensionJitterFrequency = 10f;
         [Range(0f, 1f)]
         public float tensionThreshold = 0.92f;
         public AnimationCurve tensionCurve;
-
-        public float staminaDrainDuration = 10f;
-        public float staminaDrainRate => staminaDrainDuration > 0f ? (1f / staminaDrainDuration) : 0.01f;
+        public float staminaDecreaseDuration = 10f;
+        public float staminaDecreaseRate => staminaDecreaseDuration > 0f ? (1f / staminaDecreaseDuration) : 0.01f;
         public AnimationCurve staminaCurve;
     }
 }

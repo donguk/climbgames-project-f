@@ -6,5 +6,11 @@ namespace ClimbGames.Project_HC
     {
         public Vector3 center;
         public float range;
+
+        public void Reset()
+        {
+            center = Vector3.zero;
+            range = 0f;
+        }
     }
 }

@@ -161,13 +161,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.HookedFish
   modelRoot: {fileID: 355410668978140017}
-  struggleTarget: {fileID: 2680520759107667920}
+  moveTarget: {fileID: 2680520759107667920}
   moveSpeed: 2
   rotationSpeed: 6
   steerAngleThreshold: 180
   closeDistanceThreshold: 0.1
   heightLimit: {x: 0.1, y: 0.3}
-  lifeTime: 0
 --- !u!1 &7022026772761982464
 GameObject:
   m_ObjectHideFlags: 0
@@ -178,7 +177,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2680520759107667920}
   m_Layer: 0
-  m_Name: StruggleTarget
+  m_Name: MoveTarget
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -5,43 +5,53 @@ namespace ClimbGames.Project_HC
     public class HookedFish : MonoBehaviour
     {
         [SerializeField] private Transform modelRoot;
-        [SerializeField] private Transform struggleTarget;
-        [SerializeField] private float moveSpeed = 3.5f;
+        [SerializeField] private Transform moveTarget;
         [SerializeField] private float rotationSpeed = 6.0f;
         [SerializeField] private float steerAngleThreshold = 180f;
         [SerializeField] private float closeDistanceThreshold = 0.1f;
         [SerializeField] private Vector2 heightLimit = new Vector2(0f, 0.2f);
-        [SerializeField] private float lifeTime;
 
         private FishController controller;
-        private FishData fishData;
         private float hookHeight;
         private float prevDistance;
         private Vector3 targetPosition;
+        private FishStruggleInfo struggleInfo;
+        private LineTensionInfo tensionInfo;
         private WaterAreaInfo areaInfo;
 
         public Transform ModelRoot => modelRoot;
-        public Transform StruggleTarget => struggleTarget;
-        public Vector3 StruggleDirection => transform.position - struggleTarget.position;
+        public Transform MoveTarget => moveTarget;
 
-        public void Initialize(FishController controller, FishData data)
+        public void Initialize(FishController controller)
         {
             this.controller = controller;
-            fishData = data;
 
             hookHeight = transform.position.y;
             targetPosition = transform.position;
             modelRoot.localPosition = Vector3.zero;
-            struggleTarget.localPosition = Vector3.zero;
+            moveTarget.localPosition = Vector3.zero;
         }
 
         void FixedUpdate()
         {
             if (controller.CurrentType == FishState.Struggle)
             {
+                SimulatePull();
                 SimulateStruggle();
 
-                //
+                struggleInfo.Reset();
+                tensionInfo.Reset();
+            }
+        }
+
+        void SimulatePull()
+        {
+            // 물고기의 목표 텐션을 위한 움직임
+            Vector3 lineDir = tensionInfo.direction;
+            if (lineDir.sqrMagnitude > 0.0001f)
+            {
+                Vector3 veclocity = lineDir.normalized * tensionInfo.TensionSpeed;
+                moveTarget.position += veclocity * Time.fixedDeltaTime;
             }
         }
 
@@ -65,7 +75,7 @@ namespace ClimbGames.Project_HC
             Vector3 directionToTarget = targetPosition - modelRoot.position;
             distance = directionToTarget.magnitude;
 
-            float maxMoveStep = moveSpeed * Time.fixedDeltaTime;
+            float maxMoveStep = struggleInfo.currentSpeed * Time.fixedDeltaTime;
             if (distance <= maxMoveStep)
             {
                 modelRoot.SetPositionAndRotation(targetPosition, Quaternion.LookRotation(directionToTarget.normalized));
@@ -91,12 +101,18 @@ namespace ClimbGames.Project_HC
             }
 
             // 정면(forward)으로 이동
-            modelRoot.position += modelRoot.forward * moveSpeed * Time.fixedDeltaTime;
+            modelRoot.position += modelRoot.forward * struggleInfo.currentSpeed * Time.fixedDeltaTime;
         }
 
-        public void SetAreaInfo(WaterAreaInfo areaInfo)
+        public void SetStruggleInfo(FishStruggleInfo struggleInfo)
         {
-            this.areaInfo = areaInfo;
+            this.struggleInfo = struggleInfo;
+            areaInfo = struggleInfo.areaInfo;
+        }
+
+        public void SetTensionInfo(LineTensionInfo tensionInfo)
+        {
+            this.tensionInfo = tensionInfo;
         }
 
 #if UNITY_EDITOR
