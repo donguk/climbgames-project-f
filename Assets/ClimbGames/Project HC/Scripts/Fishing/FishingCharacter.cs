@@ -11,17 +11,21 @@ namespace ClimbGames.Project_HC
         [SerializeField] private Vector2 tiltLimit = new Vector2(-10, 10);
 
         private Animator _animator;
-        private int fishingLayer;
+        private int bodyLayer, armsLayer;
         private Vector2 currentTiltLimit;
 
+        public Animator Animator => _animator;
         public Transform RodHandle => rightHandle;
         public Transform LeftHandle => leftHandle;
-        public AnimatorStateInfo CurrentAnimatorStateInfo => _animator.GetCurrentAnimatorStateInfo(fishingLayer);
+        public int BodyLayer => bodyLayer;
+        public int ArmsLayer => armsLayer;
 
         void Awake()
         {
             _animator = GetComponentInChildren<Animator>();
-            fishingLayer = _animator.GetLayerIndex(FishingAnimation.LayerName);
+
+            bodyLayer = _animator.GetLayerIndex(FishingAnimation.BodyLayer);
+            armsLayer = _animator.GetLayerIndex(FishingAnimation.ArmsLayer);
         }
 
         public void UpdateRotation(FishingCamera camera)
@@ -37,15 +41,16 @@ namespace ClimbGames.Project_HC
             root.localRotation = Quaternion.Euler(new Vector3(currentTilt, camera.CurrentPan));
         }
 
-        public Animator PlayAnimation(string name)
+        public Animator PlayFullBodyAnimation(string name)
         {
-            _animator.Play(name, fishingLayer);
+            _animator.Play(name, bodyLayer);
+            _animator.SetLayerWeight(armsLayer, 0f);
             return _animator;
         }
 
         public void SetCastingType(CastingType type)
         {
-            _animator.SetInteger(FishingAnimationParam.CastingType, (int)type);
+            _animator.SetInteger(FishingAnimation.CastingType, (int)type);
         }
 
         public void SetTrigger(string name)

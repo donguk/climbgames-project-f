@@ -7,9 +7,9 @@ namespace ClimbGames.Project_HC
         Idle,
         Casting,            // 캐스팅 동작
         Waiting,            // 기다림
-        Fight,              // 힘겨루기
-        Catch,              // 잡음 연출
-        Retrieve,           // 미끼 회수
+        Fighting,           // 힘겨루기
+        Catching,           // 잡음 연출
+        Retrieving,         // 낚시대 회수
     }
 
     public partial class FishingActorController : FSM<FishingActorState>
@@ -47,7 +47,9 @@ namespace ClimbGames.Project_HC
                 (FishingActorState.Idle, new IdleState(actor, fishController, this)),
                 (FishingActorState.Casting, new CastingState(actor, fishController, this)),
                 (FishingActorState.Waiting, new WaitingState(actor, fishController, this)),
-                (FishingActorState.Fight, new FightState(actor, fishController, this)));
+                (FishingActorState.Fighting, new FightingState(actor, fishController, this)),
+                (FishingActorState.Catching, new CatchingState(actor, fishController, this)),
+                (FishingActorState.Retrieving, new RetrievingState(actor, fishController, this)));
 
             Start(FishingActorState.Idle);
 

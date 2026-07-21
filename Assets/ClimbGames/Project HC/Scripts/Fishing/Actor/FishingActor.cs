@@ -97,7 +97,7 @@ namespace ClimbGames.Project_HC
         {
             if (controller.CurrentType == FishingActorState.Waiting)
             {
-                fishingCharacter.SetTrigger(FishingAnimationParam.RetrieveRod);
+                //fishingCharacter.SetTrigger(FishingAnimationParam.RetrieveRod);
                 fishingLine.SetLength(0.5f);
                 fishingBobber.AttachToLine(fishingLine.BobberPoint);
                 fishingHook.AttachToLine(fishingLine.EndPoint);

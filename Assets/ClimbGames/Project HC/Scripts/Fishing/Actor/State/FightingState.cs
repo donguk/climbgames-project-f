@@ -5,17 +5,17 @@ namespace ClimbGames.Project_HC
 {
     public partial class FishingActorController
     {
-        public class FightState : FishingActorStateBase
+        public class FightingState : FishingActorStateBase
         {
-            private float currentTension;
+            private float lineTension;
 
-            public FightState(FishingActor actor, FishController fish, FishingActorController fsm) : base(actor, fish, fsm)
+            public FightingState(FishingActor actor, FishController fish, FishingActorController fsm) : base(actor, fish, fsm)
             {
             }
 
             protected override void OnEnter()
             {
-                currentTension = 0f;
+                lineTension = 0f;
             }
 
             protected override void OnFixedUpdate()
@@ -38,12 +38,12 @@ namespace ClimbGames.Project_HC
                 if (reelingInput <= 0f)
                     targetTension += Fish.GetTensionNoise();
 
-                currentTension = Mathf.MoveTowards(currentTension, Mathf.Clamp01(targetTension), Time.fixedDeltaTime);
-                FishingModel.Instance.SetTensionValue(currentTension);
+                lineTension = Mathf.MoveTowards(lineTension, Mathf.Clamp01(targetTension), Time.fixedDeltaTime);
+                FishingModel.Instance.SetTensionValue(lineTension);
 
                 hookedFish.SetTensionInfo(new LineTensionInfo()
                 {
-                    lineTension = currentTension,
+                    lineTension = lineTension,
                     targetTension = fishData.tensionCurve.Evaluate(Fish.CurrentStamina),
                     stretchThreshold = fishData.StretchThreshold,
                     direction = Actor.Rod.PoleTip.position - hookedFish.MoveTarget.position,
@@ -51,7 +51,7 @@ namespace ClimbGames.Project_HC
                 });
 
                 // 도망침
-                if (currentTension > fishData.tensionThreshold)
+                if (lineTension > fishData.tensionThreshold)
                 {
                     // 임계점을 넘은 시간이 누적되면 도망침
                     Fish.ChangeState(FishState.Flee);
@@ -60,7 +60,7 @@ namespace ClimbGames.Project_HC
 
                 // 잡음
                 if (Actor.Line.TotalLength < 1f)
-                    fsm.ChangeState(FishingActorState.Catch);
+                    fsm.ChangeState(FishingActorState.Catching);
             }
         }
     }

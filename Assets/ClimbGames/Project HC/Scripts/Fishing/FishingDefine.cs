@@ -10,17 +10,13 @@ namespace ClimbGames.Project_HC
 
     public static class FishingAnimation
     {
-        public const string LayerName = "Fishing Layer";
-        public const string CastingThrow = "Casting_Throw";
+        public const string BodyLayer = "Full Body";
+        public const string ArmsLayer = "Arms";
 
-        public static int CastingThrowHash = Animator.StringToHash("Casting_Throw");
-        public static int WaitingHash = Animator.StringToHash("Waiting");
-    }
-
-    public static class FishingAnimationParam
-    {
         public const string CastingType = "CastingType";
-        public const string RetrieveRod = "RetrieveRod";
+        public const string Throw = "Throw";
+        public const string PullOut = "PullOut";
+        public const string PullOut_Catch = "PullOut_Catch";
     }
 
     public enum CastingType

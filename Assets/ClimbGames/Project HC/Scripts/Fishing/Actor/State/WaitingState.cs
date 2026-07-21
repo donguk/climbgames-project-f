@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using R3;
+using UnityEngine.InputSystem;
 
 namespace ClimbGames.Project_HC
 {
@@ -16,8 +17,15 @@ namespace ClimbGames.Project_HC
                 Actor.Bobber.OnComplateLandingAsObservable().Subscribe(_ =>
                 {
                     // 물고기 행동 시작
-                    Fish.ChangeState(FishState.Approach);
+                    //Fish.ChangeState(FishState.Approach);
                 }).AddTo(this);
+            }
+
+            protected override void OnUpdate()
+            {
+                // 테스트
+                if (Keyboard.current.bKey.wasReleasedThisFrame)
+                    fsm.ChangeState(FishingActorState.Catching);
             }
 
             protected override void OnFixedUpdate()
@@ -31,7 +39,7 @@ namespace ClimbGames.Project_HC
                 {
                     // 릴 감기
                     if (Actor.Line.Reeling(reelingInput * Time.fixedDeltaTime) < 1f)
-                        Actor.RetrieveRod();
+                        fsm.ChangeState(FishingActorState.Retrieving);
                 }
 
                 LineLengthInfo lengthInfo = LineLengthInfo.Default;
@@ -49,7 +57,7 @@ namespace ClimbGames.Project_HC
                 //}
 
                 if (Fish.IsHooked)
-                    fsm.ChangeState(FishingActorState.Fight);
+                    fsm.ChangeState(FishingActorState.Fighting);
             }
         }
     }

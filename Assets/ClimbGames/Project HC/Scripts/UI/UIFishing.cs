@@ -146,7 +146,7 @@ namespace ClimbGames.Project_HC
                 case FishingActorState.Idle: SetCastingState(CastingState.None); break;
             }
 
-            if (state == FishingActorState.Fight)
+            if (state == FishingActorState.Fighting)
             {
                 sld_tension_gauge.gameObject.SetActive(true);
                 tensionValueUpdater?.Dispose();

@@ -22,9 +22,8 @@ namespace ClimbGames.Project_HC
                 lineState = LineState.None;
 
                 // 케스팅 애니메이션
-                var animator = Actor.Character.PlayAnimation(FishingAnimation.CastingThrow);
-                int layerIndex = animator.GetLayerIndex(FishingAnimation.LayerName);
-                animator.OnNormalizedTimeReachedAsObservable(FishingAnimation.CastingThrow, 0.4f, layerIndex).Subscribe(_ =>
+                Actor.Character.SetTrigger(FishingAnimation.Throw);
+                Actor.Character.Animator.OnNormalizedTimeReachedAsObservable(FishingAnimation.Throw, 0.4f, Actor.Character.BodyLayer).Subscribe(_ =>
                 {
                     CastingThrow();
                 }).AddTo(this);
