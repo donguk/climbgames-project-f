@@ -16,12 +16,15 @@ namespace ClimbGames.Project_HC
         // 늘어난 길이
         public readonly float StretchLength => Mathf.Max(0f, straightLength - lineLength);
 
-        public readonly float TensionLength => Mathf.Max(0f, straightLength - 1.2f/*slack distance*/ - lineLength);
-        public readonly float PullSpeed => TensionLength * 6f;
+        // 라인이 중력에 의해 쳐지지 않은 정도에서의 길이 계산
+        public readonly float TensionedLength => Mathf.Max(0f, straightLength - 1.5f/*slack length*/ - lineLength);
+        public readonly float PullSpeed => TensionedLength * 4f;
+        public readonly bool IsTensioned => StretchLength > 1f;
 
         public void Reset()
         {
             straightLength = 0f;
+            lineLength = 0f;
         }
     }
 }

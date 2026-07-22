@@ -60,11 +60,12 @@ namespace ClimbGames.Project_HC
                 {
                     Destroy(Joint);
 
-                    waterHeight = other.transform.position.y;
-                    Body.isKinematic = true;
-                    Body.excludeLayers = 1 << FishingLayer.Water;
-                    AttachPoint.SetTrackingTarget(transform);
+                    var body = Body;
+                    body.isKinematic = true;
+                    body.excludeLayers = 1 << FishingLayer.Water;
+                    ConnectedPoint.SetTrackingTarget(transform);
 
+                    waterHeight = other.transform.position.y;
                     landingTimer.Reset(landingClip.duration);
                     onFloating.OnNext(Unit.Default);
                 }
@@ -126,7 +127,7 @@ namespace ClimbGames.Project_HC
                 Vector3 tiltAxis = Vector3.Cross(Vector3.up, lineDir);
                 float stretchThreshold = Mathf.Lerp(0.2f, 0.05f, sensitivity);
 
-                float tensionAngle = Mathf.Lerp(0f, pullMaxAngle, lengthInfo.TensionLength / stretchThreshold);
+                float tensionAngle = Mathf.Lerp(0f, pullMaxAngle, lengthInfo.TensionedLength / stretchThreshold);
                 tensionRotation = Quaternion.AngleAxis(tensionAngle, tiltAxis);
             }
 
@@ -147,20 +148,23 @@ namespace ClimbGames.Project_HC
         {
             base.AttachToLine(point);
 
-            Joint.angularXMotion = ConfigurableJointMotion.Locked;
-            Joint.angularZMotion = ConfigurableJointMotion.Locked;
+            var joint = Joint;
+            joint.angularXMotion = ConfigurableJointMotion.Locked;
+            joint.angularZMotion = ConfigurableJointMotion.Locked;
 
-            Joint.lowAngularXLimit = new SoftJointLimit() { limit = -30f };
-            Joint.highAngularXLimit = new SoftJointLimit() { limit = 30f };
-            Joint.angularZLimit = new SoftJointLimit() { limit = 30 };
-            Joint.angularXDrive = new JointDrive() { positionDamper = 1, maximumForce = float.MaxValue };
-            Joint.angularYZDrive = new JointDrive() { positionDamper = 1, maximumForce = float.MaxValue };
+            joint.lowAngularXLimit = new SoftJointLimit() { limit = -30f };
+            joint.highAngularXLimit = new SoftJointLimit() { limit = 30f };
+            joint.angularZLimit = new SoftJointLimit() { limit = 30 };
+            joint.angularXDrive = new JointDrive() { positionDamper = 1, maximumForce = float.MaxValue };
+            joint.angularYZDrive = new JointDrive() { positionDamper = 1, maximumForce = float.MaxValue };
 
             Body.excludeLayers = 1 << FishingLayer.Water;
         }
 
-        public override void CastingThrow(Vector3 velocity)
+        public override void Throw(Vector3 velocity)
         {
+            //
+
             Joint.angularXMotion = ConfigurableJointMotion.Locked;
             Joint.angularZMotion = ConfigurableJointMotion.Locked;
 

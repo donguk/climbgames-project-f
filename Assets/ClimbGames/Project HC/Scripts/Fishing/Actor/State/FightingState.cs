@@ -1,5 +1,6 @@
 ﻿
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace ClimbGames.Project_HC
 {
@@ -16,6 +17,20 @@ namespace ClimbGames.Project_HC
             protected override void OnEnter()
             {
                 lineTension = 0f;
+            }
+
+            protected override void OnUpdate()
+            {
+                // 테스트
+                if (Keyboard.current.cKey.wasReleasedThisFrame)
+                    fsm.ChangeState(FishingActorState.Catching);
+
+                //
+                if (Keyboard.current.fKey.wasReleasedThisFrame)
+                {
+                    Fish.ChangeState(FishState.Flee);
+                    fsm.ChangeState(FishingActorState.Waiting);
+                }
             }
 
             protected override void OnFixedUpdate()

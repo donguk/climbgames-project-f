@@ -32,9 +32,9 @@ namespace ClimbGames.Project_HC
             Body.excludeLayers |= 1 << FishingLayer.Ground;
         }
 
-        public override void CastingThrow(Vector3 velocity)
+        public override void Throw(Vector3 velocity)
         {
-            base.CastingThrow(velocity);
+            base.Throw(velocity);
 
             Body.excludeLayers &= ~(1 << FishingLayer.Ground);
         }

@@ -34,7 +34,6 @@ namespace ClimbGames.Project_HC
             this.rodTip = rodTip;
             lineDrawers = GetComponentsInChildren<FishingLineDrawer>();
 
-            targetLengthTimer.Reset(true);
             SetLength(Mathf.Max(0.5f, length));
             lineBody.BuildLine(rodTip.position, TotalLength);
 
@@ -118,15 +117,20 @@ namespace ClimbGames.Project_HC
             };
         }
 
-        public void SetLength(float length, bool useTween = false)
+        public void SetLength(float length, float duration = 0f)
         {
             targetLength = totalLength = length;
-            targetLengthTimer.Reset(useTween == false);
+            targetLengthTimer.Reset(duration);
+        }
+
+        public void SetForcedTension(float tension, float duration = 0f)
+        {
+            forcedTension = targetTension = tension;
+            forcedTensionTimer.Reset(duration);
         }
 
         public void SetCastingType(CastingType type, Transform target)
         {
-            targetLengthTimer.Reset();
             if (type == CastingType.Pitching)
             {
                 handlePoint.SetTrackingTarget(target, true);
@@ -135,7 +139,7 @@ namespace ClimbGames.Project_HC
             else
             {
                 handlePoint.SetTrackingTarget(null);
-                targetLength = totalLength;
+                SetLength(totalLength, 1f);
             }
         }
 
@@ -153,13 +157,6 @@ namespace ClimbGames.Project_HC
                 totalLength = Mathf.Max(0.5f, totalLength - amount);
 
             return targetLength = totalLength;
-        }
-
-        public void SetHookedFish(HookedFish targetFish)
-        {
-            endPoint.SetTrackingTarget(targetFish.ModelRoot);
-            forcedTension = targetTension = 1f;
-            forcedTensionTimer.Reset();
         }
     }
 }

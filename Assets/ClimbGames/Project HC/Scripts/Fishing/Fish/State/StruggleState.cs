@@ -20,7 +20,8 @@ namespace ClimbGames.Project_HC
 
                 // 바늘 연결
                 Actor.Bobber.AttachToLine(Actor.Line.BobberPoint);
-                Actor.Line.SetHookedFish(targetFish);
+                Actor.Line.EndPoint.SetTrackingTarget(targetFish.ModelRoot);
+                Actor.Line.SetForcedTension(1f, 0.5f);
             }
 
             protected override void OnFixedUpdate()

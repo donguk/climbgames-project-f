@@ -9,7 +9,7 @@ namespace ClimbGames.Project_HC
         protected float duration;
         private float elapsedTime;
 
-        public virtual float Value => duration > 0f ? Mathf.Clamp01(elapsedTime / duration) : 0f;
+        public virtual float Value => duration > 0f ? Mathf.Clamp01(elapsedTime / duration) : 1f;
         public bool IsCompleted => elapsedTime >= duration;
 
         public NormalizedTimer() : this(1f)

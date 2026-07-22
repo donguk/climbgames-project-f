@@ -9,6 +9,7 @@ namespace ClimbGames.Project_HC
         Nibble,             // 입질 단계
         Bite,               // 바늘을 물었음
         Struggle,
+        Submit,
         Flee,
     }
 
@@ -69,7 +70,9 @@ namespace ClimbGames.Project_HC
                 (FishState.Approach, new ApproachState(this)),
                 (FishState.Nibble, new NibbleState(this)),
                 (FishState.Bite, new BiteState(this)),
-                (FishState.Struggle, new StruggleState(this)));
+                (FishState.Struggle, new StruggleState(this)),
+                (FishState.Submit, new SubmitState(this)),
+                (FishState.Flee, new FleeState(this)));
 
             Start(FishState.Idle);
         }

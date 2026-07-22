@@ -74,9 +74,8 @@ namespace ClimbGames.Project_HC
                     // 피칭모드 일 경우 그립 풀기
                     Actor.Line.HandlePoint.SetTrackingTarget(null);
 
-                    // 
-                    Actor.Hook.CastingThrow(velocity);
-                    Actor.Bobber.CastingThrow(velocity);
+                    Actor.Hook.Throw(velocity);
+                    Actor.Bobber.Throw(velocity);
 
                     lineState = LineState.Flying;
                 }

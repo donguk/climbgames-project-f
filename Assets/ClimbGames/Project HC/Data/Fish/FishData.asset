@@ -139,7 +139,8 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     duration: 1.4
-  struggleRange: 1
+  moveRange: 1
+  moveSpeed: 2.4
   tensionSensitivity: 0.5
   tensionJitterIntensity: 0.05
   tensionJitterFrequency: 10
@@ -177,7 +178,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  staminaDrainDuration: 10
+  staminaDecreaseDuration: 10
   staminaCurve:
     serializedVersion: 2
     m_Curve:

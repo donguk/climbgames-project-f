@@ -17,7 +17,7 @@ namespace ClimbGames.Project_HC
                 Actor.Bobber.OnComplateLandingAsObservable().Subscribe(_ =>
                 {
                     // 물고기 행동 시작
-                    //Fish.ChangeState(FishState.Approach);
+                    Fish.ChangeState(FishState.Approach);
                 }).AddTo(this);
             }
 
@@ -25,7 +25,7 @@ namespace ClimbGames.Project_HC
             {
                 // 테스트
                 if (Keyboard.current.bKey.wasReleasedThisFrame)
-                    fsm.ChangeState(FishingActorState.Catching);
+                    Fish.ChangeState(FishState.Bite);
             }
 
             protected override void OnFixedUpdate()
@@ -50,11 +50,11 @@ namespace ClimbGames.Project_HC
                 }
 
                 // 인풋이 없는 경우
-                //if (reelingInput <= 0f && dragInput <= 0f)
-                //{
-                //    if (lengthInfo.PullDistance < 0.001f && lengthInfo.lineLength < lengthInfo.IdleSlackLength)
-                //        Actor.Line.Release(0.001f);
-                //}
+                if (reelingInput <= 0f && dragInput <= 0f)
+                {
+                    if (lengthInfo.IsTensioned)
+                        Actor.Line.Release(0.001f);
+                }
 
                 if (Fish.IsHooked)
                     fsm.ChangeState(FishingActorState.Fighting);
