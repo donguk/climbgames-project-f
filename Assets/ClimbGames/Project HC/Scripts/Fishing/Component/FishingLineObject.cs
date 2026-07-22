@@ -41,5 +41,14 @@ namespace ClimbGames.Project_HC
             ConnectedPoint = point;
             ConnectedPoint.SetTrackingTarget(null);
         }
+
+        public virtual void DetachFromLine()
+        {
+            if (Joint != null)
+                Destroy(Joint);
+
+            if (ConnectedPoint != null)
+                ConnectedPoint.SetTrackingTarget(transform);
+        }
     }
 }

@@ -50,7 +50,7 @@ namespace ClimbGames.Project_HC
             Vector3 lineDir = tensionInfo.direction;
             if (lineDir.sqrMagnitude > 0.0001f)
             {
-                Vector3 veclocity = lineDir.normalized * tensionInfo.TensionSpeed;
+                Vector3 veclocity = lineDir.normalized * tensionInfo.intensity;
                 moveTarget.position += veclocity * Time.fixedDeltaTime;
             }
         }
@@ -75,7 +75,7 @@ namespace ClimbGames.Project_HC
             Vector3 directionToTarget = targetPosition - modelRoot.position;
             distance = directionToTarget.magnitude;
 
-            float maxMoveStep = struggleInfo.currentSpeed * Time.fixedDeltaTime;
+            float maxMoveStep = struggleInfo.speed * Time.fixedDeltaTime;
             if (distance <= maxMoveStep)
             {
                 modelRoot.SetPositionAndRotation(targetPosition, Quaternion.LookRotation(directionToTarget.normalized));
@@ -101,7 +101,7 @@ namespace ClimbGames.Project_HC
             }
 
             // 정면(forward)으로 이동
-            modelRoot.position += modelRoot.forward * struggleInfo.currentSpeed * Time.fixedDeltaTime;
+            modelRoot.position += modelRoot.forward * struggleInfo.speed * Time.fixedDeltaTime;
         }
 
         public void SetStruggleInfo(FishStruggleInfo struggleInfo)
@@ -117,11 +117,9 @@ namespace ClimbGames.Project_HC
 
         public override void AttachToLine(FishingLinePoint point)
         {
-            // reset
-            Vector3 position = modelRoot.position;
+            transform.position = modelRoot.position;
             modelRoot.localPosition = Vector3.zero;
             modelRoot.localRotation = Quaternion.identity;
-            transform.position = position;
 
             base.AttachToLine(point);
 

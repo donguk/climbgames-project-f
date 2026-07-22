@@ -6,12 +6,12 @@ namespace ClimbGames.Project_HC
     {
         public WaterAreaInfo areaInfo;
         public float stamina;
-        public float currentSpeed;
+        public float speed;
 
         public void Reset()
         {
             areaInfo.Reset();
-            currentSpeed = 0;
+            speed = 0;
             stamina = 0f;
         }
     }

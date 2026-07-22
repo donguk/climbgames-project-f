@@ -6,6 +6,7 @@ namespace ClimbGames.Project_HC
     {
         public class BiteState : FishStateBase
         {
+            private FishData fishData;
             private NormalizedTimer biteTimer = new NormalizedTimer();
             private Vector3 angleAxis;
 
@@ -15,7 +16,9 @@ namespace ClimbGames.Project_HC
 
             protected override void OnEnter()
             {
-                biteTimer.Reset(FishData.biteClip.duration);
+                fishData = Controller.FetchData();
+
+                biteTimer.Reset(fishData.biteClip.duration);
                 angleAxis = Random.Range(0, 2) > 0 ? Vector3.forward : Vector3.back;
             }
 
@@ -27,8 +30,8 @@ namespace ClimbGames.Project_HC
                 {
                     Actor.Bobber.SetBiteInfo(new FishBiteInfo()
                     {
-                        bobberHeight = FishData.biteClip.bobberHeight.Evaluate(biteTimer.Value),
-                        bobberRotation = FishData.biteClip.bobberRotation.Evaluate(biteTimer.Value),
+                        bobberHeight = fishData.biteClip.bobberHeight.Evaluate(biteTimer.Value),
+                        bobberRotation = fishData.biteClip.bobberRotation.Evaluate(biteTimer.Value),
                         angleAxis = angleAxis,
                     });
                 }

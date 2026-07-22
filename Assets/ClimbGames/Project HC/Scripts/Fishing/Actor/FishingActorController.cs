@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace ClimbGames.Project_HC
 {
@@ -23,6 +24,21 @@ namespace ClimbGames.Project_HC
             {
                 Actor = actor;
                 Fish = fish;
+            }
+
+            protected override void OnUpdate()
+            {
+                // 테스트
+                {
+                    if (Keyboard.current.cKey.wasReleasedThisFrame)
+                        fsm.ChangeState(FishingActorState.Catching);
+
+                    if (Keyboard.current.fKey.wasReleasedThisFrame)
+                        Fish.ChangeState(FishState.Flee);
+
+                    if (Keyboard.current.bKey.wasReleasedThisFrame)
+                        Fish.ChangeState(FishState.Bite);
+                }
             }
 
             protected override void OnFixedUpdate()

@@ -56,19 +56,12 @@ namespace ClimbGames.Project_HC
             Debug.Log($"[FishingBobber] OnTggerEnter: {other.gameObject.name}");
             if (other.gameObject.layer == FishingLayer.Water)
             {
-                if (Joint != null)
-                {
-                    Destroy(Joint);
+                DetachFromLine();
 
-                    var body = Body;
-                    body.isKinematic = true;
-                    body.excludeLayers = 1 << FishingLayer.Water;
-                    ConnectedPoint.SetTrackingTarget(transform);
-
-                    waterHeight = other.transform.position.y;
-                    landingTimer.Reset(landingClip.duration);
-                    onFloating.OnNext(Unit.Default);
-                }
+                Body.excludeLayers = 1 << FishingLayer.Water;
+                waterHeight = other.transform.position.y;
+                landingTimer.Reset(landingClip.duration);
+                onFloating.OnNext(Unit.Default);
             }
         }
 
@@ -109,7 +102,7 @@ namespace ClimbGames.Project_HC
 
             if (lineDir.sqrMagnitude > 0.0001f)
             {
-                Vector3 targetVelocity = lineDir.normalized * lengthInfo.PullSpeed;
+                Vector3 targetVelocity = lineDir.normalized * lengthInfo.pullSpeed;
                 currentVelocity = Vector3.MoveTowards(currentVelocity, targetVelocity, pullAcceleration * Time.fixedDeltaTime);
                 transform.position += targetVelocity * Time.fixedDeltaTime;
             }
@@ -117,7 +110,7 @@ namespace ClimbGames.Project_HC
 
         void SimulateRotation()
         {
-            Quaternion tensionRotation = Quaternion.identity;
+            Quaternion dargRotation = Quaternion.identity;
             Vector3 lineDir = lengthInfo.direction;
             lineDir.y = 0f;
 
@@ -125,23 +118,17 @@ namespace ClimbGames.Project_HC
             {
                 lineDir.Normalize();
                 Vector3 tiltAxis = Vector3.Cross(Vector3.up, lineDir);
-                float stretchThreshold = Mathf.Lerp(0.2f, 0.05f, sensitivity);
+                float lengthThreshold = Mathf.Lerp(0.2f, 0.05f, sensitivity);
 
-                float tensionAngle = Mathf.Lerp(0f, pullMaxAngle, lengthInfo.TensionedLength / stretchThreshold);
-                tensionRotation = Quaternion.AngleAxis(tensionAngle, tiltAxis);
+                float dragAngle = Mathf.Lerp(0f, pullMaxAngle, lengthInfo.pullLength / lengthThreshold);
+                dargRotation = Quaternion.AngleAxis(dragAngle, tiltAxis);
             }
 
             float biteAngle = biteMaxAngle * Mathf.Clamp01(biteInfo.bobberRotation);
             Quaternion biteRotation = Quaternion.AngleAxis(biteAngle, biteInfo.angleAxis);
 
-            Quaternion targetRotation = tensionRotation * biteRotation;
+            Quaternion targetRotation = dargRotation * biteRotation;
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
-        }
-
-        public void SetCastingType(CastingType type)
-        {
-            Joint.angularXMotion = type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
-            Joint.angularZMotion = type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
         }
 
         public override void AttachToLine(FishingLinePoint point)
@@ -161,14 +148,25 @@ namespace ClimbGames.Project_HC
             Body.excludeLayers = 1 << FishingLayer.Water;
         }
 
+        public override void DetachFromLine()
+        {
+            base.DetachFromLine();
+
+            Body.isKinematic = true;
+        }
+
         public override void Throw(Vector3 velocity)
         {
-            //
-
             Joint.angularXMotion = ConfigurableJointMotion.Locked;
             Joint.angularZMotion = ConfigurableJointMotion.Locked;
 
             Body.excludeLayers = 0;
+        }
+
+        public void SetCastingType(CastingType type)
+        {
+            Joint.angularXMotion = type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
+            Joint.angularZMotion = type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
         }
 
         public void SetLengthInfo(LineLengthInfo lengthInfo)

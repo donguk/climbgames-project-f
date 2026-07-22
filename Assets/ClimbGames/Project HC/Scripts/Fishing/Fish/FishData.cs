@@ -25,10 +25,9 @@ namespace ClimbGames.Project_HC
         public float tensionJitterIntensity = 0.05f;
         public float tensionJitterFrequency = 10f;
         [Range(0f, 1f)]
-        public float tensionThreshold = 0.92f;
+        public float tensionThreshold = 0.9f;
         public AnimationCurve tensionCurve;
-        public float staminaDecreaseDuration = 10f;
-        public float staminaDecreaseRate => staminaDecreaseDuration > 0f ? (1f / staminaDecreaseDuration) : 0.01f;
+        public float staminaDuration = 20f;
         public AnimationCurve staminaCurve;
     }
 }

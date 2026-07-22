@@ -30,7 +30,7 @@ namespace ClimbGames.Project_HC
         private CastingState castingState = CastingState.None;
         private int loadingDirection = 1;
         private float loadingValue;
-        private IDisposable tensionValueUpdater;
+        private IDisposable fishStatusUpdater;
 
         void OnEnable()
         {
@@ -149,16 +149,16 @@ namespace ClimbGames.Project_HC
             if (state == FishingActorState.Fighting)
             {
                 sld_tension_gauge.gameObject.SetActive(true);
-                tensionValueUpdater?.Dispose();
-                tensionValueUpdater = FishingModel.Instance.TensionValue.Subscribe(_ =>
+                fishStatusUpdater?.Dispose();
+                fishStatusUpdater = FishingModel.Instance.OnUpdateFishStatusAsObservable().Subscribe(_ =>
                 {
-                    sld_tension_gauge.value = _;
-                    txt_tension_value.text = $"{_:0.##}";
+                    sld_tension_gauge.value = _.currentTension;
+                    txt_tension_value.text = $"{_.currentTension:0.##}";
                 }).AddTo(this);
             }
             else
             {
-                tensionValueUpdater?.Dispose();
+                fishStatusUpdater?.Dispose();
                 sld_tension_gauge.gameObject.SetActive(false);
             }
         }

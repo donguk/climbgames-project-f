@@ -21,13 +21,6 @@ namespace ClimbGames.Project_HC
                 }).AddTo(this);
             }
 
-            protected override void OnUpdate()
-            {
-                // 테스트
-                if (Keyboard.current.bKey.wasReleasedThisFrame)
-                    Fish.ChangeState(FishState.Bite);
-            }
-
             protected override void OnFixedUpdate()
             {
                 base.OnFixedUpdate();
@@ -53,10 +46,10 @@ namespace ClimbGames.Project_HC
                 if (reelingInput <= 0f && dragInput <= 0f)
                 {
                     if (lengthInfo.IsTensioned)
-                        Actor.Line.Release(0.001f);
+                        Actor.Line.Release(0.002f);
                 }
 
-                if (Fish.IsHooked)
+                if (Fish.CurrentType == FishState.Struggle)
                     fsm.ChangeState(FishingActorState.Fighting);
             }
         }

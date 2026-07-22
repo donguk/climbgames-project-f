@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using UnityEditor;
+using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
@@ -11,24 +12,6 @@ namespace ClimbGames.Project_HC
         Struggle,
         Submit,
         Flee,
-    }
-
-    public class FishStatus
-    {
-        public float stamina;          // 0~1
-        public float noiseSeed;
-
-        public void Initialize(FishData data)
-        {
-            stamina = 1f;
-            noiseSeed = Random.Range(0f, 1000f);
-        }
-
-        public void DecreaseStamina(float value)
-        {
-            stamina = Mathf.Clamp01(stamina - value);
-        }
-
     }
 
     public partial class FishController : FSM<FishState>
@@ -51,7 +34,6 @@ namespace ClimbGames.Project_HC
         private HookedFish hookedFish;
         private FishStatus fishStatus = new FishStatus();
 
-        public bool IsHooked => hookedFish != null;
         public FishData Data => fishData;
         public HookedFish Target => hookedFish;
         public FishStatus Status => fishStatus;
@@ -77,12 +59,13 @@ namespace ClimbGames.Project_HC
             Start(FishState.Idle);
         }
 
-        public void FetchData()
+        public FishData FetchData()
         {
             if (fishData == null)
                 fishData = AssetManager.LoadAsset<FishData>("Fish/FishData.asset");
 
             fishStatus.Initialize(fishData);
+            return fishData;
         }
 
         public HookedFish CreateHookedFish()
@@ -95,9 +78,21 @@ namespace ClimbGames.Project_HC
             return hookedFish;
         }
 
+        public void DeleteHookedFish()
+        {
+            if (hookedFish != null)
+                GameObject.Destroy(hookedFish.gameObject);
+
+            if (fishData != null)
+                AssetManager.Release(fishData);
+
+            hookedFish = null;
+            fishData = null;
+        }
+
         public float GetTensionNoise()
         {
-            float currentJitter = fishData.tensionJitterIntensity * CurrentStamina;
+            float currentJitter = Mathf.Max(0.01f, fishData.tensionJitterIntensity * CurrentStamina);
             float noise = (Mathf.PerlinNoise(Time.time * fishData.tensionJitterFrequency + fishStatus.noiseSeed, 0f) * 2f) - 1f;
             return noise * currentJitter;
         }

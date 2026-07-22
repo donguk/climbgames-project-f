@@ -112,13 +112,13 @@ MonoBehaviour:
         inWeight: 0
         outWeight: 0.09636667
       - serializedVersion: 3
-        time: 0.4235523
-        value: -0.14545532
-        inSlope: -3.7166822
-        outSlope: -3.7166822
+        time: 0.41334823
+        value: -0.22272758
+        inSlope: -4.2011685
+        outSlope: -4.2011685
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.038340896
+        inWeight: 0.037230242
         outWeight: 0.05005929
       - serializedVersion: 3
         time: 1
@@ -138,47 +138,47 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    duration: 1.4
+    duration: 1.2
   moveRange: 1
   moveSpeed: 2.4
   tensionSensitivity: 0.5
   tensionJitterIntensity: 0.05
   tensionJitterFrequency: 10
-  tensionThreshold: 0.92
+  tensionThreshold: 0.9
   tensionCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.2
-      inSlope: 1.5272857
-      outSlope: 1.5272857
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.19328076
-      value: 0.49519494
-      inSlope: 0.6614938
-      outSlope: 0.6614938
+      value: 0.3
+      inSlope: 0.51912034
+      outSlope: 0.51912034
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0.17365666
-      outWeight: 0.0597678
+      inWeight: 0
+      outWeight: 0.07625547
+    - serializedVersion: 3
+      time: 0.6127855
+      value: 0.44523254
+      inSlope: -0.4311398
+      outSlope: -0.4311398
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.23595908
+      outWeight: 0.09083765
     - serializedVersion: 3
       time: 1
       value: 0.2
-      inSlope: -0.36592028
-      outSlope: -0.36592028
-      tangentMode: 34
+      inSlope: -0.06439367
+      outSlope: -0.06439367
+      tangentMode: 0
       weightedMode: 0
-      inWeight: 0.33333334
+      inWeight: 0.055861704
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  staminaDecreaseDuration: 10
+  staminaDuration: 20
   staminaCurve:
     serializedVersion: 2
     m_Curve:

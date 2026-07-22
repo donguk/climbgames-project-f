@@ -22,7 +22,6 @@ namespace ClimbGames.Project_HC
         private NormalizedTimer forcedTensionTimer = new NormalizedTimer(1f);
 
         public float TotalLength => totalLength;
-        public float TensionLength { get; private set; }
         public FishingLineBody Body => lineBody;
         public Transform RodTip => rodTip;
         public FishingLinePoint BobberPoint => bobberPoint;
@@ -109,11 +108,17 @@ namespace ClimbGames.Project_HC
                 }
             }
 
+            // 라인이 당겨진 길이
+            float pullLength = Mathf.Max(0f, straightLength - 1.5f/*slack length*/ - lineLength);
+            float pullSpeed = pullLength * 4f;
+
             return new LineLengthInfo()
             {
                 straightLength = straightLength,
                 lineLength = lineLength,
                 direction = lineDirection,
+                pullLength = pullLength,
+                pullSpeed = pullSpeed,
             };
         }
 
