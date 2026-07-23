@@ -39,7 +39,7 @@ namespace ClimbGames.Project_HC
         public FishStatus Status => fishStatus;
         public float CurrentStamina => fishData.staminaCurve.Evaluate(1f - fishStatus.stamina);
 
-        public FishController() : base("Fish", true)
+        public FishController() : base("<color=blue>Fish</color>", true)
         {
         }
 

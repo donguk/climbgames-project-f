@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using R3;
-using UnityEngine.InputSystem;
 
 namespace ClimbGames.Project_HC
 {
@@ -14,11 +13,8 @@ namespace ClimbGames.Project_HC
 
             protected override void OnEnter()
             {
-                Actor.Bobber.OnComplateLandingAsObservable().Subscribe(_ =>
-                {
-                    // 물고기 행동 시작
-                    Fish.ChangeState(FishState.Approach);
-                }).AddTo(this);
+                // 물고기가 물었을때
+                FishingEvent.Broker.Receive<FishingEvent.OnFishBite>().Subscribe(_ => fsm.ChangeState(FishingActorState.Fighting)).AddTo(this);
             }
 
             protected override void OnFixedUpdate()
@@ -42,15 +38,12 @@ namespace ClimbGames.Project_HC
                     Actor.Bobber.SetLengthInfo(lengthInfo);
                 }
 
-                // 인풋이 없는 경우
+                // 인풋이 없는 경우 약간씩 풀림
                 if (reelingInput <= 0f && dragInput <= 0f)
                 {
                     if (lengthInfo.IsTensioned)
                         Actor.Line.Release(0.002f);
                 }
-
-                if (Fish.CurrentType == FishState.Struggle)
-                    fsm.ChangeState(FishingActorState.Fighting);
             }
         }
     }

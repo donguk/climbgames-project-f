@@ -53,7 +53,7 @@ namespace ClimbGames.Project_HC
 
         private FishController fishController = new FishController();
 
-        public FishingActorController() : base("Actor", true)
+        public FishingActorController() : base("<color=green>Actor</color>", true)
         {
         }
 

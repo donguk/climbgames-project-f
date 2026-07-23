@@ -18,7 +18,7 @@ namespace ClimbGames.Project_HC
                 // 물고기 결정
                 Controller.FetchData();
 
-                biteTime = 0.1f;//Random.Range(5f, 10f);
+                biteTime = Random.Range(5f, 10f);
                 elapsedTime = 0f;
             }
 
@@ -27,11 +27,11 @@ namespace ClimbGames.Project_HC
                 elapsedTime += Time.deltaTime;
                 if (elapsedTime > biteTime)
                 {
-                    //if (Random.Range(0, 2) > 0)
-                    //{
-                    //    fsm.ChangeState(FishState.Nibble);
-                    //}
-                    //else
+                    if (Random.Range(0, 2) > 0)
+                    {
+                        fsm.ChangeState(FishState.Nibble);
+                    }
+                    else
                     {
                         fsm.ChangeState(FishState.Bite);
                     }

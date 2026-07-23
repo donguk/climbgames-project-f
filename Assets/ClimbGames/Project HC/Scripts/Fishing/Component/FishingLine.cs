@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishingLine : MonoBehaviour
+    public partial class FishingLine : FishingEquipment
     {
         [SerializeField] private FishingLineBody lineBody;
         [SerializeField] private FishingLinePoint bobberPoint;
@@ -162,6 +162,40 @@ namespace ClimbGames.Project_HC
                 totalLength = Mathf.Max(0.5f, totalLength - amount);
 
             return targetLength = totalLength;
+        }
+
+
+
+        // 이벤트 처리
+
+        protected override void OnCastingThrow(FishingEvent.OnCastingThrow param)
+        {
+            // 피칭모드 일 경우 그립 풀기
+            handlePoint.SetTrackingTarget(null);
+        }
+
+        protected override void OnFishBite(FishingEvent.OnFishBite param)
+        {
+            // 물고기 추적
+            endPoint.SetTrackingTarget(param.hookedFish.ModelRoot);
+            SetForcedTension(1f, 0.5f);
+        }
+
+        protected override void OnFishFlee(FishingEvent.OnFishFlee param)
+        {
+            // 추적 끈기
+            endPoint.SetTrackingTarget(null);
+            SetForcedTension(0f, 0.1f);
+        }
+
+        protected override void OnFishSubmit(FishingEvent.OnFishSubmit param)
+        {
+            // 물고기 연결
+            endPoint.Attach(param.hookedFish);
+            endPoint.SetTrackingTarget(null);
+
+            SetForcedTension(0f, 1f);
+            SetLength(1f, 2f);
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace ClimbGames.Project_HC
 {
-    public class HookedFish : FishingLineObject
+    public class HookedFish : MonoBehaviour, ILineAttachable
     {
         [SerializeField] private Transform modelRoot;
         [SerializeField] private Transform moveTarget;
@@ -18,9 +18,20 @@ namespace ClimbGames.Project_HC
         private FishStruggleInfo struggleInfo;
         private LineTensionInfo tensionInfo;
         private WaterAreaInfo areaInfo;
+        private Rigidbody body;
 
         public Transform ModelRoot => modelRoot;
         public Transform MoveTarget => moveTarget;
+        public Transform Target => transform;
+        public Rigidbody Body
+        {
+            get
+            {
+                if (body == null)
+                    body = gameObject.GetOrAddComponent<Rigidbody>();
+                return body;
+            }
+        }
 
         public void Initialize(FishController controller)
         {
@@ -115,17 +126,15 @@ namespace ClimbGames.Project_HC
             this.tensionInfo = tensionInfo;
         }
 
-        public override void AttachToLine(FishingLinePoint point)
+        void ILineAttachable.OnAttached(FishingLinePoint point, ConfigurableJoint joint)
         {
-            transform.position = modelRoot.position;
-            modelRoot.localPosition = Vector3.zero;
-            modelRoot.localRotation = Quaternion.identity;
-
-            base.AttachToLine(point);
-
-            var joint = Joint;
             joint.angularXDrive = new JointDrive() { positionDamper = 0.1f, maximumForce = float.MaxValue };
             joint.angularYZDrive = new JointDrive() { positionDamper = 0.1f, maximumForce = float.MaxValue };
+        }
+
+        void ILineAttachable.OnDetached(FishingLinePoint point)
+        {
+            //
         }
 
 #if UNITY_EDITOR

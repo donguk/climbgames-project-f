@@ -1,6 +1,6 @@
 ﻿
 using UnityEngine;
-using UnityEngine.InputSystem;
+using R3;
 
 namespace ClimbGames.Project_HC
 {
@@ -10,6 +10,15 @@ namespace ClimbGames.Project_HC
         {
             public FightingState(FishingActor actor, FishController fish, FishingActorController fsm) : base(actor, fish, fsm)
             {
+            }
+
+            protected override void OnEnter()
+            {
+                // 물고기 도망
+                FishingEvent.Broker.Receive<FishingEvent.OnFishFlee>().Subscribe(_ => fsm.ChangeState(FishingActorState.Waiting)).AddTo(this);
+
+                // 물고기 잡음
+                FishingEvent.Broker.Receive<FishingEvent.OnFishSubmit>().Subscribe(_ => fsm.ChangeState(FishingActorState.Catching)).AddTo(this);
             }
 
             protected override void OnUpdate()
@@ -40,20 +49,6 @@ namespace ClimbGames.Project_HC
             protected override void OnFixedUpdate()
             {
                 base.OnFixedUpdate();
-
-                // 도망
-                if (Fish.CurrentType == FishState.Flee)
-                {
-                    fsm.ChangeState(FishingActorState.Waiting);
-                    return;
-                }
-
-                // 잡음
-                if (Fish.CurrentType == FishState.Submit)
-                {
-                    fsm.ChangeState(FishingActorState.Catching);
-                    return;
-                }
 
                 float reelingInput = FishingInput.Instance.Reeling;
                 if (reelingInput > 0f)

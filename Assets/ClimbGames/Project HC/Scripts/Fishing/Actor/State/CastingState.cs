@@ -9,75 +9,43 @@ namespace ClimbGames.Project_HC
     {
         public class CastingState : FishingActorStateBase
         {
-            enum LineState { None, Flying, Settled }
-
-            private LineState lineState;
-
             public CastingState(FishingActor actor, FishController fish, FishingActorController fsm) : base(actor, fish, fsm)
             {
             }
 
             protected override void OnEnter()
             {
-                lineState = LineState.None;
-
                 // 케스팅 애니메이션
                 Actor.Character.SetTrigger(FishingAnimation.Throw);
                 Actor.Character.Animator.OnNormalizedTimeReachedAsObservable(FishingAnimation.Throw, 0.4f, Actor.Character.BodyLayer).Subscribe(_ =>
                 {
-                    CastingThrow();
+                    Throw();
                 }).AddTo(this);
 
-                // 라인 끝이 땅에 닿았을 경우
-                Actor.Hook.OnGroundAsObservable().Subscribe(_ =>
-                {
-                    lineState = LineState.Settled;
-                }).AddTo(this);
+                // (찌 없는 경우) 바늘이 땅에 닿았을 경우
+                FishingEvent.Broker.Receive<FishingEvent.OnHookGrounded>().Subscribe(_ => fsm.ChangeState(FishingActorState.Waiting)).AddTo(this);
 
                 // 찌가 물에 닿을 경우
-                Actor.Bobber.OnFloatingAsObservable().Subscribe(_ =>
-                {
-                    Actor.Hook.AttachToLine(Actor.Line.EndPoint);
-                    lineState = LineState.Settled;
-                }).AddTo(this);
+                FishingEvent.Broker.Receive<FishingEvent.OnBobberEnterWater>().Subscribe(_ => fsm.ChangeState(FishingActorState.Waiting)).AddTo(this);
             }
 
             protected override void OnFixedUpdate()
             {
                 base.OnFixedUpdate();
 
-                switch (lineState)
-                {
-                    case LineState.Flying:
-                        {
-                            float dist = Vector3.Distance(Actor.Line.RodTip.position, Actor.Line.EndPoint.transform.position);
-                            if (Actor.Line.TotalLength < dist)
-                                Actor.Line.SetLength(dist);
-
-                            break;
-                        }
-                    case LineState.Settled:
-                        {
-                            fsm.ChangeState(FishingActorState.Waiting);
-                            break;
-                        }
-                }
+                float dist = Vector3.Distance(Actor.Line.RodTip.position, Actor.Line.EndPoint.transform.position);
+                if (Actor.Line.TotalLength < dist)
+                    Actor.Line.SetLength(dist);
             }
 
-            public void CastingThrow()
+            public void Throw()
             {
                 CastingType castingType = FishingModel.Instance.CastingType.CurrentValue;
                 float throwAngle = castingType == CastingType.OverHead ? 40f : 20f;
 
                 if (TryGetThrowVelocity(Actor.Hook.transform, Actor.WaterArea.Center, throwAngle, out var velocity))
                 {
-                    // 피칭모드 일 경우 그립 풀기
-                    Actor.Line.HandlePoint.SetTrackingTarget(null);
-
-                    Actor.Hook.Throw(velocity);
-                    Actor.Bobber.Throw(velocity);
-
-                    lineState = LineState.Flying;
+                    FishingEvent.Broker.Publish(new FishingEvent.OnCastingThrow() { velocity = velocity });
                 }
             }
 

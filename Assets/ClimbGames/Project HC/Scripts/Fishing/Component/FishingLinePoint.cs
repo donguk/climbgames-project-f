@@ -1,4 +1,5 @@
 ﻿using R3;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace ClimbGames.Project_HC
@@ -11,7 +12,6 @@ namespace ClimbGames.Project_HC
 
         private FishingLine line;
         private NormalizedTimer targetTween = new NormalizedTimer(1f);
-        private Subject<bool> onKinematicChanged = new Subject<bool>();
 
         public Rigidbody Body => body;
         public float Height => height;
@@ -19,8 +19,6 @@ namespace ClimbGames.Project_HC
         public Transform TrackingTarget { get; private set; }
         public FishingLineBody.LinePoint PinPoint { get; private set; }
         public bool HasTarget => TrackingTarget != null;
-        public float TweenValue => targetTween.Value;
-        public Observable<bool> OnKinematicChangedAsObservable() => onKinematicChanged.AsObservable();
 
         void Awake()
         {
@@ -34,9 +32,9 @@ namespace ClimbGames.Project_HC
 
         public void Initialize(FishingLine line)
         {
-            Retrieve();
-
             this.line = line;
+
+            body.isKinematic = true;
         }
 
         public void Initialize(FishingLine line, float height)
@@ -48,30 +46,6 @@ namespace ClimbGames.Project_HC
         public void SetHeight(float height)
         {
             this.height = height;
-        }
-
-        public void SetTrackingTarget(Transform target, bool useTween = false)
-        {
-            TrackingTarget = target;
-            targetTween.Reset(useTween == false);
-
-            if (target != null)
-            {
-                // 물리 포인트 추가
-                PinPoint = line.Body.AddPinPoint(this);
-            }
-            else
-            {
-                // 추가된 물리 포인트 삭제
-                line.Body.RemovePinPoint(PinPoint);
-                PinPoint = null;
-            }
-        }
-
-        public void Retrieve()
-        {
-            body.isKinematic = true;
-            onKinematicChanged.OnNext(body.isKinematic);
         }
 
         public void UpdatePosition()
@@ -114,6 +88,57 @@ namespace ClimbGames.Project_HC
                     accumulatedHeight += linePoint.segmentLength;
                 }
             }
+        }
+
+        public void SetTrackingTarget(Transform target, bool useTween = false)
+        {
+            TrackingTarget = target;
+            targetTween.Reset(useTween == false);
+
+            if (target != null)
+            {
+                // 물리 포인트 추가
+                PinPoint = line.Body.AddPinPoint(this);
+            }
+            else
+            {
+                // 추가된 물리 포인트 삭제
+                line.Body.RemovePinPoint(PinPoint);
+                PinPoint = null;
+            }
+        }
+
+        public void Attach(ILineAttachable attachable)
+        {
+            attachable.Body.isKinematic = false;
+
+            var joint = attachable.Target.GetComponent<ConfigurableJoint>();
+            if (joint == null)
+            {
+                joint = attachable.Target.AddComponent<ConfigurableJoint>();
+                joint.autoConfigureConnectedAnchor = false;
+                joint.xMotion = ConfigurableJointMotion.Locked;
+                joint.yMotion = ConfigurableJointMotion.Locked;
+                joint.zMotion = ConfigurableJointMotion.Locked;
+            }
+            else
+            {
+                joint.connectedBody = null;
+            }
+
+            // 초기 회전 리셋
+            attachable.Target.rotation = transform.rotation;
+            joint.connectedBody = body;
+
+            attachable.OnAttached(this, joint);
+        }
+
+        public void Detach(ILineAttachable attachable)
+        {
+            if (attachable.Target.TryGetComponent<ConfigurableJoint>(out var joint))
+                Destroy(joint);
+
+            attachable.OnDetached(this);
         }
 
         void OnDrawGizmos()

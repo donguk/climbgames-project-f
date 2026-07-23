@@ -2,53 +2,51 @@
 
 namespace ClimbGames.Project_HC
 {
-    public class FishingLineObject : MonoBehaviour
+    public class FishingLineObject : FishingEquipment, ILineAttachable
     {
         private Rigidbody body;
-        private ConfigurableJoint joint;
 
-        public Rigidbody Body => body;
-        public ConfigurableJoint Joint => joint;
-        public FishingLinePoint ConnectedPoint { get; private set; }
-
-        protected virtual void Awake()
+        public Transform Target => transform;
+        public Rigidbody Body
         {
-            body = GetComponent<Rigidbody>();
-            joint = GetComponent<ConfigurableJoint>();
+            get
+            {
+                if (body == null)
+                    body = gameObject.GetOrAddComponent<Rigidbody>();
+                return body;
+            }
+        }
+        public ConfigurableJoint RuntimeJoint { get; private set; }
+        public FishingLinePoint LinePoint { get; private set; }
+
+        void ILineAttachable.OnAttached(FishingLinePoint point, ConfigurableJoint joint)
+        {
+            // 연결 포인트 저장
+            LinePoint = point;
+            RuntimeJoint = joint;
+
+            // 라인에 오브젝트 연결
+            LinePoint.SetTrackingTarget(null);
+            OnAttachToLine(point, joint);
         }
 
-        public virtual void AttachToLine(FishingLinePoint point)
+        void ILineAttachable.OnDetached(FishingLinePoint point)
         {
-            body.isKinematic = false;
+            // 연결되었던 포인트 저장
+            LinePoint = point;
+            RuntimeJoint = null;
 
-            if (joint == null)
-            {
-                joint = gameObject.GetOrAddComponent<ConfigurableJoint>();
-                joint.autoConfigureConnectedAnchor = false;
-                joint.xMotion = ConfigurableJointMotion.Locked;
-                joint.yMotion = ConfigurableJointMotion.Locked;
-                joint.zMotion = ConfigurableJointMotion.Locked;
-            }
-            else
-            {
-                joint.connectedBody = null;
-            }
-
-            // 초기 회전 리셋
-            transform.rotation = point.transform.rotation;
-            joint.connectedBody = point.Body;
-
-            ConnectedPoint = point;
-            ConnectedPoint.SetTrackingTarget(null);
+            // 라인의 포인트가 오브젝트를 추적
+            LinePoint.SetTrackingTarget(transform);
+            OnDetachFromLine(point);
         }
 
-        public virtual void DetachFromLine()
+        protected virtual void OnAttachToLine(FishingLinePoint point, ConfigurableJoint joint)
         {
-            if (Joint != null)
-                Destroy(Joint);
+        }
 
-            if (ConnectedPoint != null)
-                ConnectedPoint.SetTrackingTarget(transform);
+        protected virtual void OnDetachFromLine(FishingLinePoint point)
+        {
         }
     }
 }

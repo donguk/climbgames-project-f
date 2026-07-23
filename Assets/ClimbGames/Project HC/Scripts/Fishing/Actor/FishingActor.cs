@@ -47,15 +47,9 @@ namespace ClimbGames.Project_HC
 
         void Update()
         {
+            // 카메라 타켓 회전
             if (FishingInput.Instance.IsPressed)
                 fishingCamera.UpdateRotation(FishingInput.Instance.DragDelta);
-
-            // Test
-            if (Keyboard.current.upArrowKey.isPressed)
-                fishingLine.Reeling(Time.deltaTime * 2f);
-
-            if (Keyboard.current.downArrowKey.isPressed)
-                fishingLine.Release(Time.deltaTime * 2f);
         }
 
         public async UniTask Initialize(FishingArea area)
@@ -73,8 +67,8 @@ namespace ClimbGames.Project_HC
             fishingLine.Initialize(fishingRod.PoleTip, 0.5f, 0.25f);
 
             // 채비 설정
-            fishingBobber.AttachToLine(fishingLine.BobberPoint);
-            fishingHook.AttachToLine(fishingLine.EndPoint);
+            fishingLine.BobberPoint.Attach(fishingBobber);
+            fishingLine.EndPoint.Attach(fishingHook);
 
             await UniTask.Delay(100);
             controller.InitializeAndStart(this);
@@ -98,9 +92,9 @@ namespace ClimbGames.Project_HC
             if (controller.CurrentType == FishingActorState.Waiting)
             {
                 //fishingCharacter.SetTrigger(FishingAnimationParam.RetrieveRod);
-                fishingLine.SetLength(0.5f);
-                fishingBobber.AttachToLine(fishingLine.BobberPoint);
-                fishingHook.AttachToLine(fishingLine.EndPoint);
+                //fishingLine.SetLength(0.5f);
+                //fishingBobber.AttachToLine(fishingLine.BobberPoint);
+                //fishingHook.AttachToLine(fishingLine.EndPoint);
 
                 controller.ChangeState(FishingActorState.Idle);
             }

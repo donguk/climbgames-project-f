@@ -18,10 +18,7 @@ namespace ClimbGames.Project_HC
                 // 물고기 생성
                 targetFish = Controller.CreateHookedFish();
 
-                // 바늘 연결
-                Actor.Bobber.AttachToLine(Actor.Line.BobberPoint);
-                Actor.Line.EndPoint.SetTrackingTarget(targetFish.ModelRoot);
-                Actor.Line.SetForcedTension(1f, 0.5f);
+                FishingEvent.Broker.Publish(new FishingEvent.OnFishBite() { hookedFish = targetFish });
             }
 
             protected override void OnFixedUpdate()

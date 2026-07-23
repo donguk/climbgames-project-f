@@ -4,7 +4,7 @@ using System;
 
 namespace ClimbGames.Project_HC
 {
-    public class FishingBobber : FishingEquipment
+    public class FishingBobber : FishingLineObject
     {
         [Serializable]
         public class FloatingClip
@@ -28,15 +28,13 @@ namespace ClimbGames.Project_HC
         private Vector3 currentVelocity;
         private NormalizedTimer landingTimer = new NormalizedTimer();
         private NormalizedTimer floatingTimer = new NormalizedTimer();
-        private Subject<Unit> onFloating = new Subject<Unit>();
-        private Subject<Unit> onCompleteLanding = new Subject<Unit>();
+
+        private ReactiveProperty<bool> onCompleteLanding = new ReactiveProperty<bool>();
         private LineLengthInfo lengthInfo;
         private FishBiteInfo biteInfo;
 
-        public bool IsLanding => landingTimer.IsCompleted == false;
-        public bool IsFloating => Joint == null;
-        public Observable<Unit> OnFloatingAsObservable() => onFloating.AsObservable();
-        public Observable<Unit> OnComplateLandingAsObservable() => onCompleteLanding.AsObservable();
+        public bool IsFloating => RuntimeJoint == null;
+        public Observable<bool> OnComplateLandingAsObservable() => onCompleteLanding.AsObservable();
 
         void FixedUpdate()
         {
@@ -56,26 +54,27 @@ namespace ClimbGames.Project_HC
             Debug.Log($"[FishingBobber] OnTggerEnter: {other.gameObject.name}");
             if (other.gameObject.layer == FishingLayer.Water)
             {
-                DetachFromLine();
-
-                Body.excludeLayers = 1 << FishingLayer.Water;
                 waterHeight = other.transform.position.y;
                 landingTimer.Reset(landingClip.duration);
-                onFloating.OnNext(Unit.Default);
+
+                LinePoint.Detach(this);
+                Body.excludeLayers = 1 << FishingLayer.Water;
+
+                FishingEvent.Broker.Publish(new FishingEvent.OnBobberEnterWater());
             }
         }
 
         void SimulateHeight()
         {
             float targetHeight = waterHeight;
-            if (IsLanding)
+            if (landingTimer.IsCompleted == false)
             {
                 landingTimer.Update(Time.deltaTime);
                 targetHeight += landingClip.height.Evaluate(landingTimer.Value);
 
                 if (landingTimer.IsCompleted)
                 {
-                    onCompleteLanding.OnNext(Unit.Default);
+                    FishingEvent.Broker.Publish(new FishingEvent.OnBobberLandedWater());
                     floatingTimer.Reset(floatingClip.duration);
                 }
             }
@@ -131,11 +130,8 @@ namespace ClimbGames.Project_HC
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
         }
 
-        public override void AttachToLine(FishingLinePoint point)
+        protected override void OnAttachToLine(FishingLinePoint point, ConfigurableJoint joint)
         {
-            base.AttachToLine(point);
-
-            var joint = Joint;
             joint.angularXMotion = ConfigurableJointMotion.Locked;
             joint.angularZMotion = ConfigurableJointMotion.Locked;
 
@@ -148,25 +144,15 @@ namespace ClimbGames.Project_HC
             Body.excludeLayers = 1 << FishingLayer.Water;
         }
 
-        public override void DetachFromLine()
+        protected override void OnDetachFromLine(FishingLinePoint point)
         {
-            base.DetachFromLine();
-
             Body.isKinematic = true;
-        }
-
-        public override void Throw(Vector3 velocity)
-        {
-            Joint.angularXMotion = ConfigurableJointMotion.Locked;
-            Joint.angularZMotion = ConfigurableJointMotion.Locked;
-
-            Body.excludeLayers = 0;
         }
 
         public void SetCastingType(CastingType type)
         {
-            Joint.angularXMotion = type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
-            Joint.angularZMotion = type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
+            RuntimeJoint.angularXMotion = type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
+            RuntimeJoint.angularZMotion = type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
         }
 
         public void SetLengthInfo(LineLengthInfo lengthInfo)
@@ -177,6 +163,27 @@ namespace ClimbGames.Project_HC
         public void SetBiteInfo(FishBiteInfo biteInfo)
         {
             this.biteInfo = biteInfo;
+        }
+
+
+        // 이벤트
+        protected override void OnCastingThrow(FishingEvent.OnCastingThrow onThrow)
+        {
+            RuntimeJoint.angularXMotion = ConfigurableJointMotion.Locked;
+            RuntimeJoint.angularZMotion = ConfigurableJointMotion.Locked;
+
+            Body.excludeLayers = 0;
+        }
+
+        protected override void OnFishBite(FishingEvent.OnFishBite param)
+        {
+            LinePoint.Attach(this);
+        }
+
+        protected override void OnFishFlee(FishingEvent.OnFishFlee param)
+        {
+            LinePoint.Detach(this);
+            landingTimer.Reset(landingClip.duration);
         }
     }
 }
