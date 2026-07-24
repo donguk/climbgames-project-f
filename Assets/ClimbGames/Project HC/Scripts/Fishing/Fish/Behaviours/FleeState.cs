@@ -2,11 +2,11 @@
 
 namespace ClimbGames.Project_HC
 {
-    public partial class Fish
+    public partial class FishMachine
     {
         public class FleeState : FishStateBase
         {
-            public FleeState(Fish fish, FishingPlayer player) : base(fish, player)
+            public FleeState(FishingPlayer player, FishMachine fsm) : base(player, fsm)
             {
             }
 
@@ -16,7 +16,7 @@ namespace ClimbGames.Project_HC
                 Player.MessageBroker.Publish(new FishingEvent.OnFishFlee());
 
                 // 삭제
-                Fish.DeleteHookedFish();
+                Player.DeleteHookedFish();
             }
 
             protected override void OnUpdate()

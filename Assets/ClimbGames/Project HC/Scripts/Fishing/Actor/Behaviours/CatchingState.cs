@@ -3,11 +3,11 @@ using R3;
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishingPlayer
+    public partial class FishingActorMachine
     {
-        public class CatchingState : FishingPlayerStateBase
+        public class CatchingState : ActorStateBase
         {
-            public CatchingState(FishingPlayer player, Fish fish, FishingPlayer fsm) : base(player, fish, fsm)
+            public CatchingState(FishingPlayer player, FishingActorMachine fsm) : base(player, fsm)
             {
             }
 
@@ -19,7 +19,7 @@ namespace ClimbGames.Project_HC
                 {
                     Player.MessageBroker.Publish(new FishingEvent.OnPullOut()
                     {
-                        hookedFish = Fish.Target,
+                        hookedFish = Fish,
                         rod = Actor.Rod
                     });
                 }).AddTo(this);
@@ -27,7 +27,7 @@ namespace ClimbGames.Project_HC
                 // 애니메이션 완료
                 Actor.Character.Animator.OnStateExitAsObservable(FishingAnimation.PullOut_Catch, Actor.Character.BodyLayer).Subscribe(_ =>
                 {
-                    Player.MessageBroker.Publish(new FishingEvent.OnFishCatched() { fishData = Fish.Data });
+                    Player.MessageBroker.Publish(new FishingEvent.OnFishCatched() { fishData = Player.FishData });
                 }).AddTo(this);
             }
         }

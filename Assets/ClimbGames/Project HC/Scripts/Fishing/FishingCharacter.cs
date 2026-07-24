@@ -28,16 +28,12 @@ namespace ClimbGames.Project_HC
             armsLayer = _animator.GetLayerIndex(FishingAnimation.ArmsLayer);
         }
 
-        public void UpdateRotation(FishingPlayer player)
+        public void UpdateRotation(FishingCamera camera, FishingPlayerModel model)
         {
-            FishingCamera camera = player.Actor.Camera;
-            CastingType castingType = player.CastingType;
-            FishingPlayerState state = player.State.CurrentValue;
-
             Vector3 targetTiltLimit = camera.TiltLimit;
 
             // 케스팅 피칭 모드시 캐릭터 틸트(상하) 제한
-            if (castingType == CastingType.Pitching && state == FishingPlayerState.Idle)
+            if (model.CastingType.CurrentValue == CastingType.Pitching && model.ActorState.CurrentValue == FishingActorState.Idle)
                 targetTiltLimit = tiltLimit;
 
             currentTiltLimit = Vector3.Lerp(currentTiltLimit, targetTiltLimit, Time.deltaTime * 5f);

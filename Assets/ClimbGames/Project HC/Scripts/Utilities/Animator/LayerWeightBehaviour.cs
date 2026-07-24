@@ -6,15 +6,15 @@ namespace ClimbGames.Project_HC
 {
     public class LayerWeightBehaviour : StateMachineBehaviour
     {
-        [SerializeField] float targetWeight;
-        [SerializeField] float durationTime;
+        [SerializeField] float weight;
+        [SerializeField] float duration;
 
         private CancellationTokenSource cts;
 
         public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
         {
             cts = new CancellationTokenSource();
-            FadeLayerWeight(animator, layerIndex, targetWeight, durationTime).Forget();
+            FadeLayerWeight(animator, layerIndex, weight, duration).Forget();
         }
 
         public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
@@ -24,19 +24,18 @@ namespace ClimbGames.Project_HC
             cts = null;
         }
 
-        async UniTaskVoid FadeLayerWeight(Animator animator, int layerIndex, float targetWeight, float durationTime, CancellationToken cancellationToken = default)
+        async UniTaskVoid FadeLayerWeight(Animator animator, int layerIndex, float weight, float duration, CancellationToken cancellationToken = default)
         {
             float startWeight = animator.GetLayerWeight(layerIndex);
             float time = 0f;
 
-            while (time < durationTime)
+            while (time < duration)
             {
                 time += Time.deltaTime;
-                float weight = Mathf.Lerp(startWeight, targetWeight, time / durationTime);
-                animator.SetLayerWeight(layerIndex, weight);
+                animator.SetLayerWeight(layerIndex, Mathf.Lerp(startWeight, weight, time / duration));
                 await UniTask.NextFrame(cancellationToken);
             }
-            animator.SetLayerWeight(layerIndex, targetWeight);
+            animator.SetLayerWeight(layerIndex, weight);
         }
     }
 }

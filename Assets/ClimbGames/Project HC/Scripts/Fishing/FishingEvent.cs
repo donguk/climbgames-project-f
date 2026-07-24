@@ -23,12 +23,6 @@ namespace ClimbGames.Project_HC
 
         // 이벤트
 
-        public struct OnActorChanged : IFishingEvent
-        {
-            public FishingPlayerState before;
-            public FishingPlayerState current;
-        }
-
         public struct OnCastingTypeChanged : IFishingEvent
         {
             public CastingType type;

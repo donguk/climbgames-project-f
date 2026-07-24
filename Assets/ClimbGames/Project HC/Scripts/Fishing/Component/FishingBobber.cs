@@ -130,12 +130,9 @@ namespace ClimbGames.Project_HC
 
         protected override void OnAttachToLine(FishingLinePoint point, ConfigurableJoint joint)
         {
-            joint.angularXMotion = ConfigurableJointMotion.Limited;
-            joint.angularZMotion = ConfigurableJointMotion.Limited;
+            joint.angularXMotion = ConfigurableJointMotion.Locked;
+            joint.angularZMotion = ConfigurableJointMotion.Locked;
 
-            joint.lowAngularXLimit = new SoftJointLimit() { limit = -30f };
-            joint.highAngularXLimit = new SoftJointLimit() { limit = 30f };
-            joint.angularZLimit = new SoftJointLimit() { limit = 30 };
             joint.angularXDrive = new JointDrive() { positionDamper = 1, maximumForce = float.MaxValue };
             joint.angularYZDrive = new JointDrive() { positionDamper = 1, maximumForce = float.MaxValue };
 

@@ -5,11 +5,11 @@ using R3;
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishingPlayer
+    public partial class FishingActorMachine
     {
-        public class CastingState : FishingPlayerStateBase
+        public class CastingState : ActorStateBase
         {
-            public CastingState(FishingPlayer player, Fish fish, FishingPlayer fsm) : base(player, fish, fsm)
+            public CastingState(FishingPlayer player, FishingActorMachine fsm) : base(player, fsm)
             {
             }
 
@@ -23,10 +23,10 @@ namespace ClimbGames.Project_HC
                 }).AddTo(this);
 
                 // (찌 없는 경우) 바늘이 땅에 닿았을 경우
-                Player.MessageBroker.Receive<FishingEvent.OnHookGrounded>().Subscribe(_ => fsm.ChangeState(FishingPlayerState.Waiting)).AddTo(this);
+                Player.MessageBroker.Receive<FishingEvent.OnHookGrounded>().Subscribe(_ => fsm.ChangeState(FishingActorState.Waiting)).AddTo(this);
 
                 // 찌가 물에 닿을 경우
-                Player.MessageBroker.Receive<FishingEvent.OnBobberEnterWater>().Subscribe(_ => fsm.ChangeState(FishingPlayerState.Waiting)).AddTo(this);
+                Player.MessageBroker.Receive<FishingEvent.OnBobberEnterWater>().Subscribe(_ => fsm.ChangeState(FishingActorState.Waiting)).AddTo(this);
             }
 
             protected override void OnFixedUpdate()
@@ -43,7 +43,7 @@ namespace ClimbGames.Project_HC
 
             public void Throw()
             {
-                float throwAngle = Player.CastingType == CastingType.OverHead ? 40f : 20f;
+                float throwAngle = Player.Model.CastingType.CurrentValue == CastingType.OverHead ? 40f : 20f;
                 if (TryGetThrowVelocity(Actor.Hook.transform, Actor.WaterArea.Center, throwAngle, out var velocity))
                 {
                     Player.MessageBroker.Publish(new FishingEvent.OnCastingThrow() { velocity = velocity });

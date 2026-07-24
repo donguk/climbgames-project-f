@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
-    public class OffsetTransformBehaviour : StateMachineBehaviour
+    public class TransformParentBehaviour : StateMachineBehaviour
     {
         [SerializeField] private Vector3 position;
         [SerializeField] private Vector3 rotation;
@@ -15,7 +15,7 @@ namespace ClimbGames.Project_HC
         public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
         {
             cts = new CancellationTokenSource();
-            TranslateOffset(animator.transform.parent, position, Quaternion.Euler(rotation), 0.2f, cts.Token).Forget();
+            Translate(animator.transform.parent, position, Quaternion.Euler(rotation), duration, cts.Token).Forget();
         }
 
         public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
@@ -25,7 +25,7 @@ namespace ClimbGames.Project_HC
             cts = null;
         }
 
-        async UniTaskVoid TranslateOffset(Transform target, Vector3 position, Quaternion rotation, float duration, CancellationToken cancellationToken)
+        async UniTaskVoid Translate(Transform target, Vector3 position, Quaternion rotation, float duration, CancellationToken cancellationToken)
         {
             if (target == null)
                 return;

@@ -2,7 +2,7 @@
 
 namespace ClimbGames.Project_HC
 {
-    public class FishStruggleInfo
+    public struct FishStruggleInfo
     {
         public WaterAreaInfo areaInfo;
         public float stamina;

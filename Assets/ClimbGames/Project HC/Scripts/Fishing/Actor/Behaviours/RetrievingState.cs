@@ -4,11 +4,11 @@ using R3;
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishingPlayer
+    public partial class FishingActorMachine
     {
-        public class RetrievingState : FishingPlayerStateBase
+        public class RetrievingState : ActorStateBase
         {
-            public RetrievingState(FishingPlayer player, Fish fish, FishingPlayer fsm) : base(player, fish, fsm)
+            public RetrievingState(FishingPlayer player, FishingActorMachine fsm) : base(player, fsm)
             {
             }
 
@@ -23,7 +23,7 @@ namespace ClimbGames.Project_HC
 
                 Actor.Character.Animator.OnNormalizedTimeReachedAsObservable(FishingAnimation.PullOut, 0.9f, Actor.Character.BodyLayer).Subscribe(_ =>
                 {
-                    fsm.ChangeState(FishingPlayerState.Idle);
+                    fsm.ChangeState(FishingActorState.Idle);
                 }).AddTo(this);
             }
         }

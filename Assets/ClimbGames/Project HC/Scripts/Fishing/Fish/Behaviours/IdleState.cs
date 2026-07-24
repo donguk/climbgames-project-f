@@ -2,18 +2,18 @@
 
 namespace ClimbGames.Project_HC
 {
-    public partial class Fish
+    public partial class FishMachine
     {
         public class IdleState : FishStateBase
         {
-            public IdleState(Fish fish, FishingPlayer player) : base(fish, player)
+            public IdleState(FishingPlayer player, FishMachine fsm) : base(player, fsm)
             {
             }
 
             protected override void OnEnter()
             {
                 // 삭제
-                Fish.DeleteHookedFish();
+                Player.DeleteHookedFish();
 
                 // 물고기가 bite 가능한 경우 접근
                 Player.MessageBroker.Receive<FishingEvent.OnHookGrounded>().Subscribe(_ => fsm.ChangeState(FishState.Approach)).AddTo(this);

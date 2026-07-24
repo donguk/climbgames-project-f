@@ -2,7 +2,7 @@
 
 namespace ClimbGames.Project_HC
 {
-    public partial class Fish
+    public partial class FishMachine
     {
         public class NibbleState : FishStateBase
         {
@@ -10,13 +10,13 @@ namespace ClimbGames.Project_HC
             private NormalizedTimer nibbleTimer = new NormalizedTimer();
             private Vector3 angleAxis;
 
-            public NibbleState(Fish fish, FishingPlayer player) : base(fish, player)
+            public NibbleState(FishingPlayer player, FishMachine fsm) : base(player, fsm)
             {
             }
 
             protected override void OnEnter()
             {
-                biteClip = Fish.Data.nibbleClip;
+                biteClip = Player.FishData.nibbleClip;
                 nibbleTimer.Reset(biteClip.duration);
                 angleAxis = Random.Range(0, 2) > 0 ? Vector3.forward : Vector3.back;
             }

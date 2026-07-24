@@ -2,21 +2,21 @@
 
 namespace ClimbGames.Project_HC
 {
-    public partial class Fish
+    public partial class FishMachine
     {
         public class ApproachState : FishStateBase
         {
             private float biteTime;
             private float elapsedTime;
 
-            public ApproachState(Fish fish, FishingPlayer player) : base(fish, player)
+            public ApproachState(FishingPlayer player, FishMachine fsm) : base(player, fsm)
             {
             }
 
             protected override void OnEnter()
             {
                 // 물고기 결정
-                Fish.FetchData();
+                Player.FetchFishData();
 
                 biteTime = Random.Range(5f, 10f);
                 elapsedTime = 0f;
