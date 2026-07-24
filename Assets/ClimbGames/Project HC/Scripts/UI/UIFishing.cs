@@ -26,6 +26,7 @@ namespace ClimbGames.Project_HC
         [SerializeField] private TMP_Text txt_casting_type;
         [SerializeField] private Slider sld_tension_gauge;
         [SerializeField] private TMP_Text txt_tension_value;
+        [SerializeField] private Button btn_get;
 
         private CastingState castingState = CastingState.None;
         private int loadingDirection = 1;
@@ -55,6 +56,9 @@ namespace ClimbGames.Project_HC
 
             btn_reeling.OnPointerDownAsObservable().Subscribe(_ => FishingInput.Instance.SetReeling(true)).AddTo(this);
             btn_reeling.OnPointerUpAsObservable().Subscribe(_ => FishingInput.Instance.SetReeling(false)).AddTo(this);
+
+            localPlayer.MessageBroker.Receive<FishingEvent.OnFishCatched>().Subscribe(_ => btn_get.gameObject.SetActive(true)).AddTo(this);
+            btn_get.OnClickAsObservable().Subscribe(_ => localPlayer.GetFish()).AddTo(this);
         }
 
         void Update()
@@ -95,6 +99,8 @@ namespace ClimbGames.Project_HC
                         btn_casting.interactable = true;
                         sld_casting_gauge.gameObject.SetActive(false);
                         txt_casting.text = "Casting";
+
+                        btn_get.gameObject.SetActive(false);
                         break;
                     }
                 case CastingState.Loading:

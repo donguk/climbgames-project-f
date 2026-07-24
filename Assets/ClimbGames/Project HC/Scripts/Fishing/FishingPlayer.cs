@@ -61,5 +61,11 @@ namespace ClimbGames.Project_HC
 
             messageBroker.Publish(new FishingEvent.OnCastingTypeChanged() { type = type, leftHandle = Actor.Character.LeftHandle });
         }
+
+        public void GetFish()
+        {
+            ChangeState(FishingPlayerState.Idle);
+            fish.ChangeState(FishState.Idle);
+        }
     }
 }
