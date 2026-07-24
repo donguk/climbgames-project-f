@@ -30,7 +30,7 @@ namespace ClimbGames.Project_HC
         private CastingState castingState = CastingState.None;
         private int loadingDirection = 1;
         private float loadingValue;
-        private IDisposable fishStatusUpdater;
+        private FishingPlayer localPlayer;
 
         void OnEnable()
         {
@@ -39,11 +39,19 @@ namespace ClimbGames.Project_HC
 
         void Start()
         {
-            FishingModel.Instance.FishingState.Subscribe(_ => OnChangeFishingState(_)).AddTo(this);
+            localPlayer = FishingPlayerManager.Instance.LocalPlayer;
+
+            localPlayer.State.Subscribe(_ => OnChangeFishingState(_)).AddTo(this);
             btn_casting.OnClickAsObservable().Subscribe(_ => OnClickCasting()).AddTo(this);
 
-            SetCastingType(FishingModel.Instance.CastingType.CurrentValue);
-            tgl_casting_type.OnValueChangedAsObservable().Subscribe(_ => SetCastingType(_ ? CastingType.OverHead : CastingType.Pitching)).AddTo(this);
+            SetCastingType(localPlayer.CastingType);
+            tgl_casting_type.OnValueChangedAsObservable().Subscribe(_ =>
+            {
+                CastingType type = _ ? CastingType.OverHead : CastingType.Pitching;
+                localPlayer.SetCastingType(type);
+                SetCastingType(type);
+
+            }).AddTo(this);
 
             btn_reeling.OnPointerDownAsObservable().Subscribe(_ => FishingInput.Instance.SetReeling(true)).AddTo(this);
             btn_reeling.OnPointerUpAsObservable().Subscribe(_ => FishingInput.Instance.SetReeling(false)).AddTo(this);
@@ -65,12 +73,14 @@ namespace ClimbGames.Project_HC
                         sld_casting_gauge.value = loadingValue;
                         break;
                     }
-                case CastingState.Throw:
-                    {
-                        if (FishingModel.Instance.FishingState.CurrentValue == FishingActorState.Waiting)
-                            SetCastingState(CastingState.Landing);
-                        break;
-                    }
+            }
+
+            if (localPlayer.State.CurrentValue == FishingPlayerState.Fighting)
+            {
+                FishStatus fishStatus = localPlayer.Fish.Status;
+
+                sld_tension_gauge.value = fishStatus.currentTension;
+                txt_tension_value.text = $"{fishStatus.currentTension:0.##}";
             }
         }
 
@@ -99,7 +109,7 @@ namespace ClimbGames.Project_HC
                 case CastingState.Throw:
                     {
                         btn_casting.interactable = false;
-                        FishingModel.Instance.StartCasting(loadingValue);
+                        localPlayer.MessageBroker.Publish(new FishingEvent.OnCastingStarted() { intensity = loadingValue });
                         break;
                     }
                 case CastingState.Landing:
@@ -113,8 +123,6 @@ namespace ClimbGames.Project_HC
 
         void SetCastingType(CastingType type)
         {
-            FishingModel.Instance.ChangeCastingType(type);
-
             tgl_casting_type.SetIsOnWithoutNotify(type == CastingType.OverHead);
             txt_casting_type.text = $"{type}";
         }
@@ -125,7 +133,7 @@ namespace ClimbGames.Project_HC
             {
                 case CastingState.None:
                     {
-                        if (FishingModel.Instance.CastingType.CurrentValue == CastingType.OverHead)
+                        if (localPlayer.CastingType == CastingType.OverHead)
                             SetCastingState(CastingState.Loading);
                         else
                             SetCastingState(CastingState.Throw);
@@ -139,26 +147,20 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        void OnChangeFishingState(FishingActorState state)
+        void OnChangeFishingState(FishingPlayerState state)
         {
             switch (state)
             {
-                case FishingActorState.Idle: SetCastingState(CastingState.None); break;
+                case FishingPlayerState.Idle: SetCastingState(CastingState.None); break;
+                case FishingPlayerState.Waiting: SetCastingState(CastingState.Landing); break;
             }
 
-            if (state == FishingActorState.Fighting)
+            if (state == FishingPlayerState.Fighting)
             {
                 sld_tension_gauge.gameObject.SetActive(true);
-                fishStatusUpdater?.Dispose();
-                fishStatusUpdater = FishingModel.Instance.OnUpdateFishStatusAsObservable().Subscribe(_ =>
-                {
-                    sld_tension_gauge.value = _.currentTension;
-                    txt_tension_value.text = $"{_.currentTension:0.##}";
-                }).AddTo(this);
             }
             else
             {
-                fishStatusUpdater?.Dispose();
                 sld_tension_gauge.gameObject.SetActive(false);
             }
         }

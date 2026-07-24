@@ -18,13 +18,13 @@ namespace ClimbGames.Project_HC
             });
         }
 
-        public static Observable<Unit> OnStateExitAsObservable(this Animator animator, string stateName)
+        public static Observable<Unit> OnStateExitAsObservable(this Animator animator, string stateName, int layer = 0)
         {
             if (animator == null) throw new ArgumentNullException(nameof(animator));
             if (string.IsNullOrEmpty(stateName)) throw new ArgumentNullException(nameof(stateName));
 
             return Observable.EveryUpdate()
-                .Select(_ => animator.GetCurrentAnimatorStateInfo(0).IsName(stateName))
+                .Select(_ => animator.GetCurrentAnimatorStateInfo(layer).IsName(stateName))
                 .DistinctUntilChanged() // 변화 감지
                 .Pairwise()             // 이전값, 현재값 비교
                 .Where(pair => pair.Previous == true && pair.Current == false)

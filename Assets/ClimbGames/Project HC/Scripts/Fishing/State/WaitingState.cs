@@ -3,18 +3,18 @@ using R3;
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishingActorController
+    public partial class FishingPlayer
     {
-        public class WaitingState : FishingActorStateBase
+        public class WaitingState : FishingPlayerStateBase
         {
-            public WaitingState(FishingActor actor, FishController fish, FishingActorController fsm) : base(actor, fish, fsm)
+            public WaitingState(FishingPlayer player, Fish fish, FishingPlayer fsm) : base(player, fish, fsm)
             {
             }
 
             protected override void OnEnter()
             {
                 // 물고기가 물었을때
-                FishingEvent.Broker.Receive<FishingEvent.OnFishBite>().Subscribe(_ => fsm.ChangeState(FishingActorState.Fighting)).AddTo(this);
+                Player.MessageBroker.Receive<FishingEvent.OnFishBite>().Subscribe(_ => fsm.ChangeState(FishingPlayerState.Fighting)).AddTo(this);
             }
 
             protected override void OnFixedUpdate()
@@ -28,7 +28,7 @@ namespace ClimbGames.Project_HC
                 {
                     // 릴 감기
                     if (Actor.Line.Reeling(reelingInput * Time.fixedDeltaTime) < 1f)
-                        fsm.ChangeState(FishingActorState.Retrieving);
+                        fsm.ChangeState(FishingPlayerState.Retrieving);
                 }
 
                 LineLengthInfo lengthInfo = LineLengthInfo.Default;

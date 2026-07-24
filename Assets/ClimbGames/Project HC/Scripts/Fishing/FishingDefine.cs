@@ -14,6 +14,7 @@ namespace ClimbGames.Project_HC
         public const string ArmsLayer = "Arms";
 
         public const string CastingType = "CastingType";
+        public const string Idle = "Idle";
         public const string Throw = "Throw";
         public const string PullOut = "PullOut";
         public const string PullOut_Catch = "PullOut_Catch";

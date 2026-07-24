@@ -28,13 +28,11 @@ namespace ClimbGames.Project_HC
         private Vector3 currentVelocity;
         private NormalizedTimer landingTimer = new NormalizedTimer();
         private NormalizedTimer floatingTimer = new NormalizedTimer();
-
-        private ReactiveProperty<bool> onCompleteLanding = new ReactiveProperty<bool>();
         private LineLengthInfo lengthInfo;
         private FishBiteInfo biteInfo;
 
         public bool IsFloating => RuntimeJoint == null;
-        public Observable<bool> OnComplateLandingAsObservable() => onCompleteLanding.AsObservable();
+        public bool IsBitable => IsFloating && landingTimer.IsCompleted;
 
         void FixedUpdate()
         {
@@ -60,7 +58,7 @@ namespace ClimbGames.Project_HC
                 LinePoint.Detach(this);
                 Body.excludeLayers = 1 << FishingLayer.Water;
 
-                FishingEvent.Broker.Publish(new FishingEvent.OnBobberEnterWater());
+                MessageBroker.Publish(new FishingEvent.OnBobberEnterWater());
             }
         }
 
@@ -74,7 +72,7 @@ namespace ClimbGames.Project_HC
 
                 if (landingTimer.IsCompleted)
                 {
-                    FishingEvent.Broker.Publish(new FishingEvent.OnBobberLandedWater());
+                    MessageBroker.Publish(new FishingEvent.OnBobberLandedWater());
                     floatingTimer.Reset(floatingClip.duration);
                 }
             }
@@ -132,8 +130,8 @@ namespace ClimbGames.Project_HC
 
         protected override void OnAttachToLine(FishingLinePoint point, ConfigurableJoint joint)
         {
-            joint.angularXMotion = ConfigurableJointMotion.Locked;
-            joint.angularZMotion = ConfigurableJointMotion.Locked;
+            joint.angularXMotion = ConfigurableJointMotion.Limited;
+            joint.angularZMotion = ConfigurableJointMotion.Limited;
 
             joint.lowAngularXLimit = new SoftJointLimit() { limit = -30f };
             joint.highAngularXLimit = new SoftJointLimit() { limit = 30f };
@@ -141,18 +139,15 @@ namespace ClimbGames.Project_HC
             joint.angularXDrive = new JointDrive() { positionDamper = 1, maximumForce = float.MaxValue };
             joint.angularYZDrive = new JointDrive() { positionDamper = 1, maximumForce = float.MaxValue };
 
+            joint.projectionMode = JointProjectionMode.PositionAndRotation;
+            joint.projectionDistance = 0.1f;
+
             Body.excludeLayers = 1 << FishingLayer.Water;
         }
 
         protected override void OnDetachFromLine(FishingLinePoint point)
         {
             Body.isKinematic = true;
-        }
-
-        public void SetCastingType(CastingType type)
-        {
-            RuntimeJoint.angularXMotion = type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
-            RuntimeJoint.angularZMotion = type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
         }
 
         public void SetLengthInfo(LineLengthInfo lengthInfo)
@@ -167,6 +162,12 @@ namespace ClimbGames.Project_HC
 
 
         // 이벤트
+        protected override void OnCastingTypeChanged(FishingEvent.OnCastingTypeChanged param)
+        {
+            RuntimeJoint.angularXMotion = param.type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
+            RuntimeJoint.angularZMotion = param.type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
+        }
+
         protected override void OnCastingThrow(FishingEvent.OnCastingThrow onThrow)
         {
             RuntimeJoint.angularXMotion = ConfigurableJointMotion.Locked;
@@ -184,6 +185,11 @@ namespace ClimbGames.Project_HC
         {
             LinePoint.Detach(this);
             landingTimer.Reset(landingClip.duration);
+        }
+
+        protected override void OnPullOut(FishingEvent.OnPullOut param)
+        {
+            LinePoint.Attach(this);
         }
     }
 }

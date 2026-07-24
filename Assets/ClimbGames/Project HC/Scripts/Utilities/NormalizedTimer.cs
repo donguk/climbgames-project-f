@@ -3,11 +3,11 @@ using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
-    [Serializable]
     public class NormalizedTimer
     {
         protected float duration;
         private float elapsedTime;
+        private Action onComplete;
 
         public virtual float Value => duration > 0f ? Mathf.Clamp01(elapsedTime / duration) : 1f;
         public bool IsCompleted => elapsedTime >= duration;
@@ -28,6 +28,12 @@ namespace ClimbGames.Project_HC
 
             if (elapsedTime < duration)
                 elapsedTime += deltaTime;
+
+            if (IsCompleted)
+            {
+                onComplete?.Invoke();
+                onComplete = null;
+            }
         }
 
         public void Reset(bool reverse = false)
@@ -35,9 +41,11 @@ namespace ClimbGames.Project_HC
             elapsedTime = reverse ? duration : 0f;
         }
 
-        public void Reset(float duration)
+        public void Reset(float duration, Action onComplete = null)
         {
             this.duration = duration;
+            this.onComplete = onComplete;
+
             Reset();
         }
     }

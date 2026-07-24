@@ -2,20 +2,22 @@
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishController
+    public partial class Fish
     {
         public class NibbleState : FishStateBase
         {
+            private FishData.BiteClip biteClip;
             private NormalizedTimer nibbleTimer = new NormalizedTimer();
             private Vector3 angleAxis;
 
-            public NibbleState(FishController fsm) : base(fsm)
+            public NibbleState(Fish fish, FishingPlayer player) : base(fish, player)
             {
             }
 
             protected override void OnEnter()
             {
-                nibbleTimer.Reset(FishData.nibbleClip.duration);
+                biteClip = Fish.Data.nibbleClip;
+                nibbleTimer.Reset(biteClip.duration);
                 angleAxis = Random.Range(0, 2) > 0 ? Vector3.forward : Vector3.back;
             }
 
@@ -27,8 +29,8 @@ namespace ClimbGames.Project_HC
                 {
                     Actor.Bobber.SetBiteInfo(new FishBiteInfo()
                     {
-                        bobberHeight = FishData.nibbleClip.bobberHeight.Evaluate(nibbleTimer.Value),
-                        bobberRotation = FishData.nibbleClip.bobberRotation.Evaluate(nibbleTimer.Value),
+                        bobberHeight = biteClip.bobberHeight.Evaluate(nibbleTimer.Value),
+                        bobberRotation = biteClip.bobberRotation.Evaluate(nibbleTimer.Value),
                         angleAxis = angleAxis,
                     });
                 }

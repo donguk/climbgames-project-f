@@ -9,8 +9,6 @@ namespace ClimbGames.Project_HC
         [SerializeField] private FishingLinePoint bobberPoint;
         [SerializeField] private FishingLinePoint endPoint;
         [SerializeField] private FishingLinePoint handlePoint;
-        [SerializeField] public float slackDistance = 1f;
-        [SerializeField] public float maxPullDistance = 0.5f;
         [SerializeField] private float totalLength;
         [Range(0f, 1f)]
         [SerializeField] private float forcedTension = 0f;
@@ -134,20 +132,6 @@ namespace ClimbGames.Project_HC
             forcedTensionTimer.Reset(duration);
         }
 
-        public void SetCastingType(CastingType type, Transform target)
-        {
-            if (type == CastingType.Pitching)
-            {
-                handlePoint.SetTrackingTarget(target, true);
-                targetLength = Vector3.Distance(rodTip.position, target.position);
-            }
-            else
-            {
-                handlePoint.SetTrackingTarget(null);
-                SetLength(totalLength, 1f);
-            }
-        }
-
         public float Release(float amount)
         {
             if (amount > 0f)
@@ -167,6 +151,19 @@ namespace ClimbGames.Project_HC
 
 
         // 이벤트 처리
+        protected override void OnCastingTypeChanged(FishingEvent.OnCastingTypeChanged param)
+        {
+            if (param.type == CastingType.Pitching)
+            {
+                handlePoint.SetTrackingTarget(param.leftHandle, 1f);
+                targetLength = Vector3.Distance(rodTip.position, param.leftHandle.position);
+            }
+            else
+            {
+                handlePoint.SetTrackingTarget(null);
+                SetLength(totalLength, 1f);
+            }
+        }
 
         protected override void OnCastingThrow(FishingEvent.OnCastingThrow param)
         {
@@ -188,14 +185,22 @@ namespace ClimbGames.Project_HC
             SetForcedTension(0f, 0.1f);
         }
 
-        protected override void OnFishSubmit(FishingEvent.OnFishSubmit param)
+        protected override void OnPullOut(FishingEvent.OnPullOut param)
         {
-            // 물고기 연결
-            endPoint.Attach(param.hookedFish);
-            endPoint.SetTrackingTarget(null);
+            // 물고기가 잡혔다면 연결
+            if (param.hookedFish != null)
+            {
+                // 포지션 리셋
+                var hookedFish = param.hookedFish;
+                hookedFish.transform.position = hookedFish.ModelRoot.position;
+                hookedFish.ModelRoot.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
 
+                endPoint.Attach(param.hookedFish);
+            }
+
+            endPoint.SetTrackingTarget(param.rod.LineGuide, 1f, () => endPoint.SetTrackingTarget(null));
             SetForcedTension(0f, 1f);
-            SetLength(1f, 2f);
+            SetLength(1f, 1f);
         }
     }
 }

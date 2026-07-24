@@ -1,20 +1,44 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ClimbGames.Project_HC
 {
     public interface IFishingEvent
     {
-        // 타입 구분이 필요한 경우 사용
+        // 타입 구분이 필요한 경우
     }
 
-
-    // !다중 캐릭터 일 경우 broker 분리 필요!
     public static class FishingEvent
     {
-        private static readonly Lazy<MessageBroker> _broker = new(() => new MessageBroker());
-        public static MessageBroker Broker => _broker.Value;
+        private static Dictionary<int, MessageBroker> _brokers = new Dictionary<int, MessageBroker>();
+        public static MessageBroker GetBroker(int id)
+        {
+            if (_brokers.TryGetValue(id, out var broker) == false)
+                _brokers[id] = broker = new MessageBroker();
 
+            return broker;
+        }
+
+
+        // 이벤트
+
+        public struct OnActorChanged : IFishingEvent
+        {
+            public FishingPlayerState before;
+            public FishingPlayerState current;
+        }
+
+        public struct OnCastingTypeChanged : IFishingEvent
+        {
+            public CastingType type;
+            public Transform leftHandle;
+        }
+
+        public struct OnCastingStarted : IFishingEvent
+        {
+            public float intensity;
+        }
 
         public struct OnCastingThrow : IFishingEvent
         {
@@ -45,6 +69,17 @@ namespace ClimbGames.Project_HC
         public struct OnFishSubmit : IFishingEvent
         {
             public HookedFish hookedFish;
+        }
+
+        public struct OnPullOut : IFishingEvent
+        {
+            public HookedFish hookedFish;
+            public FishingRod rod;
+        }
+
+        public struct OnFishCatched : IFishingEvent
+        {
+            public FishData fishData;
         }
     }
 }

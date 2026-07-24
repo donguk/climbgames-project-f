@@ -59,17 +59,13 @@ namespace ClimbGames.Project_HC
             }
             await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
 
-            if (fishingActor == null)
-                fishingActor = AssetManager.Instantiate<FishingActor>("FishingActor");
-
-            fishingActor.gameObject.SetActive(true);
-            await fishingActor.Initialize(area);
+            await FishingPlayerManager.Instance.LocalPlayer.Initialize(area);
 
             var brain = Camera.main.GetComponent<CinemachineBrain>();
             brain.UpdateMethod = CinemachineBrain.UpdateMethods.FixedUpdate;
 
             SetupFishing();
-            WorldCamera.Instance.ChangeCinemachine($"Fishing", fishingActor.Camera.TrackingTarget);
+            WorldCamera.Instance.ChangeCinemachine($"Fishing", FishingPlayerManager.Instance.LocalPlayer.Camera.TrackingTarget);
             (DefaultTransition.Instance as ITransitionHandler).Complete();
         }
 
@@ -96,8 +92,8 @@ namespace ClimbGames.Project_HC
         {
             player.gameObject.SetActive(true);
             joystick.gameObject.SetActive(true);
-            if (fishingActor != null)
-                fishingActor.gameObject.SetActive(false);
+
+            FishingPlayerManager.Instance.LocalPlayer.Hide();
             UIManager.Instance.Hide<UIFishing>();
         }
     }

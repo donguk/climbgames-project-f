@@ -4,6 +4,8 @@ namespace ClimbGames.Project_HC
 {
     public class FishingHook : FishingLineObject
     {
+        public bool IsFlying => RuntimeJoint == null && Body.isKinematic == false;
+
         void OnTriggerEnter(Collider other)
         {
             if (other.gameObject.layer == FishingLayer.Water)
@@ -13,13 +15,15 @@ namespace ClimbGames.Project_HC
         void OnCollisionEnter(Collision collision)
         {
             if (collision.gameObject.layer == FishingLayer.Ground)
-                FishingEvent.Broker.Publish(new FishingEvent.OnHookGrounded());
+                MessageBroker.Publish(new FishingEvent.OnHookGrounded());
         }
 
         protected override void OnAttachToLine(FishingLinePoint point, ConfigurableJoint joint)
         {
             joint.angularXMotion = ConfigurableJointMotion.Locked;
             joint.angularZMotion = ConfigurableJointMotion.Locked;
+            joint.projectionMode = JointProjectionMode.PositionAndRotation;
+            joint.projectionDistance = 0.1f;
 
             Body.excludeLayers |= 1 << FishingLayer.Ground;
         }

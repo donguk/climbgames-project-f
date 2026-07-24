@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace ClimbGames.Project_HC
 {
@@ -11,7 +12,6 @@ namespace ClimbGames.Project_HC
         [SerializeField] private float closeDistanceThreshold = 0.1f;
         [SerializeField] private Vector2 heightLimit = new Vector2(0f, 0.2f);
 
-        private FishController controller;
         private float hookHeight;
         private float prevDistance;
         private Vector3 targetPosition;
@@ -33,10 +33,8 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        public void Initialize(FishController controller)
+        public void Initialize()
         {
-            this.controller = controller;
-
             hookHeight = transform.position.y;
             targetPosition = transform.position;
             modelRoot.localPosition = Vector3.zero;
@@ -45,7 +43,7 @@ namespace ClimbGames.Project_HC
 
         void FixedUpdate()
         {
-            if (controller.CurrentType == FishState.Struggle)
+            if (body == null || body.isKinematic)
             {
                 SimulatePull();
                 SimulateStruggle();
@@ -130,11 +128,13 @@ namespace ClimbGames.Project_HC
         {
             joint.angularXDrive = new JointDrive() { positionDamper = 0.1f, maximumForce = float.MaxValue };
             joint.angularYZDrive = new JointDrive() { positionDamper = 0.1f, maximumForce = float.MaxValue };
+
+            joint.projectionMode = JointProjectionMode.PositionAndRotation;
+            joint.projectionDistance = 0.1f;
         }
 
         void ILineAttachable.OnDetached(FishingLinePoint point)
         {
-            //
         }
 
 #if UNITY_EDITOR

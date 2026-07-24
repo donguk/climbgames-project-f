@@ -20,9 +20,7 @@ namespace ClimbGames.Project_HC
         public void Publish<T>(T message)
         {
             if (_subjects.TryGetValue(typeof(T), out var obj))
-            {
                 ((ISubject<T>)obj).OnNext(message);
-            }
         }
 
         public void Dispose()

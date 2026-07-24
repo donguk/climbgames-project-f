@@ -254,6 +254,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1463579562596576004}
+  - {fileID: 2489721781556049780}
   m_Father: {fileID: 3438542697333716551}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &437844497878125134
@@ -518,6 +519,37 @@ Transform:
   - {fileID: 8405094171265710374}
   m_Father: {fileID: 5891604150123037153}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5395658938090290889
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2489721781556049780}
+  m_Layer: 0
+  m_Name: LineGuide
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2489721781556049780
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5395658938090290889}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6956180829742902735}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5895220611674031566
 GameObject:
   m_ObjectHideFlags: 0
@@ -529,7 +561,7 @@ GameObject:
   - component: {fileID: 803290377219658855}
   - component: {fileID: 5486047626744227089}
   m_Layer: 0
-  m_Name: PhysicsRod
+  m_Name: FishingRod
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -565,6 +597,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingRod
   model: {fileID: 3531395478202011344}
   poleTip: {fileID: 6956180829742902735}
+  lineGuide: {fileID: 2489721781556049780}
 --- !u!1 &7334703581003273667
 GameObject:
   m_ObjectHideFlags: 0

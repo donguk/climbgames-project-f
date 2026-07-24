@@ -2,21 +2,25 @@
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishController
+    public partial class Fish
     {
         public class FleeState : FishStateBase
         {
-            public FleeState(FishController fsm) : base(fsm)
+            public FleeState(Fish fish, FishingPlayer player) : base(fish, player)
             {
             }
 
             protected override void OnEnter()
             {
-                FishingEvent.Broker.Publish(new FishingEvent.OnFishFlee());
+                // 이벤트를 먼저 발생하여, hook/bobber나 bobber 를 원상태로 복원
+                Player.MessageBroker.Publish(new FishingEvent.OnFishFlee());
 
                 // 삭제
-                Controller.DeleteHookedFish();
+                Fish.DeleteHookedFish();
+            }
 
+            protected override void OnUpdate()
+            {
                 fsm.ChangeState(FishState.Idle);
             }
         }

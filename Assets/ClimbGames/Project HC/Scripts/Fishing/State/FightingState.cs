@@ -4,21 +4,21 @@ using R3;
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishingActorController
+    public partial class FishingPlayer
     {
-        public class FightingState : FishingActorStateBase
+        public class FightingState : FishingPlayerStateBase
         {
-            public FightingState(FishingActor actor, FishController fish, FishingActorController fsm) : base(actor, fish, fsm)
+            public FightingState(FishingPlayer player, Fish fish, FishingPlayer fsm) : base(player, fish, fsm)
             {
             }
 
             protected override void OnEnter()
             {
                 // 물고기 도망
-                FishingEvent.Broker.Receive<FishingEvent.OnFishFlee>().Subscribe(_ => fsm.ChangeState(FishingActorState.Waiting)).AddTo(this);
+                Player.MessageBroker.Receive<FishingEvent.OnFishFlee>().Subscribe(_ => fsm.ChangeState(FishingPlayerState.Waiting)).AddTo(this);
 
                 // 물고기 잡음
-                FishingEvent.Broker.Receive<FishingEvent.OnFishSubmit>().Subscribe(_ => fsm.ChangeState(FishingActorState.Catching)).AddTo(this);
+                Player.MessageBroker.Receive<FishingEvent.OnFishSubmit>().Subscribe(_ => fsm.ChangeState(FishingPlayerState.Catching)).AddTo(this);
             }
 
             protected override void OnUpdate()
@@ -42,8 +42,6 @@ namespace ClimbGames.Project_HC
                     fishStatus.tensionOverTime += Time.deltaTime;
                 else
                     fishStatus.tensionOverTime = 0f;
-
-                FishingModel.Instance.SetFishStatus(fishStatus);
             }
 
             protected override void OnFixedUpdate()

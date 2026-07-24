@@ -197,7 +197,7 @@ Transform:
   m_GameObject: {fileID: 1365472744456977822}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.138, y: 0, z: 0}
+  m_LocalPosition: {x: 0.183, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -462,12 +462,10 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     duration: 8
-  pullStrength: 6
-  maxPullSpeed: 2.5
-  acceleration: 4
+  pullAcceleration: 4
   sensitivity: 1
   rotationSpeed: 2
-  tensionMaxAngle: 80
+  pullMaxAngle: 80
   biteMaxAngle: 90
 --- !u!1 &1855369321598724341
 GameObject:
@@ -1092,8 +1090,6 @@ MonoBehaviour:
   bobberPoint: {fileID: 8666444395038434717}
   endPoint: {fileID: 8333694936421398241}
   handlePoint: {fileID: 2722746951955469620}
-  slackDistance: 1
-  maxPullDistance: 0.5
   totalLength: 0
   forcedTension: 0
 --- !u!1 &3188397222867896724
@@ -1481,6 +1477,7 @@ Transform:
   m_Children:
   - {fileID: 5089144640933354010}
   - {fileID: 4928357035964796974}
+  - {fileID: 7575665607505780448}
   - {fileID: 6778170814192907588}
   - {fileID: 2403641997849806357}
   - {fileID: 7178098911225865597}
@@ -1500,6 +1497,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingManager
   fishingCamera: {fileID: 2415500450369630590}
   fishingCharacter: {fileID: 8325462139175821564}
+  fishingRod: {fileID: 3325253755118202774}
   fishingLine: {fileID: 3964598790634156645}
   fishingBobber: {fileID: 8279095951030254376}
   fishingHook: {fileID: 3750939044426369172}
@@ -1563,7 +1561,7 @@ Transform:
   m_GameObject: {fileID: 8416441094817619062}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.283, y: 0.00074, z: -0.0009}
+  m_LocalPosition: {x: 0.338, y: 0.00074, z: -0.0009}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2116,3 +2114,76 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 39d4ff3f7c1f9f34c861b61d7a4bc37e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingCharacter
+--- !u!1001 &7063887133826370183
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1660799581146449646}
+    m_Modifications:
+    - target: {fileID: 803290377219658855, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 803290377219658855, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 803290377219658855, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 803290377219658855, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 803290377219658855, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 803290377219658855, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 803290377219658855, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 803290377219658855, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 803290377219658855, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 803290377219658855, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5895220611674031566, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+      propertyPath: m_Name
+      value: FishingRod
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+--- !u!114 &3325253755118202774 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5486047626744227089, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+  m_PrefabInstance: {fileID: 7063887133826370183}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b967169defd140e4baa0bb472a4facae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingRod
+--- !u!4 &7575665607505780448 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 803290377219658855, guid: 4e5fd42cef784fe4682f6dd187a0b5d2, type: 3}
+  m_PrefabInstance: {fileID: 7063887133826370183}
+  m_PrefabAsset: {fileID: 0}

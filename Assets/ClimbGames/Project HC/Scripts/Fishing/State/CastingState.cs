@@ -5,11 +5,11 @@ using R3;
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishingActorController
+    public partial class FishingPlayer
     {
-        public class CastingState : FishingActorStateBase
+        public class CastingState : FishingPlayerStateBase
         {
-            public CastingState(FishingActor actor, FishController fish, FishingActorController fsm) : base(actor, fish, fsm)
+            public CastingState(FishingPlayer player, Fish fish, FishingPlayer fsm) : base(player, fish, fsm)
             {
             }
 
@@ -23,29 +23,30 @@ namespace ClimbGames.Project_HC
                 }).AddTo(this);
 
                 // (찌 없는 경우) 바늘이 땅에 닿았을 경우
-                FishingEvent.Broker.Receive<FishingEvent.OnHookGrounded>().Subscribe(_ => fsm.ChangeState(FishingActorState.Waiting)).AddTo(this);
+                Player.MessageBroker.Receive<FishingEvent.OnHookGrounded>().Subscribe(_ => fsm.ChangeState(FishingPlayerState.Waiting)).AddTo(this);
 
                 // 찌가 물에 닿을 경우
-                FishingEvent.Broker.Receive<FishingEvent.OnBobberEnterWater>().Subscribe(_ => fsm.ChangeState(FishingActorState.Waiting)).AddTo(this);
+                Player.MessageBroker.Receive<FishingEvent.OnBobberEnterWater>().Subscribe(_ => fsm.ChangeState(FishingPlayerState.Waiting)).AddTo(this);
             }
 
             protected override void OnFixedUpdate()
             {
                 base.OnFixedUpdate();
 
-                float dist = Vector3.Distance(Actor.Line.RodTip.position, Actor.Line.EndPoint.transform.position);
-                if (Actor.Line.TotalLength < dist)
-                    Actor.Line.SetLength(dist);
+                if (Actor.Hook.IsFlying)
+                {
+                    float dist = Vector3.Distance(Actor.Line.RodTip.position, Actor.Line.EndPoint.transform.position);
+                    if (Actor.Line.TotalLength < dist)
+                        Actor.Line.SetLength(dist);
+                }
             }
 
             public void Throw()
             {
-                CastingType castingType = FishingModel.Instance.CastingType.CurrentValue;
-                float throwAngle = castingType == CastingType.OverHead ? 40f : 20f;
-
+                float throwAngle = Player.CastingType == CastingType.OverHead ? 40f : 20f;
                 if (TryGetThrowVelocity(Actor.Hook.transform, Actor.WaterArea.Center, throwAngle, out var velocity))
                 {
-                    FishingEvent.Broker.Publish(new FishingEvent.OnCastingThrow() { velocity = velocity });
+                    Player.MessageBroker.Publish(new FishingEvent.OnCastingThrow() { velocity = velocity });
                 }
             }
 

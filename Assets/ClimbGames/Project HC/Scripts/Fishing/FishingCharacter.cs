@@ -28,12 +28,16 @@ namespace ClimbGames.Project_HC
             armsLayer = _animator.GetLayerIndex(FishingAnimation.ArmsLayer);
         }
 
-        public void UpdateRotation(FishingCamera camera)
+        public void UpdateRotation(FishingPlayer player)
         {
+            FishingCamera camera = player.Actor.Camera;
+            CastingType castingType = player.CastingType;
+            FishingPlayerState state = player.State.CurrentValue;
+
             Vector3 targetTiltLimit = camera.TiltLimit;
 
             // 케스팅 피칭 모드시 캐릭터 틸트(상하) 제한
-            if (FishingModel.Instance.IsLimitedTilt)
+            if (castingType == CastingType.Pitching && state == FishingPlayerState.Idle)
                 targetTiltLimit = tiltLimit;
 
             currentTiltLimit = Vector3.Lerp(currentTiltLimit, targetTiltLimit, Time.deltaTime * 5f);
@@ -41,21 +45,14 @@ namespace ClimbGames.Project_HC
             root.localRotation = Quaternion.Euler(new Vector3(currentTilt, camera.CurrentPan));
         }
 
-        public Animator PlayFullBodyAnimation(string name)
-        {
-            _animator.Play(name, bodyLayer);
-            _animator.SetLayerWeight(armsLayer, 0f);
-            return _animator;
-        }
-
-        public void SetCastingType(CastingType type)
-        {
-            _animator.SetInteger(FishingAnimation.CastingType, (int)type);
-        }
-
         public void SetTrigger(string name)
         {
             _animator.SetTrigger(name);
+        }
+
+        public void SetParameter(string name, int value)
+        {
+            _animator.SetInteger(name, value);
         }
     }
 }

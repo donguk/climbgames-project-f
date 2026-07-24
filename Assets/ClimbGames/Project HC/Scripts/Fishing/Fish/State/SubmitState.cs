@@ -2,22 +2,17 @@
 
 namespace ClimbGames.Project_HC
 {
-    public partial class FishController
+    public partial class Fish
     {
         public class SubmitState : FishStateBase
         {
-            public SubmitState(FishController fsm) : base(fsm)
+            public SubmitState(Fish fish, FishingPlayer player) : base(fish, player)
             {
             }
 
             protected override void OnEnter()
             {
-                var hookedFish = HookedFish;
-
-                hookedFish.transform.position = hookedFish.ModelRoot.position;
-                hookedFish.ModelRoot.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-
-                FishingEvent.Broker.Publish(new FishingEvent.OnFishSubmit() { hookedFish = hookedFish });
+                Player.MessageBroker.Publish(new FishingEvent.OnFishSubmit() { hookedFish = Fish.Target });
             }
         }
     }

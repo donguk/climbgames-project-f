@@ -5,28 +5,30 @@ namespace ClimbGames.Project_HC
 {
     public class FishingEquipment : MonoBehaviour
     {
+        private int id;
+        private MessageBroker messageBroker;
         private CompositeDisposable disposables = new CompositeDisposable();
 
-        void OnDestroy()
+        protected MessageBroker MessageBroker => messageBroker;
+
+        public void Initialize(int id)
         {
-            disposables.Dispose();
-            disposables = null;
+            this.id = id;
+
+            disposables.Clear();
+            messageBroker = FishingEvent.GetBroker(id);
+
+            messageBroker.Receive<FishingEvent.OnCastingTypeChanged>().Subscribe(_ => OnCastingTypeChanged(_)).AddTo(this);
+            messageBroker.Receive<FishingEvent.OnCastingThrow>().Subscribe(_ => OnCastingThrow(_)).AddTo(this);
+            messageBroker.Receive<FishingEvent.OnBobberEnterWater>().Subscribe(_ => OnBobberEnterWater(_)).AddTo(this);
+            messageBroker.Receive<FishingEvent.OnFishBite>().Subscribe(_ => OnFishBite(_)).AddTo(this);
+            messageBroker.Receive<FishingEvent.OnFishFlee>().Subscribe(_ => OnFishFlee(_)).AddTo(this);
+            messageBroker.Receive<FishingEvent.OnFishSubmit>().Subscribe(_ => OnFishSubmit(_)).AddTo(this);
+            messageBroker.Receive<FishingEvent.OnPullOut>().Subscribe(_ => OnPullOut(_)).AddTo(this);
         }
 
-        void OnEnable()
+        protected virtual void OnCastingTypeChanged(FishingEvent.OnCastingTypeChanged param)
         {
-            disposables.Clear();
-
-            FishingEvent.Broker.Receive<FishingEvent.OnCastingThrow>().Subscribe(_ => OnCastingThrow(_)).AddTo(this);
-            FishingEvent.Broker.Receive<FishingEvent.OnBobberEnterWater>().Subscribe(_ => OnBobberEnterWater(_)).AddTo(this);
-            FishingEvent.Broker.Receive<FishingEvent.OnFishBite>().Subscribe(_ => OnFishBite(_)).AddTo(this);
-            FishingEvent.Broker.Receive<FishingEvent.OnFishFlee>().Subscribe(_ => OnFishFlee(_)).AddTo(this);
-            FishingEvent.Broker.Receive<FishingEvent.OnFishSubmit>().Subscribe(_ => OnFishSubmit(_)).AddTo(this);
-        }
-
-        void OnDisable()
-        {
-            disposables.Clear();
         }
 
         protected virtual void OnCastingThrow(FishingEvent.OnCastingThrow param)
@@ -46,6 +48,10 @@ namespace ClimbGames.Project_HC
         }
 
         protected virtual void OnFishSubmit(FishingEvent.OnFishSubmit param)
+        {
+        }
+
+        protected virtual void OnPullOut(FishingEvent.OnPullOut param)
         {
         }
     }

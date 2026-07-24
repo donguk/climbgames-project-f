@@ -1,4 +1,5 @@
-﻿using R3;
+﻿using System;
+using R3;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -90,10 +91,10 @@ namespace ClimbGames.Project_HC
             }
         }
 
-        public void SetTrackingTarget(Transform target, bool useTween = false)
+        public void SetTrackingTarget(Transform target, float duration = 0f, Action onComplete = null)
         {
             TrackingTarget = target;
-            targetTween.Reset(useTween == false);
+            targetTween.Reset(duration, onComplete);
 
             if (target != null)
             {
