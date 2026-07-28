@@ -12,7 +12,6 @@ namespace ClimbGames.Project_HC
 
         public override UniTask InitializeAsync()
         {
-            WorldManager.Instance.Initialize();
             return base.InitializeAsync();
         }
 
@@ -20,7 +19,6 @@ namespace ClimbGames.Project_HC
         {
             if (InitSceneFlag.DidCameFromInitScene == false)
             {
-                WorldManager.Instance.Initialize();
             }
         }
     }

@@ -10,7 +10,7 @@ namespace ClimbGames.Project_HC
         private FishData fishData;
 
         private FishingActor actor;
-        private HookedFish fish;
+        private HookedFish hookedFish;
 
         private FishingActorMachine actorMachine;
         private FishMachine fishMachine;
@@ -21,7 +21,7 @@ namespace ClimbGames.Project_HC
 
         public FishingActor Actor => actor;
         public FishingCamera Camera => actor.Camera;
-        public HookedFish Fish => fish;
+        public HookedFish Fish => hookedFish;
         public MessageBroker MessageBroker => messageBroker;
 
         public FishingPlayer(int id)
@@ -80,24 +80,24 @@ namespace ClimbGames.Project_HC
         {
             model.FishStatus.Initialize();
 
-            if (fish == null)
-                fish = AssetManager.Instantiate<HookedFish>("HookedFish");
+            if (hookedFish == null)
+                hookedFish = AssetManager.Instantiate<HookedFish>("HookedFish");
 
-            fish.transform.position = hook.transform.position;
-            fish.Initialize();
+            hookedFish.transform.position = hook.transform.position;
+            hookedFish.Initialize();
 
-            return fish;
+            return hookedFish;
         }
 
         public void DeleteHookedFish()
         {
-            if (fish != null)
-                GameObject.Destroy(fish.gameObject);
+            if (hookedFish != null)
+                GameObject.Destroy(hookedFish.gameObject);
 
             if (fishData != null)
                 AssetManager.Release(fishData);
 
-            fish = null;
+            hookedFish = null;
             fishData = null;
         }
 

@@ -31,7 +31,7 @@ namespace ClimbGames.Project_HC
             this.rodTip = rodTip;
             lineDrawers = GetComponentsInChildren<FishingLineDrawer>();
 
-            SetLength(Mathf.Max(0.5f, length));
+            SetLength(Mathf.Max(1f, length));
             lineBody.BuildLine(rodTip.position, TotalLength);
 
             bobberPoint.Initialize(this, bobberHeight);
@@ -199,7 +199,7 @@ namespace ClimbGames.Project_HC
             }
 
             endPoint.SetTrackingTarget(param.rod.LineGuide, 1f, () => endPoint.SetTrackingTarget(null));
-            SetForcedTension(0f, 1f);
+            SetForcedTension(0f, 0.1f);
             SetLength(1f, 1f);
         }
     }

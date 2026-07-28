@@ -1,45 +1,86 @@
 ﻿using UnityEngine;
-using Unity.Cinemachine;
+using UnityEngine.InputSystem;
 
 namespace ClimbGames.Project_HC
 {
-    public class WorldCamera : MonoSingleton<WorldCamera>
+    public class WorldCamera : MonoBehaviour
     {
-        private const int CINEMACHINE_LIVE_PRIORITY = 10;
+        [SerializeField] private WorldBounds worldBounds;
+        [SerializeField] private float dragSpeed = 1.0f;
+        [SerializeField] private float zoomSpeed = 4.0f;
 
-        [SerializeField] private Camera mainCamera;
-        [SerializeField] private SerializableDictionary<string, CinemachineCamera> cinemachineCameras;
+        private InputAction touchAction;
+        private InputAction touchDelta;
+        private InputAction zoomAction;
 
-        private CinemachineBrain cinemachineBrain;
-
-        public bool IsBlending => cinemachineBrain.IsBlending;
-        public CinemachineBlend ActiveBlend => cinemachineBrain.ActiveBlend;
-
-        protected override void Awake()
+        protected void Awake()
         {
-            base.Awake();
-
-            cinemachineBrain = mainCamera.GetComponent<CinemachineBrain>();
+            var map = InputSystem.actions.FindActionMap("World");
+            if (map != null)
+            {
+                map.Enable();
+                touchAction = map.FindAction("Touch");
+                touchDelta = map.FindAction("Touch Delta");
+                zoomAction = map.FindAction("Zoom");
+            }
         }
 
-        public CinemachineCamera ChangeCinemachine(string key, Transform target)
+        private void Update()
         {
-            CinemachineCamera cinemachine = null;
-            foreach (var pair in cinemachineCameras)
-            {
-                if (pair.Key == key)
-                {
-                    cinemachine = pair.Value;
-                    cinemachine.Target.TrackingTarget = target;
-                    pair.Value.Priority = CINEMACHINE_LIVE_PRIORITY;
-                }
-                else
-                {
-                    pair.Value.Priority = 0;
-                }
-            }
+            HandleZoom();
+            HandleDrag();
+        }
 
-            return cinemachine;
+        private void LateUpdate()
+        {
+            // 이동/줌 완료 후 DynamicBound에서 갱신된 Box Collider 크기를 기준으로 카메라 위치를 가둡니다.
+            ClampCameraPosition();
+        }
+
+        private void HandleZoom()
+        {
+            if (worldBounds == null) return;
+
+            // BoxCollider의 월드 좌표 기준 Min/Max 계산
+            Bounds bounds = worldBounds.CameraBounds;
+
+            Vector2 scroll = zoomAction.ReadValue<Vector2>();
+            float delta = scroll.y;
+            if (Mathf.Abs(delta) > 0.01f)
+            {
+                Vector3 pos = transform.position;
+                pos.y -= delta * zoomSpeed;
+                pos.y = Mathf.Clamp(pos.y, bounds.min.y, bounds.max.y);
+                transform.position = pos;
+            }
+        }
+
+        private void HandleDrag()
+        {
+            if (touchAction.IsPressed())
+            {
+                Vector3 delta = touchDelta.ReadValue<Vector2>();
+
+                // 드래그 방향에 맞춰 X, Z 이동 (높이 Y에 비례해 감도 조정)
+                Vector3 move = new Vector3(-delta.x, 0, -delta.y) * (dragSpeed * (transform.position.y / 10f));
+                transform.position += move;
+            }
+        }
+
+        private void ClampCameraPosition()
+        {
+            if (worldBounds == null) return;
+
+            // BoxCollider의 월드 좌표 기준 Min/Max 계산
+            Bounds bounds = worldBounds.CameraBounds;
+
+            Vector3 pos = transform.position;
+
+            // BoxCollider의 center/size에 맞춰 X, Z 위치 가두기
+            pos.x = Mathf.Clamp(pos.x, bounds.min.x, bounds.max.x);
+            pos.z = Mathf.Clamp(pos.z, bounds.min.z, bounds.max.z);
+
+            transform.position = pos;
         }
     }
 }
