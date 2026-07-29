@@ -21,47 +21,12 @@ namespace ClimbGames.Project_HC
 
         public ReadOnlyReactiveProperty<WorldMode> CurrentMode => currentMode;
 
-
-
-        //public async void Initialize()
-        //{
-        //    var go = GameObject.FindGameObjectWithTag("Player");
-        //    if (go != null)
-        //        player = go.GetComponent<NavMeshAgent>();
-        //    
-        //    Transform parent = UIManager.Instance.transform.FindChildByName("HUD");
-        //    joystick = await AssetManager.InstantiateAsync<VariableJoystick>("PlayerJoystick", parent);
-        //}
-
-        //void Update()
-        //{
-        //    if (joystick != null)
-        //    {
-        //        Vector3 direction = new Vector3(joystick.Horizontal, 0, joystick.Vertical);
-        //
-        //        if (direction.sqrMagnitude > 0.01f)
-        //        {
-        //            // 캐릭터 회전
-        //            player.transform.rotation = Quaternion.LookRotation(direction);
-        //
-        //            // NavMesh 위에서 부드럽게 이동
-        //            player.Move(direction * 5f * Time.deltaTime);
-        //        }
-        //    }
-        //
-        //    if (Keyboard.current != null)
-        //    {
-        //        if (Keyboard.current.escapeKey.wasReleasedThisFrame)
-        //            TransitionToWorld().Forget();
-        //    }
-        //}
-
         public async UniTaskVoid TransitionToFishing(FishingSpot spot)
         {
             await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
 
-            await FishingPlayerManager.Instance.LocalPlayer.Initialize(spot);
             await UIManager.Instance.ShowUI<UIPanelFishing>("UIPanelFishing", UILayer.View);
+            await FishingPlayerManager.Instance.LocalPlayer.Initialize(spot);
 
             CameraController.Instance.Brain.UpdateMethod = CinemachineBrain.UpdateMethods.FixedUpdate;
             var camera = CameraController.Instance.ChangeCinemachine($"Fishing", FishingPlayerManager.Instance.LocalPlayer.CameraTarget);

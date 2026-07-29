@@ -1,4 +1,5 @@
-﻿using Unity.Cinemachine;
+﻿using ClimbGames.UI;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -13,6 +14,7 @@ namespace ClimbGames.Project_HC
         private InputAction touchAction;
         private InputAction touchPosition;
         private InputAction touchDelta;
+        private InputAction moveAction;
         private FishingPlayerModel playerModel;
 
         private bool isPressed;
@@ -20,6 +22,7 @@ namespace ClimbGames.Project_HC
         private Vector2 currentTiltLimit;
         private CinemachinePanTilt cameraPanTilt;
         private float cameraStartTilt;
+        private VariableJoystick joystick;
 
         private bool IsPitchingMode => playerModel != null &&
                                         playerModel.CastingType.CurrentValue == CastingType.Pitching &&
@@ -37,6 +40,7 @@ namespace ClimbGames.Project_HC
                 touchAction = map.FindAction("Touch");
                 touchPosition = map.FindAction("Touch Position");
                 touchDelta = map.FindAction("Touch Delta");
+                moveAction = map.FindAction("Move");
             }
 
             playerModel = FishingPlayerManager.Instance.LocalPlayer.Model;
@@ -45,6 +49,11 @@ namespace ClimbGames.Project_HC
                 cameraPanTilt = camera.GetComponent<CinemachinePanTilt>();
                 cameraStartTilt = cameraPanTilt.TiltAxis.Value;
             }
+
+            var layer = UIManager.Instance.GetLayer(UILayer.View);
+            var ui = layer.GetComponentInChildren<UIPanelFishing>();
+            if (ui != null)
+                joystick = ui.Joystick;
         }
 
         void Update()
@@ -85,6 +94,20 @@ namespace ClimbGames.Project_HC
                     float extraTilt = rawTilt - playerModel.characterTilt;
                     cameraPanTilt.TiltAxis.Value = cameraStartTilt + extraTilt;
                 }
+
+                //
+                Vector2 movement = Vector2.zero;
+                if (joystick != null)
+                    movement = joystick.Direction;
+
+                if (moveAction != null)
+                {
+                    Vector2 delta = moveAction.ReadValue<Vector2>();
+                    if (delta.sqrMagnitude > movement.sqrMagnitude)
+                        movement = delta;
+                }
+
+                playerModel.SetMovement(movement.x, movement.y);
             }
         }
     }

@@ -33,6 +33,8 @@ namespace ClimbGames.Project_HC
         private float loadingValue;
         private FishingPlayer localPlayer;
 
+        public VariableJoystick Joystick => ui_joystick;
+
         void OnEnable()
         {
             SetCastingState(CastingState.None);
