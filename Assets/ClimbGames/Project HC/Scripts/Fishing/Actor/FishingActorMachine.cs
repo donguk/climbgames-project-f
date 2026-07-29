@@ -44,7 +44,7 @@ namespace ClimbGames.Project_HC
             protected override void OnFixedUpdate()
             {
                 // 캐릭터 회전
-                Actor.Character.UpdateRotation(Player.Handler.GetRotationInfo());
+                Actor.Character.UpdateRotation(Player.Model.characterPan, Player.Model.characterTilt);
 
                 // 라인 업데이트
                 Actor.Line.UpdateLine(Time.fixedDeltaTime);

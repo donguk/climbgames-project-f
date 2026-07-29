@@ -23,7 +23,7 @@ namespace ClimbGames.Project_HC
 
             protected override void OnFixedUpdate()
             {
-                float reelingInput = Player.Handler.ReelingInput;
+                float reelingValue = Player.Model.reelingValue;
                 FishingPlayerModel model = Player.Model;
                 FishData fishData = Player.FishData;
 
@@ -33,7 +33,7 @@ namespace ClimbGames.Project_HC
                 Vector3 characterToFish = targetFish.MoveTarget.position - Actor.transform.position;
                 characterToFish.y = 0f;
                 float pullAngle = Vector3.Dot(characterToFish.normalized, Actor.Rod.transform.forward);
-                if (reelingInput > 0f || pullAngle < pullAngleThreshold)
+                if (reelingValue > 0f || pullAngle < pullAngleThreshold)
                     decreaseStamina *= 2f;
 
                 model.FishStatus.DecreaseStamina(decreaseStamina * Time.fixedDeltaTime);

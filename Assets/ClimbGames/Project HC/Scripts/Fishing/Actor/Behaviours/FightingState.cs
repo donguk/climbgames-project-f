@@ -26,13 +26,13 @@ namespace ClimbGames.Project_HC
                 base.OnUpdate();
 
                 // 텐션 계산
-                float reelingInput = Player.Handler.ReelingInput;
+                float reelingValue = Player.Model.reelingValue;
                 FishingPlayerModel model = Player.Model;
                 FishData fishData = Player.FishData;
 
                 var tensionInfo = Actor.Line.GetLengthInfo(Fish.MoveTarget);
                 float lineTension = tensionInfo.StretchLength / fishData.StretchThreshold;
-                if (reelingInput <= 0f)
+                if (reelingValue <= 0f)
                     lineTension += Player.GetFishNoise();
 
                 model.lineTension = Mathf.Clamp01(lineTension);
@@ -49,9 +49,9 @@ namespace ClimbGames.Project_HC
             {
                 base.OnFixedUpdate();
 
-                float reelingInput = Player.Handler.ReelingInput;
-                if (reelingInput > 0f)
-                    Actor.Line.Reeling(reelingInput * Time.fixedDeltaTime);
+                float reelingValue = Player.Model.reelingValue;
+                if (reelingValue > 0f)
+                    Actor.Line.Reeling(reelingValue * Time.fixedDeltaTime);
 
                 FishingPlayerModel model = Player.Model;
                 HookedFish hookedFish = Player.Fish;
@@ -62,7 +62,7 @@ namespace ClimbGames.Project_HC
                 float distance = (model.lineTension - fishTension) * fishData.StretchThreshold;
 
                 // 릴링 옵션 (강도가 클수록 fishTension 에 빠르게 수렴)
-                float intensity = distance * (reelingInput > 0f ? 1f : 4f);
+                float intensity = distance * (reelingValue > 0f ? 1f : 4f);
                 Vector3 direction = Actor.Rod.PoleTip.position - hookedFish.MoveTarget.position;
 
                 hookedFish.SetTensionInfo(new LineTensionInfo()

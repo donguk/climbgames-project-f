@@ -21,13 +21,11 @@ namespace ClimbGames.Project_HC
             {
                 base.OnFixedUpdate();
 
-                float reelingInput = Player.Handler.ReelingInput;
-                float dragInput = Player.Handler.RotationDelta.magnitude;
-
-                if (reelingInput > 0f)
+                float reelingValue = Player.Model.reelingValue;
+                if (reelingValue > 0f)
                 {
                     // 릴 감기
-                    if (Actor.Line.Reeling(reelingInput * Time.fixedDeltaTime) < 1f)
+                    if (Actor.Line.Reeling(reelingValue * Time.fixedDeltaTime) < 1f)
                         fsm.ChangeState(FishingActorState.Retrieving);
                 }
 
@@ -39,7 +37,7 @@ namespace ClimbGames.Project_HC
                 }
 
                 // 인풋이 없는 경우 약간씩 풀림
-                if (reelingInput <= 0f && dragInput <= 0f)
+                if (reelingValue <= 0f)
                 {
                     if (lengthInfo.IsTensioned)
                         Actor.Line.Release(0.002f);

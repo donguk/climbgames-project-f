@@ -4,13 +4,7 @@ using UnityEngine.InputSystem;
 
 namespace ClimbGames.Project_HC
 {
-    public struct CharacterRotationInfo
-    {
-        public float pan;
-        public float tilt;
-    }
-
-    public class FishingHandler : MonoBehaviour
+    public class FishingInputHandler : MonoBehaviour
     {
         [SerializeField] private float sensitivity = 0.04f;
         [SerializeField] private Vector2 tiltLimit = new Vector2(-30f, 30f);
@@ -19,20 +13,20 @@ namespace ClimbGames.Project_HC
         private InputAction touchAction;
         private InputAction touchPosition;
         private InputAction touchDelta;
-        private FishingPlayer localPlayer;
+        private FishingPlayerModel playerModel;
 
         private bool isPressed;
-        private float currentPan;
-        private float rawTilt, currentTilt;
+        private float rawTilt;
         private Vector2 currentTiltLimit;
         private CinemachinePanTilt cameraPanTilt;
         private float cameraStartTilt;
 
-        private bool IsPitchingMode => localPlayer != null &&
-                                        localPlayer.Model.CastingType.CurrentValue == CastingType.Pitching &&
-                                        localPlayer.Model.ActorState.CurrentValue == FishingActorState.Idle;
+        private bool IsPitchingMode => playerModel != null &&
+                                        playerModel.CastingType.CurrentValue == CastingType.Pitching &&
+                                        playerModel.ActorState.CurrentValue == FishingActorState.Idle;
         public Vector2 RotationDelta { get; private set; }
         public float ReelingInput { get; private set; }
+        public float CastingIntensity { get; private set; }
 
         protected void Awake()
         {
@@ -45,7 +39,7 @@ namespace ClimbGames.Project_HC
                 touchDelta = map.FindAction("Touch Delta");
             }
 
-            localPlayer = FishingPlayerManager.Instance.LocalPlayer;
+            playerModel = FishingPlayerManager.Instance.LocalPlayer.Model;
             if (CameraController.Instance.TryGetCinemachineCamera("Fishing", out var camera))
             {
                 cameraPanTilt = camera.GetComponent<CinemachinePanTilt>();
@@ -74,38 +68,24 @@ namespace ClimbGames.Project_HC
                 {
                     RotationDelta = touchDelta.ReadValue<Vector2>();
 
-                    currentPan += RotationDelta.x * sensitivity;
-                    rawTilt -= RotationDelta.y * sensitivity;
+                    playerModel.characterPan += RotationDelta.x * sensitivity;
+                    playerModel.characterPan = Mathf.Repeat(playerModel.characterPan, 360f);
 
-                    currentPan = Mathf.Repeat(currentPan, 360f);
+                    rawTilt -= RotationDelta.y * sensitivity;
                     rawTilt = Mathf.Clamp(rawTilt, tiltLimit.x, tiltLimit.y);
                 }
 
                 Vector2 targetTiltLimit = IsPitchingMode ? pitchingTiltLimit : tiltLimit;
                 currentTiltLimit = Vector2.Lerp(currentTiltLimit, targetTiltLimit, 5f * Time.deltaTime);
-                currentTilt = Mathf.Clamp(rawTilt, currentTiltLimit.x, currentTiltLimit.y);
+                playerModel.characterTilt = Mathf.Clamp(rawTilt, currentTiltLimit.x, currentTiltLimit.y);
 
                 if (cameraPanTilt != null)
                 {
                     // 캐릭터 제한을 넘어서는 초과 틸트량 산출
-                    float extraTilt = rawTilt - currentTilt;
+                    float extraTilt = rawTilt - playerModel.characterTilt;
                     cameraPanTilt.TiltAxis.Value = cameraStartTilt + extraTilt;
                 }
             }
-        }
-
-        public void SetReelingInput(bool value)
-        {
-            ReelingInput = value ? 1f : 0f;
-        }
-
-        public CharacterRotationInfo GetRotationInfo()
-        {
-            return new CharacterRotationInfo()
-            {
-                pan = currentPan,
-                tilt = currentTilt,
-            };
         }
     }
 }

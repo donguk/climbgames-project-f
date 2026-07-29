@@ -23,6 +23,12 @@ namespace ClimbGames.Project_HC
     public class FishingPlayerModel
     {
         private readonly int id;
+
+        public float characterPan;
+        public float characterTilt;
+        public float castingIntensity;
+        public float reelingValue;
+
         public float lineTension;
         public float currentTension;
         public float tensionOverTime;
@@ -44,6 +50,16 @@ namespace ClimbGames.Project_HC
         public void ChangeCastingType(CastingType value)
         {
             castingType.Value = value;
+        }
+
+        public void SetCastingIntensity(float intensity)
+        {
+            castingIntensity = intensity;
+        }
+
+        public void SetReelingInput(bool value)
+        {
+            reelingValue = value ? 1f : 0f;
         }
 
         public void ChangeActorState(FishingActorState value)

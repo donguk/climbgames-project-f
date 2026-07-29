@@ -53,8 +53,8 @@ namespace ClimbGames.Project_HC
                 SetCastingType(type);
             }).AddTo(this);
 
-            btn_reeling.OnPointerDownAsObservable().Subscribe(_ => localPlayer.Handler.SetReelingInput(true)).AddTo(this);
-            btn_reeling.OnPointerUpAsObservable().Subscribe(_ => localPlayer.Handler.SetReelingInput(false)).AddTo(this);
+            btn_reeling.OnPointerDownAsObservable().Subscribe(_ => localPlayer.Model.SetReelingInput(true)).AddTo(this);
+            btn_reeling.OnPointerUpAsObservable().Subscribe(_ => localPlayer.Model.SetReelingInput(false)).AddTo(this);
 
             localPlayer.MessageBroker.Receive<FishingEvent.OnFishCatched>().Subscribe(_ => btn_get.gameObject.SetActive(true)).AddTo(this);
             btn_get.OnClickAsObservable().Subscribe(_ => localPlayer.TakeHookedFish()).AddTo(this);
@@ -74,6 +74,7 @@ namespace ClimbGames.Project_HC
                             loadingDirection = 1;
 
                         sld_casting_gauge.value = loadingValue;
+                        localPlayer.Model.SetCastingIntensity(loadingValue);
                         break;
                     }
             }

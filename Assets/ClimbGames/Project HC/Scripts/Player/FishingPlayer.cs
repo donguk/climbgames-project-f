@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
 using Cysharp.Threading.Tasks;
-using R3;
-using Unity.Cinemachine;
 
 namespace ClimbGames.Project_HC
 {
@@ -17,7 +15,7 @@ namespace ClimbGames.Project_HC
         private FishingActorMachine actorMachine;
         private FishMachine fishMachine;
         private MessageBroker messageBroker;
-        private FishingHandler handler;
+        private FishingInputHandler handler;
 
         public FishingPlayerModel Model => model;
         public FishData FishData => fishData;
@@ -28,7 +26,6 @@ namespace ClimbGames.Project_HC
         public HookedFish Fish => hookedFish;
         public FishMachine FishMachine => fishMachine;
         public MessageBroker MessageBroker => messageBroker;
-        public FishingHandler Handler => handler;
 
         public FishingPlayer(int id)
         {
@@ -49,7 +46,7 @@ namespace ClimbGames.Project_HC
                 actor = AssetManager.Instantiate<FishingActor>("FishingActor");
 
             if (handler == null)
-                handler = AssetManager.Instantiate<FishingHandler>("FishingHandler");
+                handler = AssetManager.Instantiate<FishingInputHandler>("FishingInputHandler");
 
             actor.gameObject.SetActive(true);
             actor.Initialize(model.ID, spot.SpawnPoint);

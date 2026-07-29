@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1588092139874971911}
   - component: {fileID: 5275888956880013384}
   m_Layer: 0
-  m_Name: FishingHandler
+  m_Name: FishingInputHandler
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

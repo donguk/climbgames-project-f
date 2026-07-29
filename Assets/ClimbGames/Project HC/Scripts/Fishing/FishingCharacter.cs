@@ -32,10 +32,10 @@ namespace ClimbGames.Project_HC
             startPanRotation = root.rotation;
         }
 
-        public void UpdateRotation(CharacterRotationInfo rotationInfo)
+        public void UpdateRotation(float pan, float tilt)
         {
-            root.rotation = startPanRotation * Quaternion.AngleAxis(rotationInfo.pan, Vector3.up);
-            tiltPivot.localRotation = Quaternion.AngleAxis(rotationInfo.tilt, Vector3.right);
+            root.rotation = startPanRotation * Quaternion.AngleAxis(pan, Vector3.up);
+            tiltPivot.localRotation = Quaternion.AngleAxis(tilt, Vector3.right);
         }
 
         public void SetTrigger(string name)
