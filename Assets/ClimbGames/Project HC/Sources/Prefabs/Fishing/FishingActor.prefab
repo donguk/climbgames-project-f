@@ -31,7 +31,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 6738038573772195531}
+  - {fileID: 6519466570175446487}
   m_Father: {fileID: 1660799581146449646}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &5960676919342412085
@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 39d4ff3f7c1f9f34c861b61d7a4bc37e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingCharacter
-  root: {fileID: 6738038573772195531}
+  root: {fileID: 0}
   tiltPivot: {fileID: 6519466570175446487}
   rightHandle: {fileID: 6852198018018377129}
   leftHandle: {fileID: 1916613554561474350}
@@ -1343,14 +1343,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4292362074428247513}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 1.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6546716653232122709}
   - {fileID: 5605245739921174212}
-  m_Father: {fileID: 6738038573772195531}
+  m_Father: {fileID: 6555410408421148365}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5056331567691950992
 GameObject:
@@ -1442,38 +1442,6 @@ Transform:
   m_Children:
   - {fileID: 5458371706010872479}
   m_Father: {fileID: 2403641997849806357}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &5570334421641171617
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6738038573772195531}
-  m_Layer: 0
-  m_Name: Root
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &6738038573772195531
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5570334421641171617}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 6519466570175446487}
-  m_Father: {fileID: 6555410408421148365}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5801081472674425226
 GameObject:

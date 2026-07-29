@@ -24,6 +24,7 @@ namespace ClimbGames.Project_HC
     {
         private readonly int id;
 
+        public Vector3 characterMovement;
         public float characterPan;
         public float characterTilt;
         public float castingIntensity;
@@ -45,6 +46,11 @@ namespace ClimbGames.Project_HC
         public FishingPlayerModel(int id)
         {
             this.id = id;
+        }
+
+        public void SetMovement(float horizontal, float vertical)
+        {
+            characterMovement = new Vector3(horizontal, 0f, vertical);
         }
 
         public void ChangeCastingType(CastingType value)

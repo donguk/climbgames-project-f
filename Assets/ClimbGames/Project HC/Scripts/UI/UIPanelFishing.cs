@@ -17,7 +17,7 @@ namespace ClimbGames.Project_HC
             Landing,
         }
 
-        [SerializeField] private VariableJoystick joystick;
+        [SerializeField] private VariableJoystick ui_joystick;
         [SerializeField] private Button btn_casting;
         [SerializeField] private Slider sld_casting_gauge;
         [SerializeField] private TMP_Text txt_casting;
@@ -86,6 +86,8 @@ namespace ClimbGames.Project_HC
                 sld_tension_gauge.value = model.currentTension;
                 txt_tension_value.text = $"{model.currentTension:0.##}";
             }
+
+            localPlayer.Model.SetMovement(ui_joystick.Horizontal, ui_joystick.Vertical);
         }
 
         void SetCastingState(CastingState state)

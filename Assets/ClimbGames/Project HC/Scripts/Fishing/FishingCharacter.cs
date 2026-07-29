@@ -5,7 +5,6 @@ namespace ClimbGames.Project_HC
 {
     public class FishingCharacter : MonoBehaviour
     {
-        [SerializeField] private Transform root;
         [SerializeField] private Transform tiltPivot;
         [SerializeField] private Transform rightHandle;
         [SerializeField] private Transform leftHandle;
@@ -29,12 +28,21 @@ namespace ClimbGames.Project_HC
             BodyLayer = _animator.GetLayerIndex(FishingAnimation.BodyLayer);
             ArmsLayer = _animator.GetLayerIndex(FishingAnimation.ArmsLayer);
 
-            startPanRotation = root.rotation;
+            startPanRotation = transform.localRotation;
+        }
+
+        public void UpdatePosition(Vector3 movement, float deltaTime)
+        {
+            if (movement.sqrMagnitude > 0.01f)
+            {
+                movement = Quaternion.AngleAxis(transform.eulerAngles.y, Vector3.up) * movement;
+                navMeshAgent.Move(movement * 4f * deltaTime);
+            }
         }
 
         public void UpdateRotation(float pan, float tilt)
         {
-            root.rotation = startPanRotation * Quaternion.AngleAxis(pan, Vector3.up);
+            transform.localRotation = startPanRotation * Quaternion.AngleAxis(pan, Vector3.up);
             tiltPivot.localRotation = Quaternion.AngleAxis(tilt, Vector3.right);
         }
 

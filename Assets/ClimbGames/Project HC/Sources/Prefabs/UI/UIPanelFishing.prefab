@@ -1194,7 +1194,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d923239b39fced4495021cf10054c27, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.UIFishing
-  joystick: {fileID: 2116189124961087232}
+  ui_joystick: {fileID: 2116189124961087232}
   btn_casting: {fileID: 7498967591401761913}
   sld_casting_gauge: {fileID: 4893382675235640842}
   txt_casting: {fileID: 4345239985215731639}

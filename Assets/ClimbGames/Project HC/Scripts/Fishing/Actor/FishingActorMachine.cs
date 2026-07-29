@@ -43,8 +43,11 @@ namespace ClimbGames.Project_HC
 
             protected override void OnFixedUpdate()
             {
-                // 캐릭터 회전
+                // 회전
                 Actor.Character.UpdateRotation(Player.Model.characterPan, Player.Model.characterTilt);
+
+                // 이동
+                Actor.Character.UpdatePosition(Player.Model.characterMovement, Time.fixedDeltaTime);
 
                 // 라인 업데이트
                 Actor.Line.UpdateLine(Time.fixedDeltaTime);
