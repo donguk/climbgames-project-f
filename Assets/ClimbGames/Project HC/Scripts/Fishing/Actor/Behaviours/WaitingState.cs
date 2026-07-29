@@ -21,8 +21,8 @@ namespace ClimbGames.Project_HC
             {
                 base.OnFixedUpdate();
 
-                float reelingInput = FishingInput.Instance.Reeling;
-                float dragInput = FishingInput.Instance.DragDelta.magnitude;
+                float reelingInput = Player.Handler.ReelingInput;
+                float dragInput = Player.Handler.RotationDelta.magnitude;
 
                 if (reelingInput > 0f)
                 {

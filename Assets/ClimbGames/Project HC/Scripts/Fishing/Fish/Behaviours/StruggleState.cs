@@ -23,7 +23,7 @@ namespace ClimbGames.Project_HC
 
             protected override void OnFixedUpdate()
             {
-                float reelingInput = FishingInput.Instance.Reeling;
+                float reelingInput = Player.Handler.ReelingInput;
                 FishingPlayerModel model = Player.Model;
                 FishData fishData = Player.FishData;
 
@@ -42,7 +42,7 @@ namespace ClimbGames.Project_HC
                 float stamina = fishData.staminaCurve.Evaluate(1f - model.FishStatus.stamina);
                 float struggleRange = Mathf.Max(0.4f/*최소범위*/, fishData.moveRange * stamina);
 
-                var areaInfo = Actor.WaterArea.GetInnerAreaInfo(targetFish.MoveTarget.position, struggleRange);
+                var areaInfo = Player.WaterArea.GetInnerAreaInfo(targetFish.MoveTarget.position, struggleRange);
                 targetFish.SetStruggleInfo(new FishStruggleInfo()
                 {
                     areaInfo = areaInfo,

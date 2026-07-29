@@ -1,18 +1,27 @@
 ﻿using ClimbGames.UI;
 using Cysharp.Threading.Tasks;
+using R3;
 using Unity.Cinemachine;
+using UnityEditor.AI;
 using UnityEngine;
-using UnityEngine.AI;
-using UnityEngine.InputSystem;
 
 namespace ClimbGames.Project_HC
 {
+    public enum WorldMode
+    {
+        Map,
+        Fishing,
+    }
+
     public class WorldManager : MonoSingleton<WorldManager>
     {
-        [SerializeField] private Transform trackingTarget;
+        [SerializeField] private WorldCamera worldCamera;
 
-        private NavMeshAgent player;
-        private VariableJoystick joystick;
+        private ReactiveProperty<WorldMode> currentMode = new ReactiveProperty<WorldMode>();
+
+        public ReadOnlyReactiveProperty<WorldMode> CurrentMode => currentMode;
+
+
 
         //public async void Initialize()
         //{
@@ -47,55 +56,39 @@ namespace ClimbGames.Project_HC
         //    }
         //}
 
-        public async UniTaskVoid TransitionToFishing(FishingArea area)
+        public async UniTaskVoid TransitionToFishing(FishingSpot spot)
         {
-            var cinemachine = CameraController.Instance.ChangeCinemachine($"WorldToFishing", area.CharacterPoint);
-            await UniTask.NextFrame();
+            await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
 
-            var activeBlend = CameraController.Instance.ActiveBlend;
-            if (activeBlend != null)
+            await FishingPlayerManager.Instance.LocalPlayer.Initialize(spot);
+            await UIManager.Instance.ShowUI<UIPanelFishing>("UIPanelFishing", UILayer.View);
+
+            CameraController.Instance.Brain.UpdateMethod = CinemachineBrain.UpdateMethods.FixedUpdate;
+            var camera = CameraController.Instance.ChangeCinemachine($"Fishing", FishingPlayerManager.Instance.LocalPlayer.CameraTarget);
+            if (camera.TryGetComponent<CinemachineFollow>(out var cameraFollow))
             {
-                float transitionTime = activeBlend.Duration * 0.5f;
-                await UniTask.WaitUntil(() => activeBlend.TimeInBlend > transitionTime);
+                Vector3 damping = cameraFollow.TrackerSettings.PositionDamping;
+                cameraFollow.TrackerSettings.PositionDamping = Vector3.zero;
+                await UniTask.NextFrame();
+                cameraFollow.TrackerSettings.PositionDamping = damping;
             }
-            await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
 
-            await FishingPlayerManager.Instance.LocalPlayer.Initialize(area);
-
-            var brain = Camera.main.GetComponent<CinemachineBrain>();
-            brain.UpdateMethod = CinemachineBrain.UpdateMethods.FixedUpdate;
-
-            SetupFishing();
-            CameraController.Instance.ChangeCinemachine($"Fishing", FishingPlayerManager.Instance.LocalPlayer.Camera.TrackingTarget);
+            currentMode.Value = WorldMode.Fishing;
             (DefaultTransition.Instance as ITransitionHandler).Complete();
         }
 
-        public async UniTaskVoid TransitionToWorld()
+        public async UniTaskVoid TransitionToMap()
         {
             await (DefaultTransition.Instance as ITransitionHandler).BeginAsync(null);
-            CameraController.Instance.ChangeCinemachine("World", player.transform);
-            var brain = Camera.main.GetComponent<CinemachineBrain>();
-            brain.UpdateMethod = CinemachineBrain.UpdateMethods.SmartUpdate;
 
-            SetupWorld();
-            (DefaultTransition.Instance as ITransitionHandler).Complete();
-        }
-
-        void SetupFishing()
-        {
-            player.gameObject.SetActive(false);
-            joystick.gameObject.SetActive(false);
-            UIManager.Instance.Hide<UIMenu>();
-            UIManager.Instance.ShowUI<UIFishing>("UIFishing", UILayer.View);
-        }
-
-        void SetupWorld()
-        {
-            player.gameObject.SetActive(true);
-            joystick.gameObject.SetActive(true);
+            CameraController.Instance.Brain.UpdateMethod = CinemachineBrain.UpdateMethods.SmartUpdate;
+            CameraController.Instance.ChangeCinemachine("World", worldCamera.transform);
 
             FishingPlayerManager.Instance.LocalPlayer.Hide();
-            UIManager.Instance.Hide<UIFishing>();
+            UIManager.Instance.Hide<UIPanelFishing>();
+
+            currentMode.Value = WorldMode.Map;
+            (DefaultTransition.Instance as ITransitionHandler).Complete();
         }
     }
 }

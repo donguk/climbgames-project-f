@@ -1,44 +1,41 @@
 ﻿using UnityEngine;
+using UnityEngine.AI;
 
 namespace ClimbGames.Project_HC
 {
     public class FishingCharacter : MonoBehaviour
     {
         [SerializeField] private Transform root;
-        [SerializeField] private Transform offset;
+        [SerializeField] private Transform tiltPivot;
         [SerializeField] private Transform rightHandle;
         [SerializeField] private Transform leftHandle;
-        [SerializeField] private Vector2 tiltLimit = new Vector2(-10, 10);
 
         private Animator _animator;
-        private int bodyLayer, armsLayer;
-        private Vector2 currentTiltLimit;
+        private NavMeshAgent navMeshAgent;
+        private Quaternion startPanRotation;
 
         public Animator Animator => _animator;
+        public Transform CameraTarget => tiltPivot;
         public Transform RodHandle => rightHandle;
         public Transform LeftHandle => leftHandle;
-        public int BodyLayer => bodyLayer;
-        public int ArmsLayer => armsLayer;
+        public int BodyLayer { get; private set; }
+        public int ArmsLayer { get; private set; }
 
         void Awake()
         {
             _animator = GetComponentInChildren<Animator>();
+            navMeshAgent = GetComponent<NavMeshAgent>();
 
-            bodyLayer = _animator.GetLayerIndex(FishingAnimation.BodyLayer);
-            armsLayer = _animator.GetLayerIndex(FishingAnimation.ArmsLayer);
+            BodyLayer = _animator.GetLayerIndex(FishingAnimation.BodyLayer);
+            ArmsLayer = _animator.GetLayerIndex(FishingAnimation.ArmsLayer);
+
+            startPanRotation = root.rotation;
         }
 
-        public void UpdateRotation(FishingCamera camera, FishingPlayerModel model)
+        public void UpdateRotation(CharacterRotationInfo rotationInfo)
         {
-            Vector3 targetTiltLimit = camera.TiltLimit;
-
-            // 케스팅 피칭 모드시 캐릭터 틸트(상하) 제한
-            if (model.CastingType.CurrentValue == CastingType.Pitching && model.ActorState.CurrentValue == FishingActorState.Idle)
-                targetTiltLimit = tiltLimit;
-
-            currentTiltLimit = Vector3.Lerp(currentTiltLimit, targetTiltLimit, Time.deltaTime * 5f);
-            float currentTilt = Mathf.Clamp(camera.CurrentTilt, currentTiltLimit.x, currentTiltLimit.y);
-            root.localRotation = Quaternion.Euler(new Vector3(currentTilt, camera.CurrentPan));
+            root.rotation = startPanRotation * Quaternion.AngleAxis(rotationInfo.pan, Vector3.up);
+            tiltPivot.localRotation = Quaternion.AngleAxis(rotationInfo.tilt, Vector3.right);
         }
 
         public void SetTrigger(string name)

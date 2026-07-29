@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Cysharp.Threading.Tasks;
 using R3;
+using Unity.Cinemachine;
 
 namespace ClimbGames.Project_HC
 {
@@ -9,20 +10,25 @@ namespace ClimbGames.Project_HC
         private FishingPlayerModel model;
         private FishData fishData;
 
+        private FishingSpot spot;
         private FishingActor actor;
         private HookedFish hookedFish;
 
         private FishingActorMachine actorMachine;
         private FishMachine fishMachine;
         private MessageBroker messageBroker;
+        private FishingHandler handler;
 
         public FishingPlayerModel Model => model;
         public FishData FishData => fishData;
 
+        public FishingWaterArea WaterArea => spot.WaterArea;
         public FishingActor Actor => actor;
-        public FishingCamera Camera => actor.Camera;
+        public Transform CameraTarget => actor.Character.CameraTarget;
         public HookedFish Fish => hookedFish;
+        public FishMachine FishMachine => fishMachine;
         public MessageBroker MessageBroker => messageBroker;
+        public FishingHandler Handler => handler;
 
         public FishingPlayer(int id)
         {
@@ -35,16 +41,23 @@ namespace ClimbGames.Project_HC
             actorMachine.onChange += (_) => model.ChangeActorState(_);
         }
 
-        public virtual async UniTask Initialize(FishingArea area)
+        public virtual async UniTask Initialize(FishingSpot spot)
         {
+            this.spot = spot;
+
             if (actor == null)
                 actor = AssetManager.Instantiate<FishingActor>("FishingActor");
 
+            if (handler == null)
+                handler = AssetManager.Instantiate<FishingHandler>("FishingHandler");
+
             actor.gameObject.SetActive(true);
-            await actor.Initialize(model.ID, area);
+            actor.Initialize(model.ID, spot.SpawnPoint);
 
             actorMachine.InitializeAndStart(this);
             fishMachine.InitializeAndStart(this);
+
+            await UniTask.NextFrame();
         }
 
         public void Hide()

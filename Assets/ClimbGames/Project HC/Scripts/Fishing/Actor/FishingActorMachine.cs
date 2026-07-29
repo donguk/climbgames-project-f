@@ -33,23 +33,18 @@ namespace ClimbGames.Project_HC
                     if (Keyboard.current.cKey.wasReleasedThisFrame)
                         fsm.ChangeState(FishingActorState.Catching);
 
-                    //if (Keyboard.current.fKey.wasReleasedThisFrame)
-                    //    Fish.ChangeState(FishState.Flee);
-                    //
-                    //if (Keyboard.current.bKey.wasReleasedThisFrame)
-                    //    Fish.ChangeState(FishState.Bite);
+                    if (Keyboard.current.fKey.wasReleasedThisFrame)
+                        Player.FishMachine.ChangeState(FishState.Flee);
+
+                    if (Keyboard.current.bKey.wasReleasedThisFrame)
+                        Player.FishMachine.ChangeState(FishState.Bite);
                 }
-
-
-                // 카메라 타켓 회전
-                if (FishingInput.Instance.IsPressed)
-                    Actor.Camera.UpdateRotation(FishingInput.Instance.DragDelta);
             }
 
             protected override void OnFixedUpdate()
             {
                 // 캐릭터 회전
-                Actor.Character.UpdateRotation(Player.Actor.Camera, Player.Model);
+                Actor.Character.UpdateRotation(Player.Handler.GetRotationInfo());
 
                 // 라인 업데이트
                 Actor.Line.UpdateLine(Time.fixedDeltaTime);

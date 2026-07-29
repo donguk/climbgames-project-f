@@ -21,12 +21,17 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 11df4993b63a04c4f8adcb5f6cdece75
-    m_Address: UIFishing
+    m_Address: UIPanelFishing
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 32f9f52d44df09641a8a157ecb4e143c
-    m_Address: UIFisingArea
+    m_Address: UIFisingSpot
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 358a7b1a5a498544f970ded998f80cfc
+    m_Address: FishingHandler
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -42,11 +47,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 51cfb8ee4041c204ea445a54995259f5
     m_Address: FishingActor
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 81c20ba05817cec4fbef10670a2e8b23
-    m_Address: UIMenu
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

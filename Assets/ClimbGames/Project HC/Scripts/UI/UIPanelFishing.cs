@@ -4,11 +4,10 @@ using UnityEngine.UI;
 using TMPro;
 using R3;
 using R3.Triggers;
-using System;
 
 namespace ClimbGames.Project_HC
 {
-    public class UIFishing : UIBase
+    public class UIPanelFishing : UIBase
     {
         enum CastingState
         {
@@ -18,6 +17,7 @@ namespace ClimbGames.Project_HC
             Landing,
         }
 
+        [SerializeField] private VariableJoystick joystick;
         [SerializeField] private Button btn_casting;
         [SerializeField] private Slider sld_casting_gauge;
         [SerializeField] private TMP_Text txt_casting;
@@ -53,8 +53,8 @@ namespace ClimbGames.Project_HC
                 SetCastingType(type);
             }).AddTo(this);
 
-            btn_reeling.OnPointerDownAsObservable().Subscribe(_ => FishingInput.Instance.SetReeling(true)).AddTo(this);
-            btn_reeling.OnPointerUpAsObservable().Subscribe(_ => FishingInput.Instance.SetReeling(false)).AddTo(this);
+            btn_reeling.OnPointerDownAsObservable().Subscribe(_ => localPlayer.Handler.SetReelingInput(true)).AddTo(this);
+            btn_reeling.OnPointerUpAsObservable().Subscribe(_ => localPlayer.Handler.SetReelingInput(false)).AddTo(this);
 
             localPlayer.MessageBroker.Receive<FishingEvent.OnFishCatched>().Subscribe(_ => btn_get.gameObject.SetActive(true)).AddTo(this);
             btn_get.OnClickAsObservable().Subscribe(_ => localPlayer.TakeHookedFish()).AddTo(this);

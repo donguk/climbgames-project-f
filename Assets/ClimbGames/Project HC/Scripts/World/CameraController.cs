@@ -12,6 +12,7 @@ namespace ClimbGames.Project_HC
 
         private CinemachineBrain cinemachineBrain;
 
+        public CinemachineBrain Brain => cinemachineBrain;
         public bool IsBlending => cinemachineBrain.IsBlending;
         public CinemachineBlend ActiveBlend => cinemachineBrain.ActiveBlend;
 
@@ -20,6 +21,11 @@ namespace ClimbGames.Project_HC
             base.Awake();
 
             cinemachineBrain = mainCamera.GetComponent<CinemachineBrain>();
+        }
+
+        public bool TryGetCinemachineCamera(string key, out CinemachineCamera camera)
+        {
+            return cinemachineCameras.TryGetValue(key, out camera);
         }
 
         public CinemachineCamera ChangeCinemachine(string key, Transform target)

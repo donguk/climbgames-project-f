@@ -26,7 +26,7 @@ namespace ClimbGames.Project_HC
                 base.OnUpdate();
 
                 // 텐션 계산
-                float reelingInput = FishingInput.Instance.Reeling;
+                float reelingInput = Player.Handler.ReelingInput;
                 FishingPlayerModel model = Player.Model;
                 FishData fishData = Player.FishData;
 
@@ -49,7 +49,7 @@ namespace ClimbGames.Project_HC
             {
                 base.OnFixedUpdate();
 
-                float reelingInput = FishingInput.Instance.Reeling;
+                float reelingInput = Player.Handler.ReelingInput;
                 if (reelingInput > 0f)
                     Actor.Line.Reeling(reelingInput * Time.fixedDeltaTime);
 

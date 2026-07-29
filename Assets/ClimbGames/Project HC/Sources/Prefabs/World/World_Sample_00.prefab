@@ -34,7 +34,7 @@ Transform:
   - {fileID: 6140778841136860919}
   m_Father: {fileID: 5364323970867644667}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &570527806806111172
+--- !u!1 &1464454338841764192
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,29 +42,29 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 9199511616517983929}
+  - component: {fileID: 2506022953392090474}
   m_Layer: 0
-  m_Name: CastingArea
+  m_Name: SpawnPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &9199511616517983929
+--- !u!4 &2506022953392090474
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 570527806806111172}
+  m_GameObject: {fileID: 1464454338841764192}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.28, y: -1.42, z: -7.26}
+  m_LocalRotation: {x: 0, y: 0.9976843, z: 0, w: 0.06801542}
+  m_LocalPosition: {x: -3.99, y: 0.313, z: 4.44}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2649791942905605046}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 172.2, z: 0}
 --- !u!1 &1976821022280467706
 GameObject:
   m_ObjectHideFlags: 0
@@ -101,9 +101,88 @@ Transform:
   - {fileID: 3082590962477274670}
   - {fileID: 5387700401126488499}
   - {fileID: 1000443587119131825}
-  - {fileID: 8179391364413850583}
+  - {fileID: 9077884188154134330}
   m_Father: {fileID: 713904009642500311}
   m_LocalEulerAnglesHint: {x: 0, y: -132.5, z: 0}
+--- !u!1 &2286158214261641589
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3364552857431700986}
+  - component: {fileID: 2940452007026678352}
+  m_Layer: 0
+  m_Name: 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3364552857431700986
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2286158214261641589}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 14.61, y: 0, z: -8.34}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 9023745936378568620}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2940452007026678352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2286158214261641589}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3aca56139b1e8a44ca6bbfa293a0338e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.WaterArea
+  radius: 3.5
+--- !u!1 &2595835118003702272
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9023745936378568620}
+  m_Layer: 0
+  m_Name: spot_0
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9023745936378568620
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2595835118003702272}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8179391364413850583}
+  - {fileID: 3364552857431700986}
+  - {fileID: 2093886049794099695}
+  m_Father: {fileID: 9077884188154134330}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3336730952213897383
 GameObject:
   m_ObjectHideFlags: 0
@@ -148,7 +227,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8079696316422349809}
   - component: {fileID: 5199615770416185462}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: navmesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -163,13 +242,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3473165921674749555}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -0.39514467, z: 0, w: 0.9186189}
-  m_LocalPosition: {x: -115.5, y: 0, z: 52.1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3580016050075346451}
-  m_LocalEulerAnglesHint: {x: 0, y: -46.55, z: 0}
+  m_Father: {fileID: 2649791942905605046}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &5199615770416185462
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -185,11 +264,11 @@ MonoBehaviour:
   m_SerializedVersion: 0
   m_AgentTypeID: 0
   m_CollectObjects: 1
-  m_Size: {x: 90.55, y: 2, z: 104.20176}
-  m_Center: {x: -4.8, y: 1, z: -14.981724}
+  m_Size: {x: 27.1, y: 4, z: 20.6}
+  m_Center: {x: 0, y: 0, z: 0}
   m_LayerMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 503
   m_UseGeometry: 0
   m_DefaultArea: 0
   m_GenerateLinks: 0
@@ -200,7 +279,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: f29fa717b21b9f645b827243ad0ce1ff, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: 24ac2c7ea6e030540bcc262b1adc5705, type: 2}
   m_BuildHeightMesh: 0
 --- !u!1 &3850859326557142136
 GameObject:
@@ -213,7 +292,7 @@ GameObject:
   - component: {fileID: 8179391364413850583}
   - component: {fileID: 3423942504650187749}
   m_Layer: 0
-  m_Name: WaterArea
+  m_Name: 0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -227,13 +306,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3850859326557142136}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 19.29, y: 0, z: -9.27}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 19.53, y: 0, z: -10.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1144874576145904974}
-  m_Father: {fileID: 5364323970867644667}
+  m_Children: []
+  m_Father: {fileID: 9023745936378568620}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3423942504650187749
 MonoBehaviour:
@@ -247,9 +325,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3aca56139b1e8a44ca6bbfa293a0338e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.WaterArea
-  radius: 3.4
-  strugglePoint: {fileID: 1144874576145904974}
-  struggleRange: 1
+  radius: 4.66
 --- !u!1 &4011820419519183010
 GameObject:
   m_ObjectHideFlags: 0
@@ -377,6 +453,83 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &4427683402079225399
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9077884188154134330}
+  m_Layer: 0
+  m_Name: WaterAreas
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9077884188154134330
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4427683402079225399}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 9023745936378568620}
+  m_Father: {fileID: 5364323970867644667}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5308199835129621834
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2093886049794099695}
+  - component: {fileID: 3113582802255153502}
+  m_Layer: 0
+  m_Name: 2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2093886049794099695
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5308199835129621834}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 25.04, y: 0, z: -13.82}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 9023745936378568620}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3113582802255153502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5308199835129621834}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3aca56139b1e8a44ca6bbfa293a0338e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.WaterArea
+  radius: 5.95
 --- !u!1 &5942534838798429793
 GameObject:
   m_ObjectHideFlags: 0
@@ -482,7 +635,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 8079696316422349809}
   - {fileID: 5043616245941046565}
   - {fileID: 7990333157085986653}
   - {fileID: 7168371416218221710}
@@ -491,37 +643,6 @@ Transform:
   - {fileID: 7628447398036612483}
   - {fileID: 7333873808260542518}
   m_Father: {fileID: 5364323970867644667}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &6389208403426041928
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1144874576145904974}
-  m_Layer: 0
-  m_Name: struggle
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1144874576145904974
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6389208403426041928}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.012887955, y: 0, z: -0.0062294006}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8179391364413850583}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6706881187368382990
 GameObject:
@@ -635,37 +756,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &6904845140774258931
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4868305174733118473}
-  m_Layer: 0
-  m_Name: CharacterPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4868305174733118473
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6904845140774258931}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.99042535, z: 0, w: 0.13804956}
-  m_LocalPosition: {x: -2.42, y: 0, z: -0.58}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2649791942905605046}
-  m_LocalEulerAnglesHint: {x: 0, y: 164.13, z: 0}
 --- !u!1 &7001329877192263619
 GameObject:
   m_ObjectHideFlags: 0
@@ -676,7 +766,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1000443587119131825}
   m_Layer: 0
-  m_Name: Interactive Objects
+  m_Name: FishingSpots
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -695,40 +785,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2161777826188635178}
-  m_Father: {fileID: 5364323970867644667}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &7310039747108770291
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2161777826188635178}
-  m_Layer: 0
-  m_Name: Fishing Points
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2161777826188635178
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7310039747108770291}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
   - {fileID: 2649791942905605046}
-  m_Father: {fileID: 1000443587119131825}
+  m_Father: {fileID: 5364323970867644667}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8281961117688046483
 GameObject:
@@ -772,9 +830,8 @@ GameObject:
   m_Component:
   - component: {fileID: 2649791942905605046}
   - component: {fileID: 990974677110943215}
-  - component: {fileID: 6965767381245694050}
   m_Layer: 0
-  m_Name: 0
+  m_Name: spot_0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -789,14 +846,14 @@ Transform:
   m_GameObject: {fileID: 8704222835233074568}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 19.76, y: 0, z: -2.42}
+  m_LocalPosition: {x: 18.96, y: 0, z: -2.05}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4164897094857161904}
-  - {fileID: 4868305174733118473}
-  - {fileID: 9199511616517983929}
-  m_Father: {fileID: 2161777826188635178}
+  - {fileID: 2506022953392090474}
+  - {fileID: 8079696316422349809}
+  m_Father: {fileID: 1000443587119131825}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &990974677110943215
 MonoBehaviour:
@@ -811,29 +868,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingPoint
   model: {fileID: 4164897094857161904}
-  characterPoint: {fileID: 4868305174733118473}
-  waterArea: {fileID: 3423942504650187749}
---- !u!65 &6965767381245694050
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8704222835233074568}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2, y: 1, z: 2}
-  m_Center: {x: 0, y: 1, z: 0}
+  spawnPoint: {fileID: 2506022953392090474}
+  waterAreas:
+  - {fileID: 3423942504650187749}
+  - {fileID: 2940452007026678352}
+  - {fileID: 3113582802255153502}
 --- !u!1001 &16859601488060582
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3851,6 +3890,10 @@ PrefabInstance:
       value: 7
       objectReference: {fileID: 0}
     - target: {fileID: -1695386897620489773, guid: f6559997c419d0e40a337dbfcdf6bbd9, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -1695386897620489773, guid: f6559997c419d0e40a337dbfcdf6bbd9, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
@@ -4560,6 +4603,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 509c4c783b63df84698035d743a519f0, type: 2}
+    - target: {fileID: -1695386897620489773, guid: f6559997c419d0e40a337dbfcdf6bbd9, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: f6559997c419d0e40a337dbfcdf6bbd9, type: 3}
       propertyPath: m_Name
       value: Lake (2)
@@ -5097,24 +5144,44 @@ PrefabInstance:
       value: SM_FishBucket
       objectReference: {fileID: 0}
     - target: {fileID: 4638660586778349655, guid: fb13ea64c1e8e4141969aad73ce4e568, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4638660586778349655, guid: fb13ea64c1e8e4141969aad73ce4e568, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4638660586778349655, guid: fb13ea64c1e8e4141969aad73ce4e568, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4638660586778349655, guid: fb13ea64c1e8e4141969aad73ce4e568, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 3.19
+      objectReference: {fileID: 0}
+    - target: {fileID: 4638660586778349655, guid: fb13ea64c1e8e4141969aad73ce4e568, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.22
+      value: 0.47
+      objectReference: {fileID: 0}
+    - target: {fileID: 4638660586778349655, guid: fb13ea64c1e8e4141969aad73ce4e568, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.02
       objectReference: {fileID: 0}
     - target: {fileID: 4638660586778349655, guid: fb13ea64c1e8e4141969aad73ce4e568, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9303536
+      value: 0.66412205
       objectReference: {fileID: 0}
     - target: {fileID: 4638660586778349655, guid: fb13ea64c1e8e4141969aad73ce4e568, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4638660586778349655, guid: fb13ea64c1e8e4141969aad73ce4e568, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.3666636
+      value: 0.7476242
       objectReference: {fileID: 0}
     - target: {fileID: 4638660586778349655, guid: fb13ea64c1e8e4141969aad73ce4e568, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4638660586778349655, guid: fb13ea64c1e8e4141969aad73ce4e568, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -5122,7 +5189,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4638660586778349655, guid: fb13ea64c1e8e4141969aad73ce4e568, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 27.38
+      value: 96.77
       objectReference: {fileID: 0}
     - target: {fileID: 4638660586778349655, guid: fb13ea64c1e8e4141969aad73ce4e568, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z

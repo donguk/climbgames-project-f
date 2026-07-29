@@ -10,8 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 5287352555261646745}
   - component: {fileID: 227153055015350387}
+  - component: {fileID: 1088469361918294231}
   m_Layer: 5
-  m_Name: UIFisingArea
+  m_Name: UIFisingSpot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -26,7 +27,7 @@ RectTransform:
   m_GameObject: {fileID: 952470277702237182}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 3, y: 3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4847953310820751516}
@@ -49,7 +50,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d81fe247a5571842bb7fbf054b77be8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ClimbGames.Framework::ClimbGames.UI.UIBillboard
+  target: {fileID: 0}
   targetCamera: {fileID: 0}
+--- !u!114 &1088469361918294231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 952470277702237182}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfea9dedc323f23489a62d1451676cdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.UIFishingSpot
 --- !u!1 &8900720936751371646
 GameObject:
   m_ObjectHideFlags: 0
@@ -109,7 +123,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:

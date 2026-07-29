@@ -44,7 +44,7 @@ namespace ClimbGames.Project_HC
             public void Throw()
             {
                 float throwAngle = Player.Model.CastingType.CurrentValue == CastingType.OverHead ? 40f : 20f;
-                if (TryGetThrowVelocity(Actor.Hook.transform, Actor.WaterArea.Center, throwAngle, out var velocity))
+                if (TryGetThrowVelocity(Actor.Hook.transform, Player.WaterArea.Center, throwAngle, out var velocity))
                 {
                     Player.MessageBroker.Publish(new FishingEvent.OnCastingThrow() { velocity = velocity });
                 }
