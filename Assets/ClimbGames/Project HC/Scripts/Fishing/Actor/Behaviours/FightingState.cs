@@ -14,6 +14,10 @@ namespace ClimbGames.Project_HC
 
             protected override void OnEnter()
             {
+                // 데이터 초기화
+                FishingPlayerModel model = Player.Model;
+                model.lineTension = model.currentTension = 0f;
+
                 // 물고기 도망
                 Player.MessageBroker.Receive<FishingEvent.OnFishFlee>().Subscribe(_ => fsm.ChangeState(FishingActorState.Waiting)).AddTo(this);
 

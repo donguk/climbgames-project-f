@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Triggers;
+using ClimbGames.Project_HC;
 
 namespace ClimbGames.Project_HC
 {
@@ -20,7 +22,7 @@ namespace ClimbGames.Project_HC
         public FishingPlayerModel Model => model;
         public FishData FishData => fishData;
 
-        public FishingWaterArea WaterArea => spot.WaterArea;
+        public FishingSpot Spot => spot;
         public FishingActor Actor => actor;
         public Transform CameraTarget => actor.Character.CameraTarget;
         public HookedFish Fish => hookedFish;
@@ -49,7 +51,7 @@ namespace ClimbGames.Project_HC
                 handler = AssetManager.Instantiate<FishingInputHandler>("FishingInputHandler");
 
             actor.gameObject.SetActive(true);
-            actor.Initialize(model.ID, spot.SpawnPoint);
+            actor.Initialize(this, spot);
 
             actorMachine.InitializeAndStart(this);
             fishMachine.InitializeAndStart(this);

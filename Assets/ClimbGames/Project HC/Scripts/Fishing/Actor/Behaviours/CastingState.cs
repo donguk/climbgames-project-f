@@ -43,12 +43,31 @@ namespace ClimbGames.Project_HC
 
             public void Throw()
             {
-                float angle = Player.Model.CastingType.CurrentValue == CastingType.OverHead ? 40f : 20f;
-                float intensity = Player.Model.castingIntensity;
+                var character = Player.Actor.Character;
 
-                if (TryGetThrowVelocity(Actor.Hook.transform, Player.WaterArea.Center, angle, out var velocity))
+                // 케스팅 범위 정보
+                var segmentInfo = Player.Spot.GetCastingArea(character.transform);
+                if (segmentInfo.IsValid)
                 {
-                    Player.MessageBroker.Publish(new FishingEvent.OnCastingThrow() { velocity = velocity });
+                    float angle = Player.Model.CastingType.CurrentValue == CastingType.Pitching ? 20f : 40f;
+                    float intensity = Player.Model.CastingType.CurrentValue == CastingType.Pitching ? 0.2f : Player.Model.castingIntensity;
+
+                    Vector3 targetPos = Vector3.Lerp(segmentInfo.startPos, segmentInfo.endPos, intensity);
+                    if (TryGetThrowVelocity(Actor.Hook.transform, targetPos, angle, out var velocity))
+                    {
+                        Player.MessageBroker.Publish(new FishingEvent.OnCastingThrow() { velocity = velocity });
+                    }
+                    else
+                    {
+                        // 주어진 각도로 정해진 위치에 도달 하지 못하는 경우
+                        fsm.ChangeState(FishingActorState.Idle);
+                    }
+
+                }
+                else
+                {
+                    // 범위 밖에서 케스팅시 
+                    fsm.ChangeState(FishingActorState.Idle);
                 }
             }
 

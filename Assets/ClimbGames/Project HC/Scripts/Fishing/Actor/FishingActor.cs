@@ -11,21 +11,25 @@ namespace ClimbGames.Project_HC
         [SerializeField] private FishingBobber fishingBobber;
         [SerializeField] private FishingHook fishingHook;
 
+        private FishingPlayer player;
+
         public FishingCharacter Character => fishingCharacter;
         public FishingRod Rod => fishingRod;
         public FishingLine Line => fishingLine;
         public FishingHook Hook => fishingHook;
         public FishingBobber Bobber => fishingBobber;
 
-        public void Initialize(int id, Transform spawnPoint)
+        public void Initialize(FishingPlayer player, FishingSpot spot)
         {
-            // init id
-            fishingLine.Initialize(id);
-            fishingBobber.Initialize(id);
-            fishingHook.Initialize(id);
+            this.player = player;
 
-            var eulerAngles = spawnPoint.rotation.eulerAngles;
-            transform.SetPositionAndRotation(spawnPoint.position, Quaternion.AngleAxis(eulerAngles.y, Vector3.up));
+            // init id
+            fishingLine.Initialize(player.Model.ID);
+            fishingBobber.Initialize(player.Model.ID);
+            fishingHook.Initialize(player.Model.ID);
+
+            var eulerAngles = spot.SpawnPoint.rotation.eulerAngles;
+            transform.SetPositionAndRotation(spot.SpawnPoint.position, Quaternion.AngleAxis(eulerAngles.y, Vector3.up));
 
             // 착용
             fishingRod.transform.SetParent(fishingCharacter.RodHandle, false);
@@ -37,6 +41,19 @@ namespace ClimbGames.Project_HC
             // 채비 설정
             fishingLine.BobberPoint.Attach(fishingBobber);
             fishingLine.EndPoint.Attach(fishingHook);
+        }
+
+        void OnDrawGizmos()
+        {
+            if (player != null && player.Model.ActorState.CurrentValue == FishingActorState.Idle)
+            {
+                var segmentInfo = player.Spot.GetCastingArea(fishingCharacter.transform);
+                if (segmentInfo.IsValid)
+                {
+                    UnityEditor.Handles.color = Color.red;
+                    UnityEditor.Handles.DrawLine(segmentInfo.startPos, segmentInfo.endPos);
+                }
+            }
         }
     }
 }
