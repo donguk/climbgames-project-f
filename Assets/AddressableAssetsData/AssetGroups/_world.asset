@@ -15,11 +15,6 @@ MonoBehaviour:
   m_GroupName: _world
   m_GUID: 477fb22652da430489d382f8216e8e09
   m_SerializeEntries:
-  - m_GUID: 0c4ce480f58c82841996eda817b19715
-    m_Address: FishingBait
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 11df4993b63a04c4f8adcb5f6cdece75
     m_Address: UIPanelFishing
     m_ReadOnly: 0
@@ -37,11 +32,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3b070ef67414ee347a779df6f549dcdd
     m_Address: HookedFish
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 4e5fd42cef784fe4682f6dd187a0b5d2
-    m_Address: PhysicsRod
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
