@@ -34,11 +34,13 @@ namespace ClimbGames.Project_HC
         public float currentTension;
         public float tensionOverTime;
 
+        private ReactiveProperty<float> lineLength = new ReactiveProperty<float>();
         private ReactiveProperty<CastingType> castingType = new ReactiveProperty<CastingType>();
         private ReactiveProperty<FishingActorState> actorState = new ReactiveProperty<FishingActorState>();
         private FishStatus fishStatus = new FishStatus();
 
         public int ID => id;
+        public ReadOnlyReactiveProperty<float> LineLength => lineLength;
         public ReadOnlyReactiveProperty<CastingType> CastingType => castingType;
         public ReadOnlyReactiveProperty<FishingActorState> ActorState => actorState;
         public FishStatus FishStatus => fishStatus;
@@ -51,6 +53,11 @@ namespace ClimbGames.Project_HC
         public void SetMovement(float horizontal, float vertical)
         {
             characterMovement = new Vector3(horizontal, 0f, vertical);
+        }
+
+        public void SetLineLength(float value)
+        {
+            lineLength.Value = value;
         }
 
         public void ChangeCastingType(CastingType value)

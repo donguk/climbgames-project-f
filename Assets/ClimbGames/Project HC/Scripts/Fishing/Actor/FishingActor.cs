@@ -36,7 +36,7 @@ namespace ClimbGames.Project_HC
             fishingRod.transform.localPosition = Vector3.zero;
 
             // 라인 생성
-            fishingLine.Initialize(fishingRod.PoleTip, 1f, 0.5f);
+            fishingLine.Initialize(player, fishingRod.PoleTip, 1f, 0.5f);
 
             // 채비 설정
             fishingLine.BobberPoint.Attach(fishingBobber);

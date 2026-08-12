@@ -14,6 +14,7 @@ namespace ClimbGames.Project_HC
         [SerializeField] private float forcedTension = 0f;
 
         private FishingLineDrawer[] lineDrawers;
+        private FishingPlayer player;
         private Transform rodTip;
         private float targetLength, targetTension;
         private NormalizedTimer targetLengthTimer = new NormalizedTimer(1f);
@@ -26,8 +27,9 @@ namespace ClimbGames.Project_HC
         public FishingLinePoint EndPoint => endPoint;
         public FishingLinePoint HandlePoint => handlePoint;
 
-        public void Initialize(Transform rodTip, float length, float bobberHeight)
+        public void Initialize(FishingPlayer player, Transform rodTip, float length, float bobberHeight)
         {
+            this.player = player;
             this.rodTip = rodTip;
             lineDrawers = GetComponentsInChildren<FishingLineDrawer>();
 
@@ -124,6 +126,9 @@ namespace ClimbGames.Project_HC
         {
             targetLength = totalLength = length;
             targetLengthTimer.Reset(duration);
+
+            // 데이터 설정
+            player.Model.SetLineLength(totalLength);
         }
 
         public void SetForcedTension(float tension, float duration = 0f)
@@ -137,6 +142,7 @@ namespace ClimbGames.Project_HC
             if (amount > 0f)
                 totalLength += amount;
 
+            player.Model.SetLineLength(totalLength);
             return targetLength = totalLength;
         }
 
@@ -145,6 +151,7 @@ namespace ClimbGames.Project_HC
             if (amount > 0f)
                 totalLength = Mathf.Max(0.5f, totalLength - amount);
 
+            player.Model.SetLineLength(totalLength);
             return targetLength = totalLength;
         }
 
@@ -187,6 +194,9 @@ namespace ClimbGames.Project_HC
 
         protected override void OnPullOut(FishingEvent.OnPullOut param)
         {
+            SetForcedTension(0f, 0.1f);
+            SetLength(1, 1f);
+
             // 물고기가 잡혔다면 연결
             if (param.hookedFish != null)
             {
@@ -196,11 +206,11 @@ namespace ClimbGames.Project_HC
                 hookedFish.ModelRoot.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
 
                 endPoint.Attach(param.hookedFish);
+
             }
 
             endPoint.SetTrackingTarget(param.rod.LineGuide, 1f, () => endPoint.SetTrackingTarget(null));
-            SetForcedTension(0f, 0.1f);
-            SetLength(1f, 1f);
+            targetLength = 1.6f;
         }
     }
 }

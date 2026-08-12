@@ -27,6 +27,7 @@ namespace ClimbGames.Project_HC
         [SerializeField] private Slider sld_tension_gauge;
         [SerializeField] private TMP_Text txt_tension_value;
         [SerializeField] private Button btn_get;
+        [SerializeField] private TMP_Text txt_line_length;
 
         private CastingState castingState = CastingState.None;
         private int loadingDirection = 1;
@@ -60,6 +61,8 @@ namespace ClimbGames.Project_HC
 
             localPlayer.MessageBroker.Receive<FishingEvent.OnFishCatched>().Subscribe(_ => btn_get.gameObject.SetActive(true)).AddTo(this);
             btn_get.OnClickAsObservable().Subscribe(_ => localPlayer.TakeHookedFish()).AddTo(this);
+
+            localPlayer.Model.LineLength.Subscribe(_ => txt_line_length.text = $"{_:0.##}m").AddTo(this);
         }
 
         void Update()
