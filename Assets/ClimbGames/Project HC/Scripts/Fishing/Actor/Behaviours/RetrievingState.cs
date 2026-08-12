@@ -25,6 +25,9 @@ namespace ClimbGames.Project_HC
                 {
                     fsm.ChangeState(FishingActorState.Idle);
                 }).AddTo(this);
+
+                // 물고기 상태 idle
+                Player.FishMachine.ChangeState(FishState.Idle);
             }
         }
     }

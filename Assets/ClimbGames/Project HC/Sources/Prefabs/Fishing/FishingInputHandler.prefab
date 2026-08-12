@@ -45,5 +45,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingInput
   sensitivity: 0.1
-  tiltLimit: {x: -30, y: 35}
+  tiltLimit: {x: -40, y: 45}
   pitchingTiltLimit: {x: -15, y: 15}

@@ -156,7 +156,7 @@ namespace ClimbGames.Project_HC
             if (param.type == CastingType.Pitching)
             {
                 handlePoint.SetTrackingTarget(param.leftHandle, 1f);
-                targetLength = Vector3.Distance(rodTip.position, param.leftHandle.position);
+                targetLength = 2f;
             }
             else
             {

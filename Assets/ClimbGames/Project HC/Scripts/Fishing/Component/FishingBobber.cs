@@ -32,7 +32,6 @@ namespace ClimbGames.Project_HC
         private FishBiteInfo biteInfo;
 
         public bool IsFloating => RuntimeJoint == null;
-        public bool IsBitable => IsFloating && landingTimer.IsCompleted;
 
         void FixedUpdate()
         {

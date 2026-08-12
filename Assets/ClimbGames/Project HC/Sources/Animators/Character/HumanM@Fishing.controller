@@ -63,7 +63,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.OffsetTransformBehaviour
   position: {x: 0, y: 0, z: 0}
-  rotation: {x: 0, y: 0, z: 0}
+  rotation: {x: 20, y: 0, z: 0}
   duration: 0.2
 --- !u!114 &-6995903803296580455
 MonoBehaviour:
@@ -348,8 +348,8 @@ AnimatorState:
   - {fileID: 1282830575434050863}
   - {fileID: -5376703169757996635}
   m_StateMachineBehaviours:
-  - {fileID: 2383635270045982651}
   - {fileID: 1508518709316166539}
+  - {fileID: 2383635270045982651}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -826,8 +826,8 @@ AnimatorState:
   - {fileID: 2023110197791326852}
   - {fileID: -8917724930913626184}
   m_StateMachineBehaviours:
-  - {fileID: -3613272210924482036}
   - {fileID: -7463185134458049392}
+  - {fileID: -3613272210924482036}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -876,8 +876,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d4b562894a527a47829d1eae739f2c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.OffsetTransformBehaviour
-  position: {x: 0, y: 0, z: 0}
-  rotation: {x: 17, y: 0, z: 0}
+  position: {x: 0, y: 0, z: 0.4}
+  rotation: {x: 30, y: 0, z: 0}
   duration: 0.5
 --- !u!206 &4554593072841368808
 BlendTree:
