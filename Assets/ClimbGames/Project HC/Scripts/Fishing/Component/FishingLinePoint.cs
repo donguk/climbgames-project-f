@@ -109,6 +109,7 @@ namespace ClimbGames.Project_HC
             }
         }
 
+        // 현재 포인트에 오브젝트 붙이기
         public void Attach(ILineAttachable attachable)
         {
             attachable.Body.isKinematic = false;
