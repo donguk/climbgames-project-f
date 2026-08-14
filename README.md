@@ -18,20 +18,20 @@
 
 ## 🏗 시스템 아키텍처 및 자체 프레임워크 (Framework Package)
 
-프로젝트 간 코드 재사용성과 유지보수성을 위해 공통 모듈을 독립적인 프레임워크 패키지(`ClimbGames Framework`)로 패키징하여 관리합니다.
+프로젝트 간 코드 재사용성과 유지보수성을 위해 공통 모듈을 독립적인 프레임워크 패키지([ClimbGames Framework](https://github.com/donguk/climbgames-framework.git))로 패키징하여 관리합니다.
 
 
-## 🎮 주요 게임 플레이 흐름
+## 🎮 주요 플레이 흐름
 
 | 1. 타이틀 & 비동기 씬 로딩 | 2. 월드 맵 & 스팟 이동 |
 | :---: | :---: |
-| ![Title](Screenshots/Image_Sequence_001_0000.jpg.jpg) | ![World](Screenshots/Image_Sequence_002_0000.jpg) |
+| ![Title](Screenshots/Image_Sequence_001_0000.jpg) | ![World](Screenshots/Image_Sequence_002_0000.jpg) |
 | Framework의 SceneTransition를 통한 씬 전환 | 월드 탐색 및 낚시 포인트 인터랙션 |
 
-| 3. 캐스팅 & 릴링 메커니즘 | 4. 어획 (Fish Get) |
-| :---: | :---: |
-| ![Idle](Screenshots/Image_Sequence_003_0000.jpg) | ![Fighting](Screenshots/Image_Sequence_004_0000.jpg) | ![Catch](Screenshots/Image_Sequence_004_0581.jpg) |
-| Verlet 로프 기반 릴링 및 장력 조절 | 입질 감지 후 UIManager를 통한 결과 연출 |
+| 3. 캐스팅 포즈 | 4. 물고기와의 Fighintg | 4. 어획 (Fish Get) |
+| :---: | :---: | :---: |
+| ![Idle](Screenshots/Image_Sequence_003_0000.jpg) | ![Fighting](Screenshots/Image_Sequence_004_0000.jpg) | ![Catching](Screenshots/Image_Sequence_004_0581.jpg) |
+| Pitching - Overhead 전환 | 릴링 및 텐션 게이지 | 결과 연출 |
 
 
 
