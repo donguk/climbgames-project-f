@@ -1,0 +1,51 @@
+﻿using UnityEngine;
+using Unity.Cinemachine;
+
+namespace ClimbGames.ProjectF
+{
+    public class CameraController : MonoSingleton<CameraController>
+    {
+        private const int CINEMACHINE_LIVE_PRIORITY = 10;
+
+        [SerializeField] private Camera mainCamera;
+        [SerializeField] private SerializableDictionary<string, CinemachineCamera> cinemachineCameras;
+
+        private CinemachineBrain cinemachineBrain;
+
+        public CinemachineBrain Brain => cinemachineBrain;
+        public bool IsBlending => cinemachineBrain.IsBlending;
+        public CinemachineBlend ActiveBlend => cinemachineBrain.ActiveBlend;
+
+        protected override void Awake()
+        {
+            base.Awake();
+
+            cinemachineBrain = mainCamera.GetComponent<CinemachineBrain>();
+        }
+
+        public bool TryGetCinemachineCamera(string key, out CinemachineCamera camera)
+        {
+            return cinemachineCameras.TryGetValue(key, out camera);
+        }
+
+        public CinemachineCamera ChangeCinemachine(string key, Transform target)
+        {
+            CinemachineCamera cinemachine = null;
+            foreach (var pair in cinemachineCameras)
+            {
+                if (pair.Key == key)
+                {
+                    cinemachine = pair.Value;
+                    cinemachine.Target.TrackingTarget = target;
+                    pair.Value.Priority = CINEMACHINE_LIVE_PRIORITY;
+                }
+                else
+                {
+                    pair.Value.Priority = 0;
+                }
+            }
+
+            return cinemachine;
+        }
+    }
+}
