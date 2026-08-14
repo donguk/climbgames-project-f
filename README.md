@@ -41,15 +41,20 @@
 * **Verlet Line Algorithm:** 이전 위치와 현재 위치의 차이값을 이용해 낚싯줄 특유의 휘어짐과 속도 연산
 * **Distance Constraint:** 노드 간 거리를 일정하게 유지하는 구속 조건을 반복 적용하여 자연스러운 팽팽함 표현
 * **Dynamic Length Control:** 캐스팅/릴링 시 노드 개수를 동적으로 조절하여 실시간 줄 길이 제어
-* **라인 최적화 및 Catmull-Rom Spline 적용 (Performance Optimization):**
-  * **물리 노드 경량화:** 연산 프레임 드랍을 방지하기 위해 실시간 물리 연산에 사용되는 Verlet Node 수를 최소화하여 CPU 오버헤드 감소
-  * **곡선 보간(Spline Interpolation):** 적은 수의 물리 노드 사이를 **Catmull-Rom Spline** 알고리즘으로 곡선 보간하여, 적은 연산량으로도 꺾임 없는 부드럽고 자연스러운 낚싯줄 비주얼 구현
-* **프레임 동기화 및 카메라 떨림(Jittering) 방지 (Execution Order Optimization):**
-  * **프레임 지연 해결:** `OnFixedUpdate` 내에서 `캐릭터 이동/회전` ➔ `라인 Verlet 시뮬레이션` 순으로 정교하게 스텝을 제어하여, 캐릭터/낚싯대 좌표 변경과 낚싯줄 물리 연산 간의 오차 및 떨림 현상 차단
-  * **Cinemachine 카메라 동기화:** 시네마신 카메라의 Update 방식을 `FixedUpdate`로 설정하여 **플레이어 이동 - 낚싯줄 물리 연산 - 카메라 추적**이 동일한 타임스텝(`Time.fixedDeltaTime`) 내에서 완전 동기화되도록 처리
-  * **FSM 내 물리 루프 캡슐화:** `StateBase` 추상 클래스에 `OnFixedUpdate()` 수명주기를 정의하고, 물리 연산이 필요한 상태에서만 개체 업데이트와 라인 시뮬레이션을 동기화
+
 
 ### 2. FSM (유한 상태 머신) 기반 개체 상태 관리
 * **Player State:** `Idle` ➔ `Casting` ➔ `Waiting` ➔ `Fighting` ➔ `Catching`
 * **Fish AI State:** `Idle` ➔ `Approach` ➔ `Bite` ➔ `Struggle` ➔ `Flee` / `Submit`
 * 프레임워크의 FSM Core를 상속받아 구현함으로써 상태 전환 시 예외 처리를 단순화하고 코드 결합도를 감소시킴
+
+
+### 3. 성능 최적화 및 트러블슈팅 (Optimization & Troubleshooting)
+* **Catmull-Rom Spline 기반 라인 연산 최적화 (Performance Optimization)**
+  * **물리 노드 경량화:** 실시간 물리 연산에 사용되는 Verlet 질점(Node) 수를 최소화하여 CPU 연산 오버헤드 절감
+  * **곡선 보간(Spline Interpolation):** 축소된 질점 사이를 **Catmull-Rom Spline** 알고리즘으로 보간하여 적은 연산량으로도 꺾임 없는 부드러운 낚싯줄 비주얼 구현
+
+* **Execution Order 및 타임스텝 동기화를 통한 Jittering 방지 (Execution Order Optimization)**
+  * **연산 순서 제어:** FSM의 `OnFixedUpdate` 내에서 `캐릭터 이동/회전` ➔ `라인 Verlet 시뮬레이션` 순으로 실행 스텝을 보장하여 1프레임 위치 오차 차단
+  * **Cinemachine 카메라 동기화:** Cinemachine 카메라의 Update 방식을 `FixedUpdate`로 설정하여 **캐릭터 이동 - 라인 물리 연산 - 카메라 추적**이 동일한 `Time.fixedDeltaTime` 타임스텝 내에서 작동하도록 완벽 동기화
+  * **FSM 수명주기 활용:** `ActorStateBase` 추상 클래스에 `OnFixedUpdate()`를 정의하여 상태별 물리 연산 루프를 깔끔하게 캡슐화
