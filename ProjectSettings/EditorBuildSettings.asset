@@ -9,13 +9,13 @@ EditorBuildSettings:
     path: Packages/com.climbgames.framework/Runtime/Core/Transition/EmptyScene.unity
     guid: 1d61250f766252d459de01ed701a82ed
   - enabled: 1
-    path: Assets/ClimbGames/Project HC/Scenes/00_Entry.unity
+    path: Assets/ClimbGames/Project F/Scenes/00_Entry.unity
     guid: 1e37f6927208c034f9a39698e176bd15
   - enabled: 1
-    path: Assets/ClimbGames/Project HC/Scenes/01_Title.unity
+    path: Assets/ClimbGames/Project F/Scenes/01_Title.unity
     guid: 208979376ec47f24195c0b182006a7d7
   - enabled: 1
-    path: Assets/ClimbGames/Project HC/Scenes/02_World.unity
+    path: Assets/ClimbGames/Project F/Scenes/02_World.unity
     guid: fe08a94c4730e2742b92bff7c0e20d35
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 8bba128053e310a4a8d3b5119d4c8e44, type: 2}
