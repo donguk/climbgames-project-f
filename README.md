@@ -11,7 +11,7 @@
 * **개발 환경:** Unity 3D, C#
 * **주요 특징:** 
   * 독립된 C# Framework 패키지 분리 및 연동 (UPM 패키지화)
-  * Verlet Integration 기반 낚싯줄 물리 연산
+  * [Verlet Integration](https://www.youtube.com/watch?v=bxG3XP4MVzk&t=1s) 기반 낚싯줄 물리 연산
   * FSM 기반 플레이어 & 물고기 AI 상태 제어
 * **조작법 (Controls):**
   * **캐릭터 이동:** 화면 좌측 터치 조이스틱 / 키보드 WASD
