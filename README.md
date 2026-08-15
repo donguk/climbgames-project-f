@@ -13,6 +13,9 @@
   * 독립된 C# Framework 패키지 분리 및 연동 (UPM 패키지화)
   * Verlet Integration 기반 낚싯줄 물리 연산
   * FSM 기반 플레이어 & 물고기 AI 상태 제어
+* **조작법 (Controls):**
+  * **캐릭터 이동:** 화면 좌측 터치 조이스틱 / 키보드 WASD
+  * **시점 전환:** 화면 우측 터치 드래그
 
 ---
 
@@ -41,6 +44,7 @@
 * **Verlet Line Algorithm:** 이전 위치와 현재 위치의 차이값을 이용해 낚싯줄 특유의 휘어짐과 속도 연산
 * **Distance Constraint:** 노드 간 거리를 일정하게 유지하는 구속 조건을 반복 적용하여 자연스러운 팽팽함 표현
 * **Dynamic Length Control:** 캐스팅/릴링 시 노드 개수를 동적으로 조절하여 실시간 줄 길이 제어
+* **Verlet Line 참고 영상:** [Make a custom rope (with collisions) using VERLET Integration (Unity Tutorial)](https://www.youtube.com/watch?v=bxG3XP4MVzk&t=1s)
 
 
 ### 2. FSM (유한 상태 머신) 기반 개체 상태 관리
