@@ -78,8 +78,7 @@ namespace ClimbGames.ProjectF
             lineBody.SetForcedTension(Mathf.Lerp(lineBody.ForcedTension, targetTension, forcedTensionTimer.Value));
 
             // 물리 업데이트
-            lineBody.Simulate(deltaTime);
-            lineBody.ApplyConstraint(rodTip.position);
+            lineBody.Step(deltaTime, rodTip.position);
 
             // 컨트롤 포인트 업데이트
             bobberPoint.UpdatePosition();
@@ -178,11 +177,19 @@ namespace ClimbGames.ProjectF
             handlePoint.SetTrackingTarget(null);
         }
 
+        protected override void OnBobberEnterWater(FishingEvent.OnBobberEnterWater param)
+        {
+            lineBody.SetWaterSurface(param.waterHeight);
+        }
+
         protected override void OnFishBite(FishingEvent.OnFishBite param)
         {
             // 물고기 추적
             endPoint.SetTrackingTarget(param.hookedFish.ModelRoot);
             SetForcedTension(1f, 0.5f);
+
+            // 물고기를 향해 물속으로 들어가는 줄은 수면에 걸리지 않음
+            lineBody.SetWaterContact(false);
         }
 
         protected override void OnFishFlee(FishingEvent.OnFishFlee param)
@@ -190,11 +197,13 @@ namespace ClimbGames.ProjectF
             // 추적 끈기
             endPoint.SetTrackingTarget(null);
             SetForcedTension(0f, 0.1f);
+            lineBody.SetWaterContact(true);
         }
 
         protected override void OnPullOut(FishingEvent.OnPullOut param)
         {
             SetForcedTension(0f, 0.1f);
+            lineBody.SetWaterContact(false);
             SetLength(1, 1f);
 
             // 물고기가 잡혔다면 연결

@@ -5,9 +5,11 @@
       "depth": 0,
       "source": "git",
       "dependencies": {
-        "com.cysharp.unitask": "2.5.10"
+        "com.cysharp.unitask": "2.5.10",
+        "com.unity.addressables": "2.9.1",
+        "com.github.exceldatareader.exceldatareader": "3.6.0"
       },
-      "hash": "b88ac1e9431cc0fbb1a5bb0e574b0f47ed329aca"
+      "hash": "9628fc80606720ca0e828748ba68965c8efcbe86"
     },
     "com.cysharp.r3": {
       "version": "1.3.1",
@@ -28,6 +30,13 @@
     "com.github-glitchenzo.nugetforunity": {
       "version": "4.5.0",
       "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://package.openupm.com"
+    },
+    "com.github.exceldatareader.exceldatareader": {
+      "version": "3.6.0",
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://package.openupm.com"

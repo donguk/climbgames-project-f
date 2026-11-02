@@ -60,7 +60,8 @@
       "scopes": [
         "com.cysharp.unitask",
         "com.cysharp.r3",
-        "com.github-glitchenzo.nugetforunity"
+        "com.github-glitchenzo.nugetforunity",
+        "com.github.exceldatareader.exceldatareader"
       ]
     }
   ]

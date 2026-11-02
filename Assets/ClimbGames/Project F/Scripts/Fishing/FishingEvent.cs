@@ -45,6 +45,7 @@ namespace ClimbGames.ProjectF
 
         public struct OnBobberEnterWater : IFishingEvent
         {
+            public float waterHeight;
         }
 
         public struct OnBobberLandedWater : IFishingEvent

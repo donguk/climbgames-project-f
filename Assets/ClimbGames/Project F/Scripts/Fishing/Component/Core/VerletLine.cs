@@ -151,7 +151,7 @@ namespace ClimbGames.ProjectF
             {
                 ApplySegmentLength();
 
-                if (i % collisionSegmentInterval == 0)
+                if (collisionMask.value != 0 && i % collisionSegmentInterval == 0)
                     HandleCollisions();
             }
         }

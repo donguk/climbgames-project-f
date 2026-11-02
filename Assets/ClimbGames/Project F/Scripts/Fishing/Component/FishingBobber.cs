@@ -57,7 +57,7 @@ namespace ClimbGames.ProjectF
                 LinePoint.Detach(this);
                 Body.excludeLayers = 1 << FishingLayer.Water;
 
-                MessageBroker.Publish(new FishingEvent.OnBobberEnterWater());
+                MessageBroker.Publish(new FishingEvent.OnBobberEnterWater() { waterHeight = waterHeight });
             }
         }
 
