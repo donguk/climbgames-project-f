@@ -354,7 +354,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60751be149890af45b2fc5b5c7b4128e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingFloat
-  modelRoot: {fileID: 0}
+  modelRoot: {fileID: 9118781878722574380}
   landingClip:
     height:
       serializedVersion: 2
@@ -472,14 +472,19 @@ MonoBehaviour:
     duration: 8
   mass: 1
   waterDrag: 4
-  staticForce: 0.1
+  staticForce: 3
   tiltMaxForce: 1
-  tiltSpeed: 8
+  tiltSpeed: 5
   tiltRecoverSpeed: 1.5
-  liftStiffness: 10
-  liftDamping: 8
+  wobbleTiltScale: 0.5
+  wobbleMaxForce: 1
+  liftStiffness: 5
+  liftDamping: 2
   breakoutHeight: 0.15
+  liftAngleLow: 20
+  liftAngleHigh: 80
   landHeightOffset: 0
+  modelAlignSpeed: 2
   rotationSpeed: 2
   pullMaxAngle: 80
   biteMaxAngle: 90

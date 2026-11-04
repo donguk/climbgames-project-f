@@ -86,6 +86,12 @@ namespace ClimbGames.ProjectF
         public float ForcedTension => forcedTension;
         public Vector3 PinForce { get; private set; }
 
+        // 첫 고정점 근처 줄이 수면과 이루는 각도
+        public float PinAngle { get; private set; }
+
+        // 첫 고정점 근처 줄의 수평 속도
+        public Vector3 PinLineVelocity { get; private set; }
+
         public void BuildLine(Vector3 anchorPosition, float length)
         {
             float remainLength = length % segmentLength;
@@ -172,6 +178,7 @@ namespace ClimbGames.ProjectF
 
             UpdateGroundHeights();
             ApplyLengthConstraint();
+            UpdatePinLineVelocity(deltaTime); // 뒤의 보정들이 _prevPositions 를 바꾸기 전에 구함
             ApplyGroundFriction();
             ApplyPullInertia(deltaTime);
             UpdatePinForce();
@@ -251,8 +258,15 @@ namespace ClimbGames.ProjectF
         void UpdatePinForce()
         {
             PinForce = Vector3.zero;
+            PinAngle = 0f;
             if (firstPinIndex >= positionCount)
                 return;
+
+            // 방향은 고정점 근처 줄에서 구해서 줄의 요동이 반영되게 함
+            int directionIndex = Mathf.Max(0, firstPinIndex - PinDirectionSegmentCount);
+            Vector3 direction = (_positions[directionIndex] - _positions[firstPinIndex]).normalized;
+            float horizontal = new Vector2(direction.x, direction.z).magnitude;
+            PinAngle = Mathf.Atan2(direction.y, horizontal) * Mathf.Rad2Deg;
 
             float pathLength = 0f, restLength = 0f;
             int startIndex = Mathf.Max(0, firstPinIndex - pinForceSegmentCount);
@@ -266,12 +280,27 @@ namespace ClimbGames.ProjectF
                 return;
 
             float strain = Mathf.Max(0f, (pathLength - restLength) / restLength);
-
-            // 방향은 고정점 근처 줄에서 구해서 줄의 요동이 반영되게 함
-            int directionIndex = Mathf.Max(0, firstPinIndex - PinDirectionSegmentCount);
-            Vector3 direction = (_positions[directionIndex] - _positions[firstPinIndex]).normalized;
-
             PinForce = direction * (lineStiffness * strain);
+        }
+
+        // 줄이 여유 있어서 늘어나지 않아도 움직임을 알 수 있도록 고정점 앞 점들의 속도를 구함
+        void UpdatePinLineVelocity(float deltaTime)
+        {
+            PinLineVelocity = Vector3.zero;
+            if (firstPinIndex >= positionCount)
+                return;
+
+            int startIndex = Mathf.Max(1, firstPinIndex - 1);
+            int count = firstPinIndex - startIndex;
+            if (count <= 0)
+                return;
+
+            Vector3 move = Vector3.zero;
+            for (int i = startIndex; i < firstPinIndex; ++i)
+                move += _positions[i] - _prevPositions[i];
+
+            move.y = 0f;
+            PinLineVelocity = move / (count * deltaTime);
         }
 
         bool IsInWater(int index)

@@ -25,14 +25,23 @@ namespace ClimbGames.ProjectF
         [SerializeField] private float tiltMaxForce = 1.5f;
         [SerializeField] private float tiltSpeed = 10f;
         [SerializeField] private float tiltRecoverSpeed = 0.5f;
+        // 줄의 속도를 기울임 힘으로 바꾸는 비율과 그 힘의 상한 (0 이면 흔들림에 반응하지 않음)
+        [SerializeField] private float wobbleTiltScale = 0.3f;
+        [SerializeField] private float wobbleMaxForce = 0.3f;
 
         [Header("Break Out")]
         [SerializeField] private float liftStiffness = 40f;
         [SerializeField] private float liftDamping = 8f;
         [SerializeField] private float breakoutHeight = 0.25f;
+        // 줄이 눕혀져 있을수록 위로 당기는 힘을 적게 받음
+        [SerializeField] private float liftAngleLow = 20f;
+        [SerializeField] private float liftAngleHigh = 70f;
 
         [Header("Landing")]
         [SerializeField] private float landHeightOffset = 0.02f;
+
+        [Header("Model")]
+        [SerializeField] private float modelAlignSpeed = 8f;
 
         [SerializeField] private float rotationSpeed = 2f;
         [SerializeField] private float pullMaxAngle = 80f;
@@ -44,6 +53,9 @@ namespace ClimbGames.ProjectF
         private bool isLanding;
         private float lift;
         private float liftVelocity;
+        private float lineAngle;
+        private Vector3 lineVelocity;
+        private Quaternion modelRestRotation = Quaternion.identity;
         private Quaternion currentDragRotation = Quaternion.identity;
         private Quaternion currentBiteRotation = Quaternion.identity;
         private NormalizedTimer landingTimer = new NormalizedTimer();
@@ -53,7 +65,19 @@ namespace ClimbGames.ProjectF
         public bool IsFloating => RuntimeJoint == null;
 
         // 착수 연출이 끝난 뒤에만 분리 가능
-        public bool ShouldBreakOut => IsFloating && landingTimer.IsCompleted && lift > breakoutHeight;
+        public bool ShouldBreakOut => IsFloating && /*landingTimer.IsCompleted &&*/ lift > breakoutHeight;
+
+        void Awake()
+        {
+            if (modelRoot != null)
+                modelRestRotation = modelRoot.localRotation;
+        }
+
+        void Update()
+        {
+            if (modelRoot != null)
+                modelRoot.localRotation = Quaternion.Slerp(modelRoot.localRotation, modelRestRotation, modelAlignSpeed * Time.deltaTime);
+        }
 
         void FixedUpdate()
         {
@@ -64,6 +88,7 @@ namespace ClimbGames.ProjectF
                 SimulateHeight();
 
                 lineForce = Vector3.zero;
+                lineVelocity = Vector3.zero;
                 biteInfo.Reset();
             }
             else if (isLanding)
@@ -102,6 +127,7 @@ namespace ClimbGames.ProjectF
 
         void LandOnWater()
         {
+            Debug.Log("[FishingBobber] LandOnWater!!!");
             landingTimer.Reset(landingClip.duration);
 
             LinePoint.Detach(this);
@@ -113,27 +139,27 @@ namespace ClimbGames.ProjectF
         void SimulateHeight()
         {
             float targetHeight = waterHeight;
-            if (landingTimer.IsCompleted == false)
-            {
-                landingTimer.Update(Time.deltaTime);
-                targetHeight += landingClip.height.Evaluate(landingTimer.Value);
-
-                if (landingTimer.IsCompleted)
-                {
-                    MessageBroker.Publish(new FishingEvent.OnBobberLandedWater());
-                    floatingTimer.Reset(floatingClip.duration);
-                }
-            }
-            else
-            {
-                floatingTimer.Update(Time.deltaTime);
-                targetHeight += floatingClip.height.Evaluate(floatingTimer.Value);
-
-                if (floatingTimer.IsCompleted)
-                    floatingTimer.Reset();
-
-                targetHeight += biteInfo.bobberHeight;
-            }
+            //if (landingTimer.IsCompleted == false)
+            //{
+            //    landingTimer.Update(Time.deltaTime);
+            //    targetHeight += landingClip.height.Evaluate(landingTimer.Value);
+            //
+            //    if (landingTimer.IsCompleted)
+            //    {
+            //        MessageBroker.Publish(new FishingEvent.OnBobberLandedWater());
+            //        floatingTimer.Reset(floatingClip.duration);
+            //    }
+            //}
+            //else
+            //{
+            //    floatingTimer.Update(Time.deltaTime);
+            //    targetHeight += floatingClip.height.Evaluate(floatingTimer.Value);
+            //
+            //    if (floatingTimer.IsCompleted)
+            //        floatingTimer.Reset();
+            //
+            //    targetHeight += biteInfo.bobberHeight;
+            //}
 
             // 연출 높이
             Vector3 position = transform.position;
@@ -141,7 +167,10 @@ namespace ClimbGames.ProjectF
 
             // 줄이 위로 당기는 힘과 수면으로 되돌리는 힘으로 정해지는 높이
             float deltaTime = Time.fixedDeltaTime;
-            liftVelocity += (lineForce.y - liftStiffness * lift) / mass * deltaTime;
+            float angleScale = Mathf.Lerp(0f, 1f, Mathf.InverseLerp(liftAngleLow, liftAngleHigh, lineAngle));
+            float liftForce = lineForce.y * angleScale;
+
+            liftVelocity += (liftForce - liftStiffness * lift) / mass * deltaTime;
             liftVelocity /= 1f + liftDamping * deltaTime;
             lift += liftVelocity * deltaTime;
 
@@ -169,15 +198,17 @@ namespace ClimbGames.ProjectF
         void SimulateRotation()
         {
             Quaternion dargRotation = Quaternion.identity;
-            // 기울임은 정지 마찰과 상관없이 약한 힘에도 반응함
-            Vector3 force = lineForce;
-            force.y = 0f;
-            float forceSize = force.magnitude;
 
-            if (forceSize > 0.0001f)
+            // 장력은 정지 마찰을 넘어야 기울이고, 줄의 흔들림은 장력과 상관없이 기울임
+            // 찌와 함께 움직이는 줄은 흔들림이 아니므로 찌의 속도를 뺌
+            Vector3 wobble = Vector3.ClampMagnitude((lineVelocity - velocity) * wobbleTiltScale, wobbleMaxForce);
+            Vector3 tilt = GetHorizontalForce() + wobble;
+            float tiltSize = tilt.magnitude;
+
+            if (tiltSize > 0.0001f)
             {
-                Vector3 tiltAxis = Vector3.Cross(Vector3.up, force / forceSize);
-                float dragAngle = pullMaxAngle * Mathf.Clamp01(forceSize / tiltMaxForce);
+                Vector3 tiltAxis = Vector3.Cross(Vector3.up, tilt / tiltSize);
+                float dragAngle = pullMaxAngle * Mathf.Clamp01(tiltSize / tiltMaxForce);
                 dargRotation = Quaternion.AngleAxis(dragAngle, tiltAxis);
             }
 
@@ -221,19 +252,34 @@ namespace ClimbGames.ProjectF
             currentBiteRotation = transform.rotation;
         }
 
-        public void SetLineForce(Vector3 force)
+        public void SetLineForce(Vector3 force, float angle, Vector3 lineVelocity)
         {
             lineForce = force;
+            lineAngle = angle;
+            this.lineVelocity = lineVelocity;
+        }
+
+        // 조인트는 연결 순간의 회전을 기준으로 삼으므로 본체는 바로 줄 방향에 맞추고, 모델은 이전 회전에서 서서히 돌아감
+        void AttachToLine()
+        {
+            Quaternion previousRotation = transform.rotation;
+            LinePoint.Attach(this);
+
+            if (modelRoot != null)
+                modelRoot.rotation = previousRotation * modelRestRotation;
         }
 
         // 물에서 떨어져 줄에 다시 붙음
         public void BreakOut()
         {
             lineForce = Vector3.zero;
-            LinePoint.Attach(this);
+            lineVelocity = Vector3.zero;
+            AttachToLine();
 
             // OnAttachToLine 이 제외한 물 충돌을 다시 켜서 재착수를 감지함
             Body.excludeLayers = 0;
+
+            Debug.Log("[FishingBobber] BreakOut");
         }
 
         public void SetBiteInfo(FishBiteInfo biteInfo)
@@ -261,7 +307,7 @@ namespace ClimbGames.ProjectF
 
         protected override void OnFishBite(FishingEvent.OnFishBite param)
         {
-            LinePoint.Attach(this);
+            AttachToLine();
         }
 
         protected override void OnFishFlee(FishingEvent.OnFishFlee param)
@@ -274,7 +320,7 @@ namespace ClimbGames.ProjectF
         {
             isLanding = false;
 
-            LinePoint.Attach(this);
+            AttachToLine();
         }
     }
 }
