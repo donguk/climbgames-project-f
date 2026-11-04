@@ -60,8 +60,16 @@ namespace ClimbGames.ProjectF
         [Header("Pin Force")]
         [SerializeField] private float lineStiffness = 40f;
 
+        // 줄이 땅 아래로 내려가지 않음
+        [Header("Ground")]
+        [SerializeField] private float groundOffset = 0.02f;
+        [SerializeField, Range(0f, 1f)] private float groundFriction = 0.2f;
+
         private const float SurfaceContactOffset = 0.01f;
         private const int PinDirectionSegmentCount = 3;
+        private const float GroundCastHeight = 50f;
+        private const float GroundCastDistance = 100f;
+        private const float GroundContactEpsilon = 0.001f;
 
         private List<LinePoint> linePoints = new List<LinePoint>();
         private float forcedTension = 0f;
@@ -70,6 +78,7 @@ namespace ClimbGames.ProjectF
         private float surfaceHeight = 0f;
         private bool hasSurface = false;
         private Vector3[] constraintStartPositions;
+        private float[] groundHeights;
 
         public IReadOnlyList<LinePoint> Points => linePoints;
         public float VisualLength => linePoints.Sum(x => x.segmentLength);
@@ -160,9 +169,56 @@ namespace ClimbGames.ProjectF
                 constraintStartPositions = new Vector3[_positions.Length];
             Array.Copy(_positions, constraintStartPositions, positionCount);
 
-            ApplyConstraint();
+            UpdateGroundHeights();
+            ApplyLengthConstraint();
+            ApplyGroundFriction();
             ApplyPullInertia(deltaTime);
             UpdatePinForce();
+        }
+
+        // 점마다 레이캐스트는 한 번만 하고, 제약 반복 중에는 저장한 높이로 비교함
+        void UpdateGroundHeights()
+        {
+            if (groundHeights == null || groundHeights.Length < positionCount)
+                groundHeights = new float[_positions.Length];
+
+            int groundMask = 1 << FishingLayer.Ground;
+            for (int i = 0; i < positionCount; ++i)
+            {
+                Vector3 origin = _positions[i];
+                origin.y += GroundCastHeight;
+
+                groundHeights[i] = Physics.Raycast(origin, Vector3.down, out RaycastHit hit, GroundCastDistance, groundMask, QueryTriggerInteraction.Ignore)
+                    ? hit.point.y + groundOffset
+                    : float.NegativeInfinity;
+            }
+        }
+
+        void ClampToGround()
+        {
+            for (int i = 1; i < positionCount; ++i)
+            {
+                if (linePoints[i].IsPinned == false && _positions[i].y < groundHeights[i])
+                {
+                    _positions[i].y = groundHeights[i];
+                    _prevPositions[i].y = groundHeights[i];
+                }
+            }
+        }
+
+        bool IsOnGround(int index)
+        {
+            return _positions[index].y <= groundHeights[index] + GroundContactEpsilon;
+        }
+
+        // 땅에 닿은 점의 수평 속도를 줄임
+        void ApplyGroundFriction()
+        {
+            for (int i = 1; i < positionCount; ++i)
+            {
+                if (linePoints[i].IsPinned == false && IsOnGround(i))
+                    _prevPositions[i] = Vector3.Lerp(_prevPositions[i], _positions[i], groundFriction);
+            }
         }
 
         // 제약이 옮긴 거리 중 옆 방향 성분을 다음 스텝 속도에 더함
@@ -174,7 +230,8 @@ namespace ClimbGames.ProjectF
 
             for (int i = 1; i < positionCount; ++i)
             {
-                if (linePoints[i].IsPinned)
+                // 땅이 밀어 올린 보정이 위쪽 속도가 되면 줄이 튐
+                if (linePoints[i].IsPinned || IsOnGround(i))
                     continue;
 
                 int next = Mathf.Min(i + 1, positionCount - 1);
@@ -262,25 +319,35 @@ namespace ClimbGames.ProjectF
             return tangentVelocity / (1f + tangentDrag * deltaTime) + normalVelocity / (1f + normalDrag * deltaTime);
         }
 
-        protected override void ApplySegmentLength()
+        // 길이 제약을 반복해서 풀고, 반복마다 수면과 땅 아래로 내려간 점을 되돌림
+        void ApplyLengthConstraint()
         {
-            // 한 방향으로만 풀면 반대쪽 끝까지 보정이 전달되지 않음
+            for (int i = 0; i < constraintCount; ++i)
+            {
+                SolveLengthConstraint();
+                ClampToSinkDepth();
+                ClampToGround();
+            }
+        }
+
+        // 한 방향으로만 풀면 반대쪽 끝까지 보정이 전달되지 않음
+        void SolveLengthConstraint()
+        {
             if (isForwardSweep)
             {
                 for (int i = 0; i < positionCount - 1; ++i)
-                    SolveSegment(i);
+                    SolveSegmentLength(i);
             }
             else
             {
                 for (int i = positionCount - 2; i >= 0; --i)
-                    SolveSegment(i);
+                    SolveSegmentLength(i);
             }
 
             isForwardSweep = !isForwardSweep;
-            ClampToSinkDepth();
         }
 
-        void SolveSegment(int i)
+        void SolveSegmentLength(int i)
         {
             Vector3 current = _positions[i];
             Vector3 next = _positions[i + 1];

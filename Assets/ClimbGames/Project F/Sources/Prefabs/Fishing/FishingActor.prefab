@@ -1184,7 +1184,7 @@ MonoBehaviour:
     bounceFactor: 0.1
     collisionSegmentInterval: 2
     constraintCount: 30
-    airDragLinear: 5.5
+    airDragLinear: 5
     airDragQuadratic: 0
     surfaceDrag: 5
     surfaceStaticSpeed: 1.05
@@ -1194,6 +1194,8 @@ MonoBehaviour:
     pullInertia: 0.5
     pullInertiaDeadSpeed: 0.2
     lineStiffness: 40
+    groundOffset: 0.02
+    groundFriction: 0.2
   bobberPoint: {fileID: 8666444395038434717}
   endPoint: {fileID: 8333694936421398241}
   handlePoint: {fileID: 2722746951955469620}
