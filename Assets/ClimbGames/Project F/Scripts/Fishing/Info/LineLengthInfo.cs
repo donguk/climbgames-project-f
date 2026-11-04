@@ -17,9 +17,6 @@ namespace ClimbGames.ProjectF
         public float lineLength;
         public Vector3 direction;
 
-        public float pullLength;
-        public float pullSpeed;
-
         /// <summary>
         /// 늘어난 길이
         /// </summary>
@@ -30,8 +27,6 @@ namespace ClimbGames.ProjectF
         {
             straightLength = 0f;
             lineLength = 0f;
-            pullLength = 0f;
-            pullSpeed = 0f;
         }
     }
 }

@@ -29,19 +29,30 @@ namespace ClimbGames.ProjectF
                         fsm.ChangeState(FishingActorState.Retrieving);
                 }
 
-                LineLengthInfo lengthInfo = LineLengthInfo.Default;
+                // 줄이 당기는 힘을 찌에 전달
                 if (Actor.Bobber.IsFloating)
                 {
-                    lengthInfo = Actor.Line.GetLengthInfo(Actor.Bobber.transform);
-                    Actor.Bobber.SetLengthInfo(lengthInfo);
+                    Actor.Bobber.SetLineForce(Actor.Line.Body.PinForce);
+
+                    // 위로 세게 당겨지면 물에서 분리
+                    if (Actor.Bobber.ShouldBreakOut)
+                    {
+                        Actor.Bobber.BreakOut();
+
+                        // 찌가 물에서 떨어지면 줄은 공중처럼 떨어짐 (재착수 시 다시 켜짐)
+                        Actor.Line.Body.SetWaterContact(false);
+
+                        Player.FishMachine.ChangeState(FishState.Idle);
+                    }
                 }
 
                 // 인풋이 없는 경우 약간씩 풀림
-                if (reelingValue <= 0f)
-                {
-                    if (lengthInfo.IsTensioned)
-                        Actor.Line.Release(0.002f);
-                }
+                // LineLengthInfo lengthInfo = Actor.Bobber.IsFloating ? Actor.Line.GetLengthInfo(Actor.Bobber.transform) : LineLengthInfo.Default;
+                // if (reelingValue <= 0f)
+                // {
+                //     if (lengthInfo.IsTensioned)
+                //         Actor.Line.Release(0.002f);
+                // }
             }
         }
     }

@@ -107,17 +107,11 @@ namespace ClimbGames.ProjectF
                 }
             }
 
-            // 라인이 당겨진 길이
-            float pullLength = Mathf.Max(0f, straightLength - 1.5f/*slack length*/ - lineLength);
-            float pullSpeed = pullLength * 4f;
-
             return new LineLengthInfo()
             {
                 straightLength = straightLength,
                 lineLength = lineLength,
                 direction = lineDirection,
-                pullLength = pullLength,
-                pullSpeed = pullSpeed,
             };
         }
 

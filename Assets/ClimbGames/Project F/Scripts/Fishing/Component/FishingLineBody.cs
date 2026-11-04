@@ -56,8 +56,12 @@ namespace ClimbGames.ProjectF
         [SerializeField, Range(0f, 1f)] private float pullInertia = 0.5f;
         [SerializeField] private float pullInertiaDeadSpeed = 0.2f;
 
+        // 줄이 늘어난 비율을 고정점을 당기는 힘으로 바꾸는 강성
+        [Header("Pin Force")]
+        [SerializeField] private float lineStiffness = 40f;
+
         private const float SurfaceContactOffset = 0.01f;
-        private const int PinStretchSegmentCount = 3;
+        private const int PinDirectionSegmentCount = 3;
 
         private List<LinePoint> linePoints = new List<LinePoint>();
         private float forcedTension = 0f;
@@ -70,7 +74,7 @@ namespace ClimbGames.ProjectF
         public IReadOnlyList<LinePoint> Points => linePoints;
         public float VisualLength => linePoints.Sum(x => x.segmentLength);
         public float ForcedTension => forcedTension;
-        public float PinStretch { get; private set; }
+        public Vector3 PinForce { get; private set; }
 
         public void BuildLine(Vector3 anchorPosition, float length)
         {
@@ -158,7 +162,7 @@ namespace ClimbGames.ProjectF
 
             ApplyConstraint();
             ApplyPullInertia(deltaTime);
-            UpdatePinStretch();
+            UpdatePinForce();
         }
 
         // 제약이 옮긴 거리 중 옆 방향 성분을 다음 스텝 속도에 더함
@@ -184,18 +188,31 @@ namespace ClimbGames.ProjectF
             }
         }
 
-        // 첫 고정점 앞 구간이 늘어난 양: 줄이 고정점을 당기는 힘의 추정값
-        void UpdatePinStretch()
+        // 로드 팁부터 첫 고정점까지 줄이 늘어난 비율로 고정점을 당기는 힘을 구함
+        // 세그먼트 하나의 길이는 솔버의 스윕 방향에 따라 달라지므로 구간 전체의 합으로 계산
+        void UpdatePinForce()
         {
-            PinStretch = 0f;
+            PinForce = Vector3.zero;
             if (firstPinIndex >= positionCount)
                 return;
 
-            for (int i = Mathf.Max(0, firstPinIndex - PinStretchSegmentCount); i < firstPinIndex; ++i)
+            float pathLength = 0f, restLength = 0f;
+            for (int i = 0; i < firstPinIndex; ++i)
             {
-                float distance = (_positions[i] - _positions[i + 1]).magnitude;
-                PinStretch += Mathf.Max(0f, distance - linePoints[i].segmentLength * (1f - forcedTension));
+                pathLength += (_positions[i + 1] - _positions[i]).magnitude;
+                restLength += linePoints[i].segmentLength * (1f - forcedTension);
             }
+
+            if (restLength <= 0.0001f)
+                return;
+
+            float strain = Mathf.Max(0f, (pathLength - restLength) / restLength);
+
+            // 방향은 고정점 근처 줄에서 구해서 줄의 요동이 반영되게 함
+            int directionIndex = Mathf.Max(0, firstPinIndex - PinDirectionSegmentCount);
+            Vector3 direction = (_positions[directionIndex] - _positions[firstPinIndex]).normalized;
+
+            PinForce = direction * (lineStiffness * strain);
         }
 
         bool IsInWater(int index)

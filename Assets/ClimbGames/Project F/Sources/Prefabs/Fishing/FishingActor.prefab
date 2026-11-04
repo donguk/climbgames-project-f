@@ -470,8 +470,16 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     duration: 8
-  pullAcceleration: 4
-  sensitivity: 1
+  mass: 1
+  waterDrag: 4
+  staticForce: 0.1
+  tiltMaxForce: 1
+  tiltSpeed: 8
+  tiltRecoverSpeed: 1.5
+  liftStiffness: 10
+  liftDamping: 8
+  breakoutHeight: 0.15
+  landHeightOffset: 0
   rotationSpeed: 2
   pullMaxAngle: 80
   biteMaxAngle: 90
@@ -1185,6 +1193,7 @@ MonoBehaviour:
     tangentDrag: 0.2
     pullInertia: 0.5
     pullInertiaDeadSpeed: 0.2
+    lineStiffness: 40
   bobberPoint: {fileID: 8666444395038434717}
   endPoint: {fileID: 8333694936421398241}
   handlePoint: {fileID: 2722746951955469620}
