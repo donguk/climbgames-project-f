@@ -50,6 +50,12 @@ namespace ClimbGames.ProjectF
         [Header("Line Slide Drag")]
         [SerializeField] private float tangentDrag = 0.2f;
 
+        // 세그먼트에 옆으로 끌린 만큼 속도를 더 줌: 세게 끌린 점일수록 로드가 멈춘 뒤 더 나아감
+        [Header("Pull Inertia")]
+        // 1 을 넘으면 보정이 속도를 키우고 그 속도가 다시 보정을 키워 발산함
+        [SerializeField, Range(0f, 1f)] private float pullInertia = 0.5f;
+        [SerializeField] private float pullInertiaDeadSpeed = 0.2f;
+
         private const float SurfaceContactOffset = 0.01f;
         private const int PinStretchSegmentCount = 3;
 
@@ -59,6 +65,7 @@ namespace ClimbGames.ProjectF
         private int firstPinIndex = 0;
         private float surfaceHeight = 0f;
         private bool hasSurface = false;
+        private Vector3[] constraintStartPositions;
 
         public IReadOnlyList<LinePoint> Points => linePoints;
         public float VisualLength => linePoints.Sum(x => x.segmentLength);
@@ -133,10 +140,11 @@ namespace ClimbGames.ProjectF
 
                 if (IsInWater(i))
                 {
-                    // 세로 방향은 관성 없이 가라앉는 속도만 적용
-                    velocity.y = 0f;
+                    // 위로 올라가는 속도는 남기고, 내려갈 때는 가라앉는 속도만 적용
+                    velocity.y = Mathf.Max(0f, velocity.y);
                     Vector3 move = ApplyDrag(i, velocity, deltaTime);
-                    move.y = -Mathf.Min(sinkSpeed * deltaTime, Mathf.Max(0f, _positions[i].y - (surfaceHeight - sinkDepth)));
+                    if (move.y <= 0f)
+                        move.y = -Mathf.Min(sinkSpeed * deltaTime, Mathf.Max(0f, _positions[i].y - (surfaceHeight - sinkDepth)));
                     _positions[i] += move;
                     continue;
                 }
@@ -144,8 +152,36 @@ namespace ClimbGames.ProjectF
                 _positions[i] += ApplyDrag(i, velocity, deltaTime) + gravity;
             }
 
+            if (constraintStartPositions == null || constraintStartPositions.Length < positionCount)
+                constraintStartPositions = new Vector3[_positions.Length];
+            Array.Copy(_positions, constraintStartPositions, positionCount);
+
             ApplyConstraint();
+            ApplyPullInertia(deltaTime);
             UpdatePinStretch();
+        }
+
+        // 제약이 옮긴 거리 중 옆 방향 성분을 다음 스텝 속도에 더함
+        // 줄 방향은 튕김과 떨림이 되므로 제외하고, 느린 보정은 무시해서 정지 상태와 미세한 움직임은 그대로 둠
+        void ApplyPullInertia(float deltaTime)
+        {
+            if (pullInertia <= 0f)
+                return;
+
+            for (int i = 1; i < positionCount; ++i)
+            {
+                if (linePoints[i].IsPinned)
+                    continue;
+
+                int next = Mathf.Min(i + 1, positionCount - 1);
+                Vector3 tangent = (_positions[next] - _positions[i - 1]).normalized;
+                Vector3 correction = _positions[i] - constraintStartPositions[i];
+                correction -= tangent * Vector3.Dot(correction, tangent);
+
+                float speed = correction.magnitude / deltaTime;
+                if (speed > pullInertiaDeadSpeed)
+                    _prevPositions[i] -= correction * (pullInertia * (1f - pullInertiaDeadSpeed / speed));
+            }
         }
 
         // 첫 고정점 앞 구간이 늘어난 양: 줄이 고정점을 당기는 힘의 추정값

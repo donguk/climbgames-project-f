@@ -1176,11 +1176,15 @@ MonoBehaviour:
     bounceFactor: 0.1
     collisionSegmentInterval: 2
     constraintCount: 30
-    airDragLinear: 0.5
+    airDragLinear: 5.5
     airDragQuadratic: 0
-    surfaceDrag: 3
-    surfaceStaticSpeed: 4.05
+    surfaceDrag: 5
+    surfaceStaticSpeed: 1.05
+    sinkSpeed: 0.1
+    sinkDepth: 0.3
     tangentDrag: 0.2
+    pullInertia: 0.5
+    pullInertiaDeadSpeed: 0.2
   bobberPoint: {fileID: 8666444395038434717}
   endPoint: {fileID: 8333694936421398241}
   handlePoint: {fileID: 2722746951955469620}
