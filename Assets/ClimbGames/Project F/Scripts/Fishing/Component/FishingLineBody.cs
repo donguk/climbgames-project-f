@@ -59,6 +59,7 @@ namespace ClimbGames.ProjectF
         // 줄이 늘어난 비율을 고정점을 당기는 힘으로 바꾸는 강성
         [Header("Pin Force")]
         [SerializeField] private float lineStiffness = 40f;
+        [SerializeField] private int pinForceSegmentCount = 8;
 
         // 줄이 땅 아래로 내려가지 않음
         [Header("Ground")]
@@ -245,8 +246,8 @@ namespace ClimbGames.ProjectF
             }
         }
 
-        // 로드 팁부터 첫 고정점까지 줄이 늘어난 비율로 고정점을 당기는 힘을 구함
-        // 세그먼트 하나의 길이는 솔버의 스윕 방향에 따라 달라지므로 구간 전체의 합으로 계산
+        // 첫 고정점 바로 앞 구간이 늘어난 비율로 고정점을 당기는 힘을 구함
+        // 고정점이 느끼는 건 붙어 있는 지점의 장력이므로, 팁 쪽 움직임은 이 구간까지 전달되어야 힘이 됨
         void UpdatePinForce()
         {
             PinForce = Vector3.zero;
@@ -254,7 +255,8 @@ namespace ClimbGames.ProjectF
                 return;
 
             float pathLength = 0f, restLength = 0f;
-            for (int i = 0; i < firstPinIndex; ++i)
+            int startIndex = Mathf.Max(0, firstPinIndex - pinForceSegmentCount);
+            for (int i = startIndex; i < firstPinIndex; ++i)
             {
                 pathLength += (_positions[i + 1] - _positions[i]).magnitude;
                 restLength += linePoints[i].segmentLength * (1f - forcedTension);
@@ -322,6 +324,9 @@ namespace ClimbGames.ProjectF
         // 길이 제약을 반복해서 풀고, 반복마다 수면과 땅 아래로 내려간 점을 되돌림
         void ApplyLengthConstraint()
         {
+            // 마지막 방향이 일정해야 고정점 앞 구간의 측정값이 스텝마다 흔들리지 않음
+            isForwardSweep = true;
+
             for (int i = 0; i < constraintCount; ++i)
             {
                 SolveLengthConstraint();
