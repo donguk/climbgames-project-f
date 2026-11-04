@@ -1194,6 +1194,7 @@ MonoBehaviour:
     pullInertia: 0.5
     pullInertiaDeadSpeed: 0.2
     lineStiffness: 40
+    pinForceSegmentCount: 4
     groundOffset: 0.02
     groundFriction: 0.2
   bobberPoint: {fileID: 8666444395038434717}
@@ -2215,7 +2216,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.CameraDistanceScaler
   minDistance: 3
-  maxDistance: 8
+  maxDistance: 6
   maxScale: 9
 --- !u!4 &5458371706010872479 stripped
 Transform:
