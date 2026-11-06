@@ -173,7 +173,8 @@ namespace ClimbGames.ProjectF
 
         protected override void OnBobberEnterWater(FishingEvent.OnBobberEnterWater param)
         {
-            lineBody.SetWaterSurface(param.waterHeight);
+            lineBody.SetWaterHeight(param.waterHeight);
+            lineBody.SetWaterContact(true);
         }
 
         protected override void OnFishBite(FishingEvent.OnFishBite param)

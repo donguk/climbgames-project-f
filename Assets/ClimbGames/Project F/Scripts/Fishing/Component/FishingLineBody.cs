@@ -31,43 +31,33 @@ namespace ClimbGames.ProjectF
             }
         }
 
-        // 공기저항: 줄을 옆으로 미는 움직임에 걸림
-        [Header("Air Drag")]
-        [SerializeField] private float airDragLinear = 0.5f;
-        [SerializeField] private float airDragQuadratic = 0f;
+        [Header("Drag")]
+        [SerializeField] private float airDrag = 0.5f; // 공기저항: 줄을 옆으로 미는 움직임에 걸림
+        [SerializeField] private float waterDrag = 3f; // 수면저항: 수면에 닿은 점을 옆으로 미는 움직임에 걸림
+        [SerializeField] private float tangentDrag = 0.2f; // Slide Drag 줄이 길이 방향으로 미끄러지는 움직임에 걸림
 
-        // 수면저항: 수면에 닿은 점을 옆으로 미는 움직임에 걸림
-        [Header("Surface Drag")]
-        [SerializeField] private float surfaceDrag = 3f;
-        [SerializeField] private float surfaceStaticSpeed = 0.05f;
+        // 세그먼트에 옆으로 끌린 만큼 속도를 더 줌: 세게 끌린 점일수록 로드가 멈춘 뒤 더 나아감
+        [Header("Pull Inertia")]
+        [SerializeField, Range(0f, 1f)] private float pullInertia = 0.5f;
+
+        // 팽팽함 기준 길이를 넘은 1m 당 고정점을 당기는 힘
+        [Header("Pin Force")]
+        [SerializeField] private float lineStiffness = 40f;
+        // 줄 길이에서 이 비율만큼 뺀 길이가 팽팽함 기준 길이 (1 이상이면 기준 길이가 0 이하라 항상 끌림)
+        // 비율이라서 줄이 짧든 길든 같은 정도로 펴졌을 때 끌기 시작함
+        [SerializeField, Range(0f, 10.2f)] private float slackRatio = 0.02f;
 
         // 물에 들어간 점은 중력 대신 일정한 속도로 천천히 가라앉음
         [Header("Water Sink")]
         [SerializeField] private float sinkSpeed = 0.1f;
         [SerializeField] private float sinkDepth = 0.3f;
 
-        // 공기와 수면 공통: 줄이 길이 방향으로 미끄러지는 움직임에 걸림
-        [Header("Line Slide Drag")]
-        [SerializeField] private float tangentDrag = 0.2f;
-
-        // 세그먼트에 옆으로 끌린 만큼 속도를 더 줌: 세게 끌린 점일수록 로드가 멈춘 뒤 더 나아감
-        [Header("Pull Inertia")]
-        // 1 을 넘으면 보정이 속도를 키우고 그 속도가 다시 보정을 키워 발산함
-        [SerializeField, Range(0f, 1f)] private float pullInertia = 0.5f;
-        [SerializeField] private float pullInertiaDeadSpeed = 0.2f;
-
-        // 줄이 늘어난 비율을 고정점을 당기는 힘으로 바꾸는 강성
-        [Header("Pin Force")]
-        [SerializeField] private float lineStiffness = 40f;
-        [SerializeField] private int pinForceSegmentCount = 8;
-
         // 줄이 땅 아래로 내려가지 않음
         [Header("Ground")]
         [SerializeField] private float groundOffset = 0.02f;
         [SerializeField, Range(0f, 1f)] private float groundFriction = 0.2f;
 
-        private const float SurfaceContactOffset = 0.01f;
-        private const int PinDirectionSegmentCount = 3;
+        private const float WaterContactOffset = 0.01f;
         private const float GroundCastHeight = 50f;
         private const float GroundCastDistance = 100f;
         private const float GroundContactEpsilon = 0.001f;
@@ -76,7 +66,7 @@ namespace ClimbGames.ProjectF
         private float forcedTension = 0f;
         private bool isForwardSweep = true;
         private int firstPinIndex = 0;
-        private float surfaceHeight = 0f;
+        private float waterHeight = 0f;
         private bool hasSurface = false;
         private Vector3[] constraintStartPositions;
         private float[] groundHeights;
@@ -85,6 +75,9 @@ namespace ClimbGames.ProjectF
         public float VisualLength => linePoints.Sum(x => x.segmentLength);
         public float ForcedTension => forcedTension;
         public Vector3 PinForce { get; private set; }
+
+        // 첫 고정점에서 줄을 따라 로드 쪽으로 향하는 방향
+        public Vector3 PinDirection { get; private set; }
 
         // 첫 고정점 근처 줄이 수면과 이루는 각도
         public float PinAngle { get; private set; }
@@ -124,10 +117,9 @@ namespace ClimbGames.ProjectF
             forcedTension = tension;
         }
 
-        public void SetWaterSurface(float height)
+        public void SetWaterHeight(float height)
         {
-            surfaceHeight = height;
-            hasSurface = true;
+            waterHeight = height;
         }
 
         public void SetWaterContact(bool isEnabled)
@@ -164,7 +156,7 @@ namespace ClimbGames.ProjectF
                     velocity.y = Mathf.Max(0f, velocity.y);
                     Vector3 move = ApplyDrag(i, velocity, deltaTime);
                     if (move.y <= 0f)
-                        move.y = -Mathf.Min(sinkSpeed * deltaTime, Mathf.Max(0f, _positions[i].y - (surfaceHeight - sinkDepth)));
+                        move.y = -Mathf.Min(sinkSpeed * deltaTime, Mathf.Max(0f, _positions[i].y - (waterHeight - sinkDepth)));
                     _positions[i] += move;
                     continue;
                 }
@@ -178,10 +170,11 @@ namespace ClimbGames.ProjectF
 
             UpdateGroundHeights();
             ApplyLengthConstraint();
-            UpdatePinLineVelocity(deltaTime); // 뒤의 보정들이 _prevPositions 를 바꾸기 전에 구함
+
+            // 위치를 바꾸는 보정은 이 앞에, 이전 위치만 바꾸는 보정은 이 뒤에 둠
+            UpdatePinState(deltaTime);
             ApplyGroundFriction();
             ApplyPullInertia(deltaTime);
-            UpdatePinForce();
         }
 
         // 점마다 레이캐스트는 한 번만 하고, 제약 반복 중에는 저장한 높이로 비교함
@@ -248,64 +241,66 @@ namespace ClimbGames.ProjectF
                 correction -= tangent * Vector3.Dot(correction, tangent);
 
                 float speed = correction.magnitude / deltaTime;
-                if (speed > pullInertiaDeadSpeed)
-                    _prevPositions[i] -= correction * (pullInertia * (1f - pullInertiaDeadSpeed / speed));
+                if (speed > 0.2f)
+                    _prevPositions[i] -= correction * (pullInertia / speed);
             }
         }
 
-        // 첫 고정점 바로 앞 구간이 늘어난 비율로 고정점을 당기는 힘을 구함
-        // 고정점이 느끼는 건 붙어 있는 지점의 장력이므로, 팁 쪽 움직임은 이 구간까지 전달되어야 힘이 됨
-        void UpdatePinForce()
+        // 고정점을 당기는 힘, 고정점 앞 줄의 각도와 수평 속도를 구함
+        // 힘은 줄이 팽팽할 때만 생기므로, 여유 있는 줄의 움직임은 속도로 따로 알려 줌
+        void UpdatePinState(float deltaTime)
         {
             PinForce = Vector3.zero;
+            PinDirection = Vector3.zero;
             PinAngle = 0f;
-            if (firstPinIndex >= positionCount)
-                return;
-
-            // 방향은 고정점 근처 줄에서 구해서 줄의 요동이 반영되게 함
-            int directionIndex = Mathf.Max(0, firstPinIndex - PinDirectionSegmentCount);
-            Vector3 direction = (_positions[directionIndex] - _positions[firstPinIndex]).normalized;
-            float horizontal = new Vector2(direction.x, direction.z).magnitude;
-            PinAngle = Mathf.Atan2(direction.y, horizontal) * Mathf.Rad2Deg;
-
-            float pathLength = 0f, restLength = 0f;
-            int startIndex = Mathf.Max(0, firstPinIndex - pinForceSegmentCount);
-            for (int i = startIndex; i < firstPinIndex; ++i)
-            {
-                pathLength += (_positions[i + 1] - _positions[i]).magnitude;
-                restLength += linePoints[i].segmentLength * (1f - forcedTension);
-            }
-
-            if (restLength <= 0.0001f)
-                return;
-
-            float strain = Mathf.Max(0f, (pathLength - restLength) / restLength);
-            PinForce = direction * (lineStiffness * strain);
-        }
-
-        // 줄이 여유 있어서 늘어나지 않아도 움직임을 알 수 있도록 고정점 앞 점들의 속도를 구함
-        void UpdatePinLineVelocity(float deltaTime)
-        {
             PinLineVelocity = Vector3.zero;
             if (firstPinIndex >= positionCount)
                 return;
 
-            int startIndex = Mathf.Max(1, firstPinIndex - 1);
-            int count = firstPinIndex - startIndex;
-            if (count <= 0)
-                return;
+            const int pinSegmentCount = 1;
+            int startIndex = Mathf.Max(0, firstPinIndex - pinSegmentCount);
 
+            // 방향은 고정점 근처 줄에서 구해서 줄의 요동이 반영되게 함
+            Vector3 direction = (_positions[startIndex] - _positions[firstPinIndex]).normalized;
+            PinDirection = direction;
+            float horizontal = new Vector2(direction.x, direction.z).magnitude;
+            PinAngle = Mathf.Atan2(direction.y, horizontal) * Mathf.Rad2Deg;
+
+            // 속도 (로드 팁인 0번 점은 제외함)
             Vector3 move = Vector3.zero;
-            for (int i = startIndex; i < firstPinIndex; ++i)
+            int moveCount = 0;
+            for (int i = Mathf.Max(1, startIndex); i < firstPinIndex; ++i)
+            {
                 move += _positions[i] - _prevPositions[i];
+                moveCount++;
+            }
 
-            move.y = 0f;
-            PinLineVelocity = move / (count * deltaTime);
+            if (moveCount > 0)
+            {
+                move.y = 0f;
+                PinLineVelocity = move / (moveCount * deltaTime);
+            }
+
+            // 힘은 줄 전체가 팽팽함 기준 길이를 넘은 만큼
+            PinForce = direction * (lineStiffness * GetOverLength());
+        }
+
+        // 팁에서 첫 고정점까지의 직선 거리가 팽팽함 기준 길이를 넘은 길이
+        // 기준 길이는 줄 길이에서 처질 수 있는 비율만큼 뺀 길이라서, 줄이 길수록 길어짐
+        float GetOverLength()
+        {
+            float totalRestLength = 0f;
+            for (int i = 0; i < firstPinIndex; ++i)
+                totalRestLength += linePoints[i].segmentLength * (1f - forcedTension);
+
+            float tautLength = totalRestLength * (1f - slackRatio);
+            float straightLength = (_positions[0] - _positions[firstPinIndex]).magnitude;
+            return Mathf.Max(0f, straightLength - tautLength);
         }
 
         bool IsInWater(int index)
         {
-            return hasSurface && index < firstPinIndex && _positions[index].y <= surfaceHeight + SurfaceContactOffset;
+            return hasSurface && index < firstPinIndex && _positions[index].y <= waterHeight + WaterContactOffset;
         }
 
         // 가라앉는 깊이 아래로는 내려가지 않음: 남는 줄은 더 깊이 가지 않고 옆으로 퍼짐
@@ -314,7 +309,7 @@ namespace ClimbGames.ProjectF
             if (hasSurface == false)
                 return;
 
-            float floor = surfaceHeight - sinkDepth;
+            float floor = waterHeight - sinkDepth;
             for (int i = 1; i < firstPinIndex; ++i)
             {
                 if (_positions[i].y < floor)
@@ -331,7 +326,7 @@ namespace ClimbGames.ProjectF
             velocity *= dampingFactor;
 
             // 물속의 정지 마찰: 약한 움직임으로는 물에 들어간 줄이 움직이지 않음
-            if (IsInWater(index) && velocity.magnitude / deltaTime < surfaceStaticSpeed)
+            if (IsInWater(index))
                 return Vector3.zero;
 
             // i-1 은 이미 갱신되어 prev 에, i+1 은 아직 positions 에 스텝 시작 위치가 있음
@@ -343,10 +338,7 @@ namespace ClimbGames.ProjectF
             Vector3 tangentVelocity = tangent * Vector3.Dot(velocity, tangent);
             Vector3 normalVelocity = velocity - tangentVelocity;
 
-            float normalDrag = IsInWater(index)
-                ? surfaceDrag
-                : airDragLinear + airDragQuadratic * normalVelocity.magnitude / deltaTime;
-
+            float normalDrag = IsInWater(index) ? waterDrag : airDrag;
             return tangentVelocity / (1f + tangentDrag * deltaTime) + normalVelocity / (1f + normalDrag * deltaTime);
         }
 

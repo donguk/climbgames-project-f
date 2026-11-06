@@ -32,7 +32,7 @@ namespace ClimbGames.ProjectF
                 // 줄이 당기는 힘을 찌에 전달
                 if (Actor.Bobber.IsFloating)
                 {
-                    Actor.Bobber.SetLineForce(Actor.Line.Body.PinForce, Actor.Line.Body.PinAngle, Actor.Line.Body.PinLineVelocity);
+                    Actor.Bobber.SetLineState(Actor.Line.Body.PinForce, Actor.Line.Body.PinDirection, Actor.Line.Body.PinAngle, Actor.Line.Body.PinLineVelocity);
 
                     // 위로 세게 당겨지면 물에서 분리
                     if (Actor.Bobber.ShouldBreakOut)

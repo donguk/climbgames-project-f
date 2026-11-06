@@ -17,17 +17,14 @@ namespace ClimbGames.ProjectF
         [SerializeField] private FloatingClip landingClip;
         [SerializeField] private FloatingClip floatingClip;
 
-        [Header("Line Force")]
         [SerializeField] private float mass = 1f;
         [SerializeField] private float waterDrag = 2f;
-        [SerializeField] private float staticForce = 0.2f;
+        [SerializeField] private float staticForce = 0f;
 
-        [SerializeField] private float tiltMaxForce = 1.5f;
+        // 힘을 기울기 비율로 바꾸는 배율 (힘 x 배율 이 1 이면 줄 방향까지 완전히 기움)
+        [SerializeField] private float tiltScale = 1f;
         [SerializeField] private float tiltSpeed = 10f;
         [SerializeField] private float tiltRecoverSpeed = 0.5f;
-        // 줄의 속도를 기울임 힘으로 바꾸는 비율과 그 힘의 상한 (0 이면 흔들림에 반응하지 않음)
-        [SerializeField] private float wobbleTiltScale = 0.3f;
-        [SerializeField] private float wobbleMaxForce = 0.3f;
 
         [Header("Break Out")]
         [SerializeField] private float liftStiffness = 40f;
@@ -44,12 +41,12 @@ namespace ClimbGames.ProjectF
         [SerializeField] private float modelAlignSpeed = 8f;
 
         [SerializeField] private float rotationSpeed = 2f;
-        [SerializeField] private float pullMaxAngle = 80f;
         [SerializeField] private float biteMaxAngle = 90f;
 
         private float waterHeight;
-        private Vector3 velocity;
+        private Vector3 pullVelocity;
         private Vector3 lineForce;
+        private Vector3 lineDirection;
         private bool isLanding;
         private float lift;
         private float liftVelocity;
@@ -83,7 +80,7 @@ namespace ClimbGames.ProjectF
         {
             if (IsFloating)
             {
-                SimulatePull();
+                SimulatePull(Time.fixedDeltaTime);
                 SimulateRotation();
                 SimulateHeight();
 
@@ -186,44 +183,35 @@ namespace ClimbGames.ProjectF
             return force.magnitude < staticForce ? Vector3.zero : force;
         }
 
-        void SimulatePull()
+        void SimulatePull(float deltaTime)
         {
-            float deltaTime = Time.fixedDeltaTime;
-
-            velocity += GetHorizontalForce() / mass * deltaTime;
-            velocity /= 1f + waterDrag * deltaTime;
-            transform.position += velocity * deltaTime;
+            pullVelocity += GetHorizontalForce() / mass * deltaTime;
+            pullVelocity /= 1f + waterDrag * deltaTime;
+            transform.position += pullVelocity * deltaTime;
         }
 
         void SimulateRotation()
         {
             Quaternion dargRotation = Quaternion.identity;
 
-            // 장력은 정지 마찰을 넘어야 기울이고, 줄의 흔들림은 장력과 상관없이 기울임
+            // 장력은 정지 마찰을 넘어야 기울이고, 줄의 흔들림은 찌를 그 속도로 끄는 데 필요한 힘으로 봄
             // 찌와 함께 움직이는 줄은 흔들림이 아니므로 찌의 속도를 뺌
-            Vector3 wobble = Vector3.ClampMagnitude((lineVelocity - velocity) * wobbleTiltScale, wobbleMaxForce);
-            Vector3 tilt = GetHorizontalForce() + wobble;
-            float tiltSize = tilt.magnitude;
+            //float wobbleForce = (lineVelocity - pullVelocity).magnitude * mass * waterDrag;
+            float tiltForce = GetHorizontalForce().magnitude;// + wobbleForce;
 
-            if (tiltSize > 0.0001f)
+            // 줄 방향이 없으면 (고정점이 없을 때) 기울이지 않음
+            if (tiltForce > 0.0001f && lineDirection.sqrMagnitude > 0.0001f)
             {
-                Vector3 tiltAxis = Vector3.Cross(Vector3.up, tilt / tiltSize);
-                float dragAngle = pullMaxAngle * Mathf.Clamp01(tiltSize / tiltMaxForce);
-                dargRotation = Quaternion.AngleAxis(dragAngle, tiltAxis);
+                // 찌의 up 에서 줄 방향까지 힘에 비례해서 기울임
+                Vector3 targetUp = Vector3.Slerp(Vector3.up, lineDirection, Mathf.Clamp01(tiltForce * tiltScale));
+                dargRotation = Quaternion.FromToRotation(Vector3.up, targetUp);
             }
-
-            float biteAngle = biteMaxAngle * Mathf.Clamp01(biteInfo.bobberRotation);
-            Quaternion biteRotation = Quaternion.AngleAxis(biteAngle, biteInfo.angleAxis);
 
             // 줄에 끌린 기울임은 빠르게 기울고 천천히 회복함
             bool isTilting = Quaternion.Angle(Quaternion.identity, dargRotation) > Quaternion.Angle(Quaternion.identity, currentDragRotation);
             float dragSpeed = isTilting ? tiltSpeed : tiltRecoverSpeed;
             currentDragRotation = Quaternion.Slerp(currentDragRotation, dargRotation, dragSpeed * Time.fixedDeltaTime);
-
-            // 입질 회전은 기존 속도를 유지함
-            currentBiteRotation = Quaternion.Slerp(currentBiteRotation, biteRotation, rotationSpeed * Time.fixedDeltaTime);
-
-            transform.rotation = currentDragRotation * currentBiteRotation;
+            transform.rotation = currentDragRotation;
         }
 
         protected override void OnAttachToLine(FishingLinePoint point, ConfigurableJoint joint)
@@ -243,7 +231,7 @@ namespace ClimbGames.ProjectF
         protected override void OnDetachFromLine(FishingLinePoint point)
         {
             Body.isKinematic = true;
-            velocity = Vector3.zero;
+            pullVelocity = Vector3.zero;
             lift = 0f;
             liftVelocity = 0f;
 
@@ -252,11 +240,12 @@ namespace ClimbGames.ProjectF
             currentBiteRotation = transform.rotation;
         }
 
-        public void SetLineForce(Vector3 force, float angle, Vector3 lineVelocity)
+        public void SetLineState(Vector3 force, Vector3 direction, float angle, Vector3 velocity)
         {
             lineForce = force;
+            lineDirection = direction;
             lineAngle = angle;
-            this.lineVelocity = lineVelocity;
+            lineVelocity = velocity;
         }
 
         // 조인트는 연결 순간의 회전을 기준으로 삼으므로 본체는 바로 줄 방향에 맞추고, 모델은 이전 회전에서 서서히 돌아감
