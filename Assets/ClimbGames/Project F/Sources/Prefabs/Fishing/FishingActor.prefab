@@ -470,18 +470,16 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     duration: 8
-  mass: 1
-  waterDrag: 4
-  staticForce: 0
+  lineWeight: 0.01
+  pullDeadSpeed: 0.07
+  pullDrag: 5
   tiltScale: 1
   tiltSpeed: 5
   tiltRecoverSpeed: 1.5
-  liftStiffness: 5
-  liftDamping: 2
-  breakoutHeight: 0.15
-  liftAngleLow: 20
-  liftAngleHigh: 80
-  landHeightOffset: 0
+  buoyancy: 30
+  buoyancyDamping: 14
+  breakoutHeight: 0.2
+  surfaceHold: 0.3
   modelAlignSpeed: 2
   rotationSpeed: 2
   biteMaxAngle: 90
@@ -1176,7 +1174,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingLine
   lineBody:
     positionCount: 10
-    segmentLength: 0.2
+    segmentLength: 0.25
     gravityForce: {x: 0, y: -6, z: 0}
     dampingFactor: 1
     collisionMask:
@@ -1185,21 +1183,21 @@ MonoBehaviour:
     collisionRadius: 0.1
     bounceFactor: 0.1
     collisionSegmentInterval: 2
-    constraintCount: 10
+    constraintCount: 50
     airDrag: 5
-    waterDrag: 3
+    waterDrag: 13
     tangentDrag: 1
-    pullInertia: 0.5
-    lineStiffness: 40
+    pullInertia: 0.8
     sinkSpeed: 0.1
     sinkDepth: 0.3
+    sinkSlope: 1
     groundOffset: 0.02
     groundFriction: 0.2
   bobberPoint: {fileID: 8666444395038434717}
   endPoint: {fileID: 8333694936421398241}
   handlePoint: {fileID: 2722746951955469620}
   totalLength: 0
-  forcedTension: 0
+  showDebug: 0
 --- !u!1 &3188397222867896724
 GameObject:
   m_ObjectHideFlags: 0

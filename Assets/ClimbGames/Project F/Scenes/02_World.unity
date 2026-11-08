@@ -1111,6 +1111,38 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2113665803721792437, guid: 925a5f105ff85db4c82cc68ab84d5242, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5199615770416185462, guid: 925a5f105ff85db4c82cc68ab84d5242, type: 3}
+      propertyPath: m_Size.y
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5199615770416185462, guid: 925a5f105ff85db4c82cc68ab84d5242, type: 3}
+      propertyPath: m_VoxelSize
+      value: 0.033333335
+      objectReference: {fileID: 0}
+    - target: {fileID: 5199615770416185462, guid: 925a5f105ff85db4c82cc68ab84d5242, type: 3}
+      propertyPath: m_NavMeshData
+      value: 
+      objectReference: {fileID: 23800000, guid: e1a8c06c5c840da42bda273f13ed884f, type: 2}
+    - target: {fileID: 5199615770416185462, guid: 925a5f105ff85db4c82cc68ab84d5242, type: 3}
+      propertyPath: m_OverrideVoxelSize
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5671534879368861599, guid: 925a5f105ff85db4c82cc68ab84d5242, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7507777098810943028, guid: 925a5f105ff85db4c82cc68ab84d5242, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7990333157085986653, guid: 925a5f105ff85db4c82cc68ab84d5242, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2.62
+      objectReference: {fileID: 0}
     - target: {fileID: 8281961117688046483, guid: 925a5f105ff85db4c82cc68ab84d5242, type: 3}
       propertyPath: m_Name
       value: World_Sample_00

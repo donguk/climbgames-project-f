@@ -22,21 +22,21 @@ namespace ClimbGames.ProjectF
                 elapsedTime = 0f;
             }
 
-            protected override void OnUpdate()
-            {
-                elapsedTime += Time.deltaTime;
-                if (elapsedTime > biteTime)
-                {
-                    if (Random.Range(0, 2) > 0)
-                    {
-                        fsm.ChangeState(FishState.Nibble);
-                    }
-                    else
-                    {
-                        fsm.ChangeState(FishState.Bite);
-                    }
-                }
-            }
+            //protected override void OnUpdate()
+            //{
+            //    elapsedTime += Time.deltaTime;
+            //    if (elapsedTime > biteTime)
+            //    {
+            //        if (Random.Range(0, 2) > 0)
+            //        {
+            //            fsm.ChangeState(FishState.Nibble);
+            //        }
+            //        else
+            //        {
+            //            fsm.ChangeState(FishState.Bite);
+            //        }
+            //    }
+            //}
         }
     }
 }

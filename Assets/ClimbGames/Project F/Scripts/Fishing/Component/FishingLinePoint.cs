@@ -18,6 +18,8 @@ namespace ClimbGames.ProjectF
         public Vector3 LineDirection { get; private set; }
         public Transform TrackingTarget { get; private set; }
         public FishingLineBody.LinePoint PinPoint { get; private set; }
+        // 줄에 항상 있는 점 (찌): 이 점의 위치를 따라감
+        public FishingLineBody.LinePoint BodyPoint { get; private set; }
         public bool HasTarget => TrackingTarget != null;
 
         void Awake()
@@ -48,6 +50,11 @@ namespace ClimbGames.ProjectF
             this.height = height;
         }
 
+        public void BindBodyPoint(FishingLineBody.LinePoint point)
+        {
+            BodyPoint = point;
+        }
+
         public void UpdatePosition()
         {
             if (HasTarget)
@@ -64,6 +71,13 @@ namespace ClimbGames.ProjectF
                     // 고정된 점 설정
                     line.Body.SetPosition(PinPoint.currentIndex, transform.position);
                 }
+            }
+            else if (BodyPoint != null)
+            {
+                int index = BodyPoint.currentIndex;
+                Vector3 position = line.Body.GetPosition(index);
+                LineDirection = transform.up = (line.Body.GetPosition(Mathf.Max(0, index - 1)) - position).normalized;
+                transform.position = position;
             }
             else
             {

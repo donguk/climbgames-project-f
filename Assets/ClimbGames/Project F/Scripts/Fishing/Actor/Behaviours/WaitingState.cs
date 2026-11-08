@@ -29,21 +29,11 @@ namespace ClimbGames.ProjectF
                         fsm.ChangeState(FishingActorState.Retrieving);
                 }
 
-                // 줄이 당기는 힘을 찌에 전달
-                if (Actor.Bobber.IsFloating)
+                // 줄에 들려 찌 점이 물에서 빠지면 찌를 줄에 다시 매단다
+                if (Actor.Bobber.ShouldBreakOut)
                 {
-                    Actor.Bobber.SetLineState(Actor.Line.Body.PinForce, Actor.Line.Body.PinDirection, Actor.Line.Body.PinAngle, Actor.Line.Body.PinLineVelocity);
-
-                    // 위로 세게 당겨지면 물에서 분리
-                    if (Actor.Bobber.ShouldBreakOut)
-                    {
-                        Actor.Bobber.BreakOut();
-
-                        // 찌가 물에서 떨어지면 줄은 공중처럼 떨어짐 (재착수 시 다시 켜짐)
-                        Actor.Line.Body.SetWaterContact(false);
-
-                        Player.FishMachine.ChangeState(FishState.Idle);
-                    }
+                    Actor.Bobber.BreakOut();
+                    Player.FishMachine.ChangeState(FishState.Idle);
                 }
 
                 // 인풋이 없는 경우 약간씩 풀림

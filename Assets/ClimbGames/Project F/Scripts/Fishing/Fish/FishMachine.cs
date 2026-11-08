@@ -24,7 +24,7 @@
             }
         }
 
-        public FishMachine() : base("<color=blue>Fish</color>", true)
+        public FishMachine() : base("<color=blue>Fish</color>", false)
         {
         }
 

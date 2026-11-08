@@ -10,15 +10,13 @@ namespace ClimbGames.ProjectF
         [SerializeField] private FishingLinePoint endPoint;
         [SerializeField] private FishingLinePoint handlePoint;
         [SerializeField] private float totalLength;
-        [Range(0f, 1f)]
-        [SerializeField] private float forcedTension = 0f;
+        [SerializeField] private bool showDebug;
 
         private FishingLineDrawer[] lineDrawers;
         private FishingPlayer player;
         private Transform rodTip;
-        private float targetLength, targetTension;
+        private float targetLength;
         private NormalizedTimer targetLengthTimer = new NormalizedTimer(1f);
-        private NormalizedTimer forcedTensionTimer = new NormalizedTimer(1f);
 
         public float TotalLength => totalLength;
         public FishingLineBody Body => lineBody;
@@ -34,9 +32,10 @@ namespace ClimbGames.ProjectF
             lineDrawers = GetComponentsInChildren<FishingLineDrawer>();
 
             SetLength(Mathf.Max(1f, length));
-            lineBody.BuildLine(rodTip.position, TotalLength);
+            lineBody.BuildLine(rodTip.position, TotalLength, bobberHeight);
 
             bobberPoint.Initialize(this, bobberHeight);
+            bobberPoint.BindBodyPoint(lineBody.BobberPoint);
             endPoint.Initialize(this);
             handlePoint.Initialize(this);
         }
@@ -49,7 +48,7 @@ namespace ClimbGames.ProjectF
             for (int i = 1; i < linePoints.Count; ++i)
             {
                 var linePoint = linePoints[i];
-                if (linePoint.IsPinned || i >= linePoints.Count - 1)
+                if (linePoint.IsPinned || linePoint.isBobber || i >= linePoints.Count - 1)
                 {
                     if (drawerIndex < lineDrawers.Length)
                     {
@@ -73,11 +72,7 @@ namespace ClimbGames.ProjectF
             targetLengthTimer.Update(deltaTime);
             lineBody.SetLength(Mathf.Lerp(lineBody.VisualLength, targetLength, targetLengthTimer.Value));
 
-            // 강제 텐션
-            forcedTensionTimer.Update(deltaTime);
-            lineBody.SetForcedTension(Mathf.Lerp(lineBody.ForcedTension, targetTension, forcedTensionTimer.Value));
-
-            // 물리 업데이트
+            // 물리 업데이트 (찌는 줄의 찌 점을 따라가므로 따로 반영할 위치가 없음)
             lineBody.Step(deltaTime, rodTip.position);
 
             // 컨트롤 포인트 업데이트
@@ -85,6 +80,27 @@ namespace ClimbGames.ProjectF
             handlePoint.UpdatePosition();
             endPoint.UpdatePosition();
         }
+
+#if UNITY_EDITOR
+        // 팁부터 첫 고정점까지 줄이 늘어난 정도와 고정점이 끌린 속도
+        void OnGUI()
+        {
+            if (showDebug == false || lineBody == null)
+                return;
+
+            float rest = lineBody.PinRestLength;
+            float stretch = lineBody.PinStretch;
+            float ratio = rest > 0f ? stretch / rest * 100f : 0f;
+
+            Vector3 move = lineBody.PinDisplacement;
+            move.y = 0f;
+            float deltaTime = lineBody.LastDeltaTime;
+            float pinSpeed = deltaTime > 0f ? move.magnitude / deltaTime : 0f;
+
+            GUI.Label(new Rect(10f, 10f, 400f, 80f),
+                $"Rest: {rest:F2} m\nStretch: {stretch:F3} m ({ratio:F2} %)\nPinMove: {pinSpeed:F3} m/s");
+        }
+#endif
 
         public LineLengthInfo GetLengthInfo(Transform target)
         {
@@ -99,7 +115,7 @@ namespace ClimbGames.ProjectF
                 lineLength += points[i].segmentLength;
                 if (i > 0)
                 {
-                    if (points[i].IsPinned)
+                    if (points[i].IsPinned || points[i].isBobber)
                     {
                         lineDirection = (rodTip.transform.position - lineBody.GetPosition(points[i].currentIndex)).normalized;
                         break;
@@ -124,12 +140,6 @@ namespace ClimbGames.ProjectF
             player.Model.SetLineLength(totalLength);
         }
 
-        public void SetForcedTension(float tension, float duration = 0f)
-        {
-            forcedTension = targetTension = tension;
-            forcedTensionTimer.Reset(duration);
-        }
-
         public float Release(float amount)
         {
             if (amount > 0f)
@@ -142,7 +152,7 @@ namespace ClimbGames.ProjectF
         public float Reeling(float amount)
         {
             if (amount > 0f)
-                totalLength = Mathf.Max(0.5f, totalLength - amount);
+                totalLength = Mathf.Max(bobberPoint.Height + lineBody.SegmentLength, totalLength - amount); // 찌 점까지는 감지 않음
 
             player.Model.SetLineLength(totalLength);
             return targetLength = totalLength;
@@ -173,7 +183,6 @@ namespace ClimbGames.ProjectF
 
         protected override void OnBobberEnterWater(FishingEvent.OnBobberEnterWater param)
         {
-            lineBody.SetWaterHeight(param.waterHeight);
             lineBody.SetWaterContact(true);
         }
 
@@ -181,7 +190,6 @@ namespace ClimbGames.ProjectF
         {
             // 물고기 추적
             endPoint.SetTrackingTarget(param.hookedFish.ModelRoot);
-            SetForcedTension(1f, 0.5f);
 
             // 물고기를 향해 물속으로 들어가는 줄은 수면에 걸리지 않음
             lineBody.SetWaterContact(false);
@@ -191,13 +199,11 @@ namespace ClimbGames.ProjectF
         {
             // 추적 끈기
             endPoint.SetTrackingTarget(null);
-            SetForcedTension(0f, 0.1f);
             lineBody.SetWaterContact(true);
         }
 
         protected override void OnPullOut(FishingEvent.OnPullOut param)
         {
-            SetForcedTension(0f, 0.1f);
             lineBody.SetWaterContact(false);
             SetLength(1, 1f);
 

@@ -26,7 +26,8 @@ namespace ClimbGames.ProjectF
             RuntimeJoint = joint;
 
             // 라인에 오브젝트 연결
-            LinePoint.SetTrackingTarget(null);
+            if (TracksLinePoint)
+                LinePoint.SetTrackingTarget(null);
             OnAttachToLine(point, joint);
         }
 
@@ -37,9 +38,13 @@ namespace ClimbGames.ProjectF
             RuntimeJoint = null;
 
             // 라인의 포인트가 오브젝트를 추적
-            LinePoint.SetTrackingTarget(transform);
+            if (TracksLinePoint)
+                LinePoint.SetTrackingTarget(transform);
             OnDetachFromLine(point);
         }
+
+        // 떨어졌을 때 줄의 점이 이 오브젝트를 고정점으로 추적하는지 (찌는 줄의 찌 점을 따라가므로 추적하지 않음)
+        protected virtual bool TracksLinePoint => true;
 
         protected virtual void OnAttachToLine(FishingLinePoint point, ConfigurableJoint joint)
         {

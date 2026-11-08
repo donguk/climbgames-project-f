@@ -20,7 +20,35 @@ namespace ClimbGames.ProjectF
             public bool isDynamic;
             public Transform pinTarget;
 
+            // 길이 제약에 끌리는 정도 (역질량: 1 은 일반 줄 점, 작을수록 무거움, 고정점은 무시하고 0)
+            public float weight;
+
+            // 찌 점: 줄을 만들 때부터 있고 지워지지 않음, 잠기면 부력으로 수면에 떠오름
+            public bool isBobber;
+            // 몸통이 다 잠겼을 때 위로 미는 가속도 (m/s², 중력 크기보다 커야 뜸)
+            public float buoyancy;
+            // 잠겼을 때 위아래 움직임을 줄이는 비율 (1/s)
+            public float buoyancyDamping;
+            // 찌 점이 수면보다 이만큼 높아지면 물에서 빠진 것으로 봄
+            public float leaveHeight;
+            // 찌 점이 뜨는 높이를 수면에서 옮김 (입질로 찌가 잠길 때 음수)
+            public float surfaceOffset;
+            // 찌 점이 물에 있을 때 수평으로 움직이는 속도에서 빼는 마찰 속도 (정지 마찰)
+            public float waterFriction;
+            // 정지 마찰을 넘어 움직이는 수평 속도를 줄이는 비율 (1/s, 물의 저항)
+            public float waterDrag;
+            // 수면이 찌를 잡는 힘: 줄이 찌를 위로 당기는 속도에서 빼는 값 (m/s)
+            public float surfaceHold;
+
+            // 매 스텝 갱신되는 상태
+            public float waterHeight;   // 점 아래 수면 높이 (없으면 -Infinity)
+            public float groundHeight;  // 점 아래 땅 높이 + groundOffset (없으면 -Infinity)
+            public float sinkFloor;     // 가라앉을 수 있는 가장 낮은 높이
+            public bool inWater;
+            public bool onGround;
+
             public bool IsPinned => currentIndex == 0 || pinTarget != null;
+            public bool HasWater => float.IsNegativeInfinity(waterHeight) == false;
 
             public void Reset()
             {
@@ -28,6 +56,22 @@ namespace ClimbGames.ProjectF
                 segmentLength = 0f;
                 isDynamic = false;
                 pinTarget = null;
+
+                weight = 1f;
+                isBobber = false;
+                buoyancy = 0f;
+                buoyancyDamping = 0f;
+                leaveHeight = 0f;
+                surfaceOffset = 0f;
+                waterFriction = 0f;
+                waterDrag = 0f;
+                surfaceHold = 0f;
+
+                waterHeight = float.NegativeInfinity;
+                groundHeight = float.NegativeInfinity;
+                sinkFloor = float.NegativeInfinity;
+                inWater = false;
+                onGround = false;
             }
         }
 
@@ -40,17 +84,12 @@ namespace ClimbGames.ProjectF
         [Header("Pull Inertia")]
         [SerializeField, Range(0f, 1f)] private float pullInertia = 0.5f;
 
-        // 팽팽함 기준 길이를 넘은 1m 당 고정점을 당기는 힘
-        [Header("Pin Force")]
-        [SerializeField] private float lineStiffness = 40f;
-        // 줄 길이에서 이 비율만큼 뺀 길이가 팽팽함 기준 길이 (1 이상이면 기준 길이가 0 이하라 항상 끌림)
-        // 비율이라서 줄이 짧든 길든 같은 정도로 펴졌을 때 끌기 시작함
-        [SerializeField, Range(0f, 10.2f)] private float slackRatio = 0.02f;
-
         // 물에 들어간 점은 중력 대신 일정한 속도로 천천히 가라앉음
         [Header("Water Sink")]
         [SerializeField] private float sinkSpeed = 0.1f;
         [SerializeField] private float sinkDepth = 0.3f;
+        // 고정점에서 줄을 따라 1m 떨어질 때 더 가라앉을 수 있는 깊이 (1 미만이어야 줄이 닿을 수 있음)
+        [SerializeField, Range(0f, 1f)] private float sinkSlope = 0.5f;
 
         // 줄이 땅 아래로 내려가지 않음
         [Header("Ground")]
@@ -61,20 +100,22 @@ namespace ClimbGames.ProjectF
         private const float GroundCastHeight = 50f;
         private const float GroundCastDistance = 100f;
         private const float GroundContactEpsilon = 0.001f;
+        private const float MinSegmentLength = 0.01f;
+        // 찌 몸통이 다 잠기는 깊이: 이 깊이까지는 잠긴 만큼 부력이 커지고, 더 깊으면 buoyancy 로 일정함
+        private const float BobberFloatDepth = 0.03f;
 
         private List<LinePoint> linePoints = new List<LinePoint>();
-        private float forcedTension = 0f;
         private bool isForwardSweep = true;
         private int firstPinIndex = 0;
-        private float waterHeight = 0f;
         private bool hasSurface = false;
         private Vector3[] constraintStartPositions;
-        private float[] groundHeights;
 
         public IReadOnlyList<LinePoint> Points => linePoints;
+        // 찌 점 (BuildLine 에서 만들고 지우지 않음)
+        public LinePoint BobberPoint { get; private set; }
         public float VisualLength => linePoints.Sum(x => x.segmentLength);
-        public float ForcedTension => forcedTension;
-        public Vector3 PinForce { get; private set; }
+        // 길이 제약이 첫 고정점을 옮긴 거리 (고정점에 무게가 있을 때만 0 이 아님)
+        public Vector3 PinDisplacement { get; private set; }
 
         // 첫 고정점에서 줄을 따라 로드 쪽으로 향하는 방향
         public Vector3 PinDirection { get; private set; }
@@ -85,7 +126,12 @@ namespace ClimbGames.ProjectF
         // 첫 고정점 근처 줄의 수평 속도
         public Vector3 PinLineVelocity { get; private set; }
 
-        public void BuildLine(Vector3 anchorPosition, float length)
+        // 디버그: 로드 팁부터 첫 고정점까지 정해진 길이의 합과, 실제 거리가 그보다 늘어난 길이
+        public float PinRestLength { get; private set; }
+        public float PinStretch { get; private set; }
+        public float LastDeltaTime { get; private set; }
+
+        public void BuildLine(Vector3 anchorPosition, float length, float bobberHeight)
         {
             float remainLength = length % segmentLength;
             int segmentCount = (int)(length / segmentLength) + (remainLength > 0f ? 1 : 0);
@@ -110,16 +156,10 @@ namespace ClimbGames.ProjectF
 
                 position.y -= linePoints[i].segmentLength;
             }
-        }
 
-        public void SetForcedTension(float tension)
-        {
-            forcedTension = tension;
-        }
-
-        public void SetWaterHeight(float height)
-        {
-            waterHeight = height;
+            // 찌 점은 끝에서 bobberHeight 만큼 떨어진 곳에 항상 둠
+            BobberPoint = InsertPointAtHeight(bobberHeight);
+            BobberPoint.isBobber = true;
         }
 
         public void SetWaterContact(bool isEnabled)
@@ -131,15 +171,18 @@ namespace ClimbGames.ProjectF
         {
             _positions[0] = anchorPosition;
 
+            // 첫 고정점 또는 찌 점: 이 앞의 줄만 수면에 걸리고 가라앉음
             firstPinIndex = positionCount;
             for (int i = 1; i < positionCount; ++i)
             {
-                if (linePoints[i].IsPinned)
+                if (linePoints[i].IsPinned || linePoints[i].isBobber)
                 {
                     firstPinIndex = i;
                     break;
                 }
             }
+
+            UpdateSinkFloors();
 
             Vector3 gravity = gravityForce * deltaTime * deltaTime;
             for (int i = 0; i < positionCount; ++i)
@@ -150,15 +193,21 @@ namespace ClimbGames.ProjectF
                 if (linePoints[i].IsPinned)
                     continue;
 
-                if (IsInWater(i))
+                // 수면 아래로 잠긴 찌는 잠긴 깊이만큼 부력을 받고(몸통이 다 잠기면 buoyancy 로 일정), 위아래 움직임은 물이 잡아 줌
+                // 줄이 부력보다 세게 당기면 잠긴 채로 끌려가고, 풀리면 수면으로 떠오름
+                LinePoint point = linePoints[i];
+                if (point.isBobber && point.HasWater)
                 {
-                    // 위로 올라가는 속도는 남기고, 내려갈 때는 가라앉는 속도만 적용
-                    velocity.y = Mathf.Max(0f, velocity.y);
-                    Vector3 move = ApplyDrag(i, velocity, deltaTime);
-                    if (move.y <= 0f)
-                        move.y = -Mathf.Min(sinkSpeed * deltaTime, Mathf.Max(0f, _positions[i].y - (waterHeight - sinkDepth)));
-                    _positions[i] += move;
-                    continue;
+                    float depth = point.waterHeight + point.surfaceOffset - _positions[i].y;
+                    if (depth > 0f)
+                    {
+                        velocity = ApplyDrag(i, velocity, deltaTime);
+                        velocity.y /= 1f + point.buoyancyDamping * deltaTime;
+
+                        float lift = point.buoyancy * Mathf.Clamp01(depth / BobberFloatDepth);
+                        _positions[i] += velocity + Vector3.up * ((lift + gravityForce.y) * deltaTime * deltaTime);
+                        continue;
+                    }
                 }
 
                 _positions[i] += ApplyDrag(i, velocity, deltaTime) + gravity;
@@ -168,8 +217,10 @@ namespace ClimbGames.ProjectF
                 constraintStartPositions = new Vector3[_positions.Length];
             Array.Copy(_positions, constraintStartPositions, positionCount);
 
-            UpdateGroundHeights();
+            UpdateContactHeights();
             ApplyLengthConstraint();
+            ApplyWaterFriction(deltaTime);
+            UpdatePointStates();
 
             // 위치를 바꾸는 보정은 이 앞에, 이전 위치만 바꾸는 보정은 이 뒤에 둠
             UpdatePinState(deltaTime);
@@ -177,20 +228,24 @@ namespace ClimbGames.ProjectF
             ApplyPullInertia(deltaTime);
         }
 
-        // 점마다 레이캐스트는 한 번만 하고, 제약 반복 중에는 저장한 높이로 비교함
-        void UpdateGroundHeights()
+        // 점마다 땅과 수면 높이를 레이캐스트로 한 번만 구하고, 제약 반복 중에는 저장한 높이로 비교함
+        void UpdateContactHeights()
         {
-            if (groundHeights == null || groundHeights.Length < positionCount)
-                groundHeights = new float[_positions.Length];
-
             int groundMask = 1 << FishingLayer.Ground;
+            int waterMask = 1 << FishingLayer.Water;
             for (int i = 0; i < positionCount; ++i)
             {
+                LinePoint point = linePoints[i];
                 Vector3 origin = _positions[i];
                 origin.y += GroundCastHeight;
 
-                groundHeights[i] = Physics.Raycast(origin, Vector3.down, out RaycastHit hit, GroundCastDistance, groundMask, QueryTriggerInteraction.Ignore)
-                    ? hit.point.y + groundOffset
+                point.groundHeight = Physics.Raycast(origin, Vector3.down, out RaycastHit groundHit, GroundCastDistance, groundMask, QueryTriggerInteraction.Ignore)
+                    ? groundHit.point.y + groundOffset
+                    : float.NegativeInfinity;
+
+                // 물 콜라이더는 트리거이고, 수면 높이는 물 오브젝트의 높이로 정함
+                point.waterHeight = Physics.Raycast(origin, Vector3.down, out RaycastHit waterHit, GroundCastDistance, waterMask, QueryTriggerInteraction.Collide)
+                    ? waterHit.collider.transform.position.y
                     : float.NegativeInfinity;
             }
         }
@@ -199,17 +254,80 @@ namespace ClimbGames.ProjectF
         {
             for (int i = 1; i < positionCount; ++i)
             {
-                if (linePoints[i].IsPinned == false && _positions[i].y < groundHeights[i])
+                LinePoint point = linePoints[i];
+                if (point.IsPinned == false && _positions[i].y < point.groundHeight)
                 {
-                    _positions[i].y = groundHeights[i];
-                    _prevPositions[i].y = groundHeights[i];
+                    _positions[i].y = point.groundHeight;
+                    _prevPositions[i].y = point.groundHeight;
                 }
             }
         }
 
         bool IsOnGround(int index)
         {
-            return _positions[index].y <= groundHeights[index] + GroundContactEpsilon;
+            return _positions[index].y <= linePoints[index].groundHeight + GroundContactEpsilon;
+        }
+
+        // 물에 뜬 찌 점
+        // - 수평: 정지 마찰(waterFriction)보다 약하게 끌리면 멈춰 있고, 넘는 만큼은 물 저항(waterDrag)으로 줄여서 천천히 따라옴
+        // - 위쪽: 줄이 위로 당긴 속도에서 수면이 잡는 속도(surfaceHold)만큼 빼서 들림 (약하게 당기면 수면에 붙어 있음)
+        //   부력으로 떠오르는 움직임은 길이 제약이 옮긴 거리가 아니므로 잡지 않음
+        void ApplyWaterFriction(float deltaTime)
+        {
+            LinePoint point = BobberPoint;
+            if (point == null || point.IsPinned || point.inWater == false)
+                return;
+
+            int index = point.currentIndex;
+            Vector3 position = _positions[index];
+
+            // 수평: 정지 마찰과 물 저항
+            Vector3 move = position - _prevPositions[index];
+            move.y = 0f;
+            Vector3 keep = ReduceBy(move, point.waterFriction * deltaTime) / (1f + point.waterDrag * deltaTime);
+            position += keep - move;
+
+            // 수면이 잡는 힘: 줄이 위로 당긴 거리
+            float lift = position.y - constraintStartPositions[index].y;
+            if (lift > 0f)
+                position.y -= Mathf.Min(lift, point.surfaceHold * deltaTime);
+
+            _positions[index] = position;
+        }
+
+        // 벡터의 길이를 amount 만큼 줄임 (0 아래로는 내려가지 않음)
+        static Vector3 ReduceBy(Vector3 vector, float amount)
+        {
+            float length = vector.magnitude;
+            return length > amount ? vector * ((length - amount) / length) : Vector3.zero;
+        }
+
+        // 점마다 물과 땅에 닿아 있는지 갱신함
+        void UpdatePointStates()
+        {
+            for (int i = 0; i < positionCount; ++i)
+            {
+                LinePoint point = linePoints[i];
+                point.onGround = IsOnGround(i);
+
+                if (point.isBobber == false)
+                {
+                    point.inWater = IsInWater(i);
+                    continue;
+                }
+
+                // 찌 점은 수면에 닿으면 물에 들어가고, leaveHeight 보다 높이 들려야 물에서 빠짐
+                if (point.HasWater == false)
+                {
+                    point.inWater = false;
+                    continue;
+                }
+
+                float surface = point.waterHeight + point.surfaceOffset;
+                point.inWater = point.inWater
+                    ? _positions[i].y <= surface + point.leaveHeight
+                    : _positions[i].y <= surface + WaterContactOffset;
+            }
         }
 
         // 땅에 닿은 점의 수평 속도를 줄임
@@ -232,7 +350,9 @@ namespace ClimbGames.ProjectF
             for (int i = 1; i < positionCount; ++i)
             {
                 // 땅이 밀어 올린 보정이 위쪽 속도가 되면 줄이 튐
-                if (linePoints[i].IsPinned || IsOnGround(i))
+                // 물에 닿은 점(찌 포함)은 물이 움직임을 잡으므로 관성을 더하지 않음
+                LinePoint point = linePoints[i];
+                if (point.IsPinned || IsOnGround(i) || point.inWater)
                     continue;
 
                 int next = Mathf.Min(i + 1, positionCount - 1);
@@ -246,14 +366,17 @@ namespace ClimbGames.ProjectF
             }
         }
 
-        // 고정점을 당기는 힘, 고정점 앞 줄의 각도와 수평 속도를 구함
-        // 힘은 줄이 팽팽할 때만 생기므로, 여유 있는 줄의 움직임은 속도로 따로 알려 줌
+        // 길이 제약이 고정점을 옮긴 거리, 고정점 앞 줄의 방향, 각도, 수평 속도를 구함
+        // 고정점은 줄이 팽팽할 때만 크게 옮겨지므로, 여유 있는 줄의 움직임은 속도로 따로 알려 줌
         void UpdatePinState(float deltaTime)
         {
-            PinForce = Vector3.zero;
+            PinDisplacement = Vector3.zero;
             PinDirection = Vector3.zero;
             PinAngle = 0f;
             PinLineVelocity = Vector3.zero;
+            PinRestLength = 0f;
+            PinStretch = 0f;
+            LastDeltaTime = deltaTime;
             if (firstPinIndex >= positionCount)
                 return;
 
@@ -281,26 +404,46 @@ namespace ClimbGames.ProjectF
                 PinLineVelocity = move / (moveCount * deltaTime);
             }
 
-            // 힘은 줄 전체가 팽팽함 기준 길이를 넘은 만큼
-            PinForce = direction * (lineStiffness * GetOverLength());
-        }
+            PinDisplacement = _positions[firstPinIndex] - constraintStartPositions[firstPinIndex];
 
-        // 팁에서 첫 고정점까지의 직선 거리가 팽팽함 기준 길이를 넘은 길이
-        // 기준 길이는 줄 길이에서 처질 수 있는 비율만큼 뺀 길이라서, 줄이 길수록 길어짐
-        float GetOverLength()
-        {
-            float totalRestLength = 0f;
+            // 디버그: 팁부터 고정점까지 늘어난 길이
+            float restLength = 0f, actualLength = 0f;
             for (int i = 0; i < firstPinIndex; ++i)
-                totalRestLength += linePoints[i].segmentLength * (1f - forcedTension);
-
-            float tautLength = totalRestLength * (1f - slackRatio);
-            float straightLength = (_positions[0] - _positions[firstPinIndex]).magnitude;
-            return Mathf.Max(0f, straightLength - tautLength);
+            {
+                restLength += linePoints[i].segmentLength;
+                actualLength += (_positions[i + 1] - _positions[i]).magnitude;
+            }
+            PinRestLength = restLength;
+            PinStretch = actualLength - restLength;
         }
 
+        // 찌(또는 첫 고정점) 앞의 줄 점이 수면에 닿았는지
         bool IsInWater(int index)
         {
-            return hasSurface && index < firstPinIndex && _positions[index].y <= waterHeight + WaterContactOffset;
+            LinePoint point = linePoints[index];
+            return hasSurface && index < firstPinIndex && _positions[index].y <= point.waterHeight + WaterContactOffset;
+        }
+
+        // 고정점은 움직이지 않고, 나머지는 점의 무게대로 끌림
+        float GetWeight(int index)
+        {
+            LinePoint point = linePoints[index];
+            return point.IsPinned ? 0f : point.weight;
+        }
+
+        // 찌 근처 점은 줄이 닿을 수 있는 깊이까지만 가라앉게 바닥을 정함
+        // 닿을 수 없는 깊이로 내려가려 하면 길이 제약이 매 스텝 되돌리면서 찌를 당김
+        void UpdateSinkFloors()
+        {
+            float distanceToPin = 0f;
+            for (int i = Mathf.Min(firstPinIndex, positionCount - 1); i >= 0; --i)
+            {
+                LinePoint point = linePoints[i];
+                if (i < firstPinIndex)
+                    distanceToPin += point.segmentLength;
+
+                point.sinkFloor = point.waterHeight - Mathf.Min(sinkDepth, distanceToPin * sinkSlope);
+            }
         }
 
         // 가라앉는 깊이 아래로는 내려가지 않음: 남는 줄은 더 깊이 가지 않고 옆으로 퍼짐
@@ -309,9 +452,9 @@ namespace ClimbGames.ProjectF
             if (hasSurface == false)
                 return;
 
-            float floor = waterHeight - sinkDepth;
             for (int i = 1; i < firstPinIndex; ++i)
             {
+                float floor = linePoints[i].sinkFloor;
                 if (_positions[i].y < floor)
                 {
                     _positions[i].y = floor;
@@ -326,8 +469,8 @@ namespace ClimbGames.ProjectF
             velocity *= dampingFactor;
 
             // 물속의 정지 마찰: 약한 움직임으로는 물에 들어간 줄이 움직이지 않음
-            if (IsInWater(index))
-                return Vector3.zero;
+            //if (IsInWater(index))
+            //    return Vector3.zero;
 
             // i-1 은 이미 갱신되어 prev 에, i+1 은 아직 positions 에 스텝 시작 위치가 있음
             Vector3 tangent = index == positionCount - 1
@@ -351,7 +494,7 @@ namespace ClimbGames.ProjectF
             for (int i = 0; i < constraintCount; ++i)
             {
                 SolveLengthConstraint();
-                ClampToSinkDepth();
+                //ClampToSinkDepth();
                 ClampToGround();
             }
         }
@@ -379,32 +522,23 @@ namespace ClimbGames.ProjectF
             Vector3 next = _positions[i + 1];
 
             LinePoint currentPoint = linePoints[i];
-            LinePoint nextPoint = linePoints[i + 1];
 
             float distance = (current - next).magnitude;
-            float segmentLength = currentPoint.segmentLength * (1f - forcedTension);
+            float segmentLength = currentPoint.segmentLength;
             float diff = distance - segmentLength;
 
             Vector3 changeDir = (current - next).normalized;
             Vector3 chagneVector = changeDir * diff;
 
-            if (currentPoint.IsPinned && nextPoint.IsPinned)
-            {
+            // 무게 비율로 나눠 옮김
+            float currentWeight = GetWeight(i);
+            float nextWeight = GetWeight(i + 1);
+            float weightSum = currentWeight + nextWeight;
+            if (weightSum <= 0f)
                 return;
-            }
-            else if (currentPoint.IsPinned)
-            {
-                next += chagneVector;
-            }
-            else if (nextPoint.IsPinned)
-            {
-                current -= chagneVector;
-            }
-            else
-            {
-                current -= chagneVector * 0.5f;
-                next += chagneVector * 0.5f;
-            }
+
+            current -= chagneVector * (currentWeight / weightSum);
+            next += chagneVector * (nextWeight / weightSum);
 
             _positions[i] = current;
             _positions[i + 1] = next;
@@ -480,6 +614,15 @@ namespace ClimbGames.ProjectF
             while (amount > 0f && linePoints.Count > 0)
             {
                 var linePoint = linePoints[0];
+
+                // 다음 점이 찌나 고정점이면 팁 점을 지우지 않음 (지우면 그 점이 팁이 됨)
+                bool isNextKept = linePoints.Count > 1 && (linePoints[1].isBobber || linePoints[1].pinTarget != null);
+                if (isNextKept)
+                {
+                    linePoint.segmentLength = Mathf.Max(MinSegmentLength, linePoint.segmentLength - amount);
+                    break;
+                }
+
                 if (linePoint.segmentLength <= amount)
                 {
                     RemovePosition(0);
@@ -506,54 +649,54 @@ namespace ClimbGames.ProjectF
 
         public LinePoint AddPinPoint(FishingLinePoint pinTarget)
         {
-            LinePoint pinPoint = null;
+            LinePoint pinPoint = InsertPointAtHeight(pinTarget.Height);
+            if (pinPoint != null)
+                pinPoint.pinTarget = pinTarget.transform;
+            return pinPoint;
+        }
 
+        // 줄 끝에서 height 만큼 떨어진 곳의 점을 돌려줌
+        // 기존 점과 거의 겹치면 그 점을 쓰고, 아니면 구간을 나눠 새 점(isDynamic)을 끼워 넣음
+        LinePoint InsertPointAtHeight(float height)
+        {
             float accumulatedHeight = 0f, pinEpsilon = segmentLength * 0.3f;
             for (int i = linePoints.Count - 2; i >= 0; --i)
             {
                 var currentPoint = linePoints[i];
-                if (pinTarget.Height < accumulatedHeight + currentPoint.segmentLength || i == 0)
+                if (height < accumulatedHeight + currentPoint.segmentLength || i == 0)
                 {
                     Vector3 position = GetPosition(i + 1);
                     Vector3 up = (GetPosition(i) - position).normalized;
 
-                    float dist = Mathf.Clamp(pinTarget.Height - accumulatedHeight, 0f, currentPoint.segmentLength);
-                    if (dist < pinEpsilon)
-                    {
-                        // 1. i + 1 번 점(아래쪽 점)과 거의 일치하는 경우
-                        pinPoint = linePoints[i + 1];
-                        pinPoint.pinTarget = pinTarget.transform;
-                        break;
-                    }
+                    float dist = Mathf.Clamp(height - accumulatedHeight, 0f, currentPoint.segmentLength);
 
+                    // 1. i + 1 번 점(아래쪽 점)과 거의 일치하는 경우
+                    if (dist < pinEpsilon)
+                        return linePoints[i + 1];
+
+                    // 2. i 번 점(위쪽 점)과 거의 일치하는 경우
                     if (currentPoint.segmentLength - dist < pinEpsilon)
-                    {
-                        // 2. i 번 점(위쪽 점)과 거의 일치하는 경우
-                        pinPoint = currentPoint;
-                        pinPoint.pinTarget = pinTarget.transform;
-                        break;
-                    }
+                        return currentPoint;
 
                     position += up * dist;
                     InsertPosition(i + 1, position, position);
                     currentPoint.segmentLength -= dist;
 
-                    pinPoint = LinePoint.Get();
-                    pinPoint.segmentLength = dist;
-                    pinPoint.pinTarget = pinTarget.transform;
-                    pinPoint.isDynamic = true;
-                    linePoints.Insert(i + 1, pinPoint);
+                    var newPoint = LinePoint.Get();
+                    newPoint.segmentLength = dist;
+                    newPoint.isDynamic = true;
+                    linePoints.Insert(i + 1, newPoint);
 
                     for (int j = i + 1; j < linePoints.Count; ++j)
                         linePoints[j].currentIndex = j;
 
-                    break;
+                    return newPoint;
                 }
 
                 accumulatedHeight += currentPoint.segmentLength;
             }
 
-            return pinPoint;
+            return null;
         }
 
         public void RemovePinPoint(LinePoint pinPoint)
@@ -569,7 +712,9 @@ namespace ClimbGames.ProjectF
                 var pinPoint = linePoints[pinIndex];
 
                 pinPoint.pinTarget = null;
-                if (pinPoint.isDynamic)
+
+                // 찌 점은 줄에서 지우지 않음
+                if (pinPoint.isDynamic && pinPoint.isBobber == false)
                 {
                     // 시작, 끝 점 제외
                     if (pinIndex > 0 && pinIndex < linePoints.Count - 1)
