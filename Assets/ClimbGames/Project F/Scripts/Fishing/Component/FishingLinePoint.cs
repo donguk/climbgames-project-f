@@ -4,122 +4,54 @@ using UnityEngine;
 
 namespace ClimbGames.ProjectF
 {
+    // 줄 위의 한 점 (찌, 봉돌, 바늘, 손): 바인드된 Segment 위치를 따라가고, 찌/바늘/물고기가 조인트로 매달림
+    // - height: 줄 끝(바늘)에서 잰 줄 길이 (m)
     public class FishingLinePoint : MonoBehaviour
     {
         [SerializeField] private Rigidbody body;
         [SerializeField] private float height;
         [SerializeField] private Color gizmoColor = Color.green;
 
-        private FishingLine line;
-        private NormalizedTimer targetTween = new NormalizedTimer(1f);
-
         public Rigidbody Body => body;
         public float Height => height;
         public Vector3 LineDirection { get; private set; }
-        public Transform TrackingTarget { get; private set; }
-        public FishingLineBody.LinePoint PinPoint { get; private set; }
-        // 줄에 항상 있는 점 (찌): 이 점의 위치를 따라감
-        public FishingLineBody.LinePoint BodyPoint { get; private set; }
-        public bool HasTarget => TrackingTarget != null;
+        public FishingLineBody.Segment Segment { get; private set; }
+
 
         void Awake()
         {
             body = GetComponent<Rigidbody>();
         }
 
-        void FixedUpdate()
+        public void Initialize()
         {
-            targetTween.Update(Time.fixedDeltaTime);
-        }
-
-        public void Initialize(FishingLine line)
-        {
-            this.line = line;
-
+            Segment = null;
             body.isKinematic = true;
-        }
-
-        public void Initialize(FishingLine line, float height)
-        {
-            Initialize(line);
-            SetHeight(height);
         }
 
         public void SetHeight(float height)
         {
-            this.height = height;
+            this.height = Mathf.Max(0f, height);
         }
 
-        public void BindBodyPoint(FishingLineBody.LinePoint point)
+        public void BindSegment(FishingLineBody.Segment segment)
         {
-            BodyPoint = point;
+            Segment = segment;
         }
 
-        public void UpdatePosition()
+        // Segment 위치와 줄 방향(위쪽 점 방향)을 따라감
+        public void SetPose(Vector3 position, Vector3 lineDirection)
         {
-            if (HasTarget)
-            {
-                Vector3 targetPosition = TrackingTarget.position;
-                transform.position = Vector3.Lerp(transform.position, targetPosition, targetTween.Value);
-
-                if (PinPoint != null)
-                {
-                    // 라인 방향 업데이트
-                    int index = Mathf.Max(1, PinPoint.currentIndex);
-                    LineDirection = transform.up = line.Body.GetPosition(index - 1) - line.Body.GetPosition(index);
-
-                    // 고정된 점 설정
-                    line.Body.SetPosition(PinPoint.currentIndex, transform.position);
-                }
-            }
-            else if (BodyPoint != null)
-            {
-                int index = BodyPoint.currentIndex;
-                Vector3 position = line.Body.GetPosition(index);
-                LineDirection = transform.up = (line.Body.GetPosition(Mathf.Max(0, index - 1)) - position).normalized;
-                transform.position = position;
-            }
-            else
-            {
-                float visualLength = line.Body.VisualLength;
-                float targetHeight = visualLength * (height / line.TotalLength);
-
-                float accumulatedHeight = 0f;
-                var linePoints = line.Body.Points;
-                for (int i = linePoints.Count - 2; i >= 0; --i)
-                {
-                    var linePoint = linePoints[i];
-                    if (targetHeight < accumulatedHeight + linePoint.segmentLength || i == 0)
-                    {
-                        Vector3 position = line.Body.GetPosition(i + 1);
-                        LineDirection = transform.up = (line.Body.GetPosition(i) - position).normalized;
-
-                        float dist = Mathf.Clamp(targetHeight - accumulatedHeight, 0f, linePoint.segmentLength);
-                        transform.position = position + transform.up * dist;
-                        break;
-                    }
-
-                    accumulatedHeight += linePoint.segmentLength;
-                }
-            }
+            if (lineDirection.sqrMagnitude > 1e-8f)
+                LineDirection = transform.up = lineDirection.normalized;
+            transform.position = position;
         }
 
-        public void SetTrackingTarget(Transform target, float duration = 0f, Action onComplete = null)
+        // Segment 가 target 을 따라가는 고정점이 됨 (null 이면 다시 자유 점)
+        public void SetTrackingTarget(Transform target)
         {
-            TrackingTarget = target;
-            targetTween.Reset(duration, onComplete);
-
-            if (target != null)
-            {
-                // 물리 포인트 추가
-                PinPoint = line.Body.AddPinPoint(this);
-            }
-            else
-            {
-                // 추가된 물리 포인트 삭제
-                line.Body.RemovePinPoint(PinPoint);
-                PinPoint = null;
-            }
+            if (Segment != null)
+                Segment.trackingTarget = target;
         }
 
         // 현재 포인트에 오브젝트 붙이기

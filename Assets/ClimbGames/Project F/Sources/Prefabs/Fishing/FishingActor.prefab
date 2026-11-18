@@ -354,6 +354,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60751be149890af45b2fc5b5c7b4128e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingFloat
+  mass: 0.001
+  drag: 0.03
+  waterDrag: 5
+  groundFriction: 0.2
   modelRoot: {fileID: 9118781878722574380}
   landingClip:
     height:
@@ -470,16 +474,12 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     duration: 8
-  lineWeight: 0.01
-  pullDeadSpeed: 0.07
-  pullDrag: 5
   tiltScale: 1
   tiltSpeed: 5
   tiltRecoverSpeed: 1.5
   buoyancy: 30
   buoyancyDamping: 14
   breakoutHeight: 0.2
-  surfaceHold: 0.3
   modelAlignSpeed: 2
   rotationSpeed: 2
   biteMaxAngle: 90
@@ -711,7 +711,7 @@ LineRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.0015
+        value: 0.0007
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -768,7 +768,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2138609534202513518}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: adde87af1f7028a4c8465d4ae2cdd089, type: 3}
   m_Name: 
@@ -880,7 +880,7 @@ LineRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.0015
+        value: 0.0007
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -937,7 +937,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2171482028914955602}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: adde87af1f7028a4c8465d4ae2cdd089, type: 3}
   m_Name: 
@@ -1049,7 +1049,7 @@ LineRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.0015
+        value: 0.0007
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -1106,7 +1106,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2347911961140950980}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: adde87af1f7028a4c8465d4ae2cdd089, type: 3}
   m_Name: 
@@ -1156,6 +1156,7 @@ Transform:
   m_Children:
   - {fileID: 8711679806588194314}
   - {fileID: 6182939429174528269}
+  - {fileID: 5592839297153049833}
   - {fileID: 8011959112766948302}
   - {fileID: 614091677150263215}
   m_Father: {fileID: 1660799581146449646}
@@ -1173,31 +1174,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingLine
   lineBody:
-    positionCount: 10
-    segmentLength: 0.25
-    gravityForce: {x: 0, y: -6, z: 0}
-    dampingFactor: 1
-    collisionMask:
-      serializedVersion: 2
-      m_Bits: 0
-    collisionRadius: 0.1
-    bounceFactor: 0.1
-    collisionSegmentInterval: 2
-    constraintCount: 50
-    airDrag: 5
-    waterDrag: 13
-    tangentDrag: 1
-    pullInertia: 0.8
-    sinkSpeed: 0.1
-    sinkDepth: 0.3
-    sinkSlope: 1
+    segmentLength: 0.1
+    lineDensity: 0.0001
+    lineDiameter: 0.0003
+    lineDamping: 0.5
+    lineWaterDrag: 3
+    lineGroundFriction: 0.2
+    gravity: {x: 0, y: -9.81, z: 0}
+    subStepCount: 8
+    iterationCount: 4
+    stability: 2
     groundOffset: 0.02
-    groundFriction: 0.2
+    waterOffset: 0.01
   bobberPoint: {fileID: 8666444395038434717}
+  sinkerPoint: {fileID: 9013240444821476681}
   endPoint: {fileID: 8333694936421398241}
   handlePoint: {fileID: 2722746951955469620}
   totalLength: 0
   showDebug: 0
+  stiffness: 150
+  damping: 0.1
+  targetLength: 0
 --- !u!1 &3188397222867896724
 GameObject:
   m_ObjectHideFlags: 0
@@ -1613,7 +1610,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingLineSocket
   body: {fileID: 3120726651221845760}
-  height: 0.25
+  height: 0.5
   gizmoColor: {r: 0, g: 0.15520048, b: 1, a: 1}
 --- !u!1 &6726976476878256060
 GameObject:
@@ -1669,6 +1666,7 @@ MonoBehaviour:
   fishingLine: {fileID: 3964598790634156645}
   fishingBobber: {fileID: 8279095951030254376}
   fishingHook: {fileID: 3750939044426369172}
+  fishingSinker: {fileID: 0}
 --- !u!1 &7224669056578320652
 GameObject:
   m_ObjectHideFlags: 0
@@ -1731,6 +1729,135 @@ Transform:
   m_Children: []
   m_Father: {fileID: 6519466570175446487}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7622405185430066506
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6185453666086001784}
+  - component: {fileID: 8473707274213941730}
+  m_Layer: 8
+  m_Name: Collider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6185453666086001784
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7622405185430066506}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5592839297153049833}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &8473707274213941730
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7622405185430066506}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.04
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &7746650046881882853
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5592839297153049833}
+  - component: {fileID: 1029459615393682550}
+  - component: {fileID: 9013240444821476681}
+  m_Layer: 8
+  m_Name: Sinker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5592839297153049833
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7746650046881882853}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6185453666086001784}
+  m_Father: {fileID: 6778170814192907588}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!54 &1029459615393682550
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7746650046881882853}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!114 &9013240444821476681
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7746650046881882853}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f438994fe88be5848ab72ac07721b603, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingLineSocket
+  body: {fileID: 1029459615393682550}
+  height: 0.25
+  gizmoColor: {r: 0.5803922, g: 0, b: 0.8274511, a: 1}
 --- !u!1 &8416441094817619062
 GameObject:
   m_ObjectHideFlags: 0
@@ -1908,6 +2035,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b8b88b7b0c0eda41b13dc5423a246e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingHook
+  mass: 0.00005
+  drag: 0.03
+  waterDrag: 3
+  groundFriction: 0.2
 --- !u!1 &8524173999618154673
 GameObject:
   m_ObjectHideFlags: 0

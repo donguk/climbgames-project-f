@@ -21,14 +21,10 @@ namespace ClimbGames.ProjectF
         [SerializeField] private FloatingClip landingClip;
         [SerializeField] private FloatingClip floatingClip;
 
-        [Header("Line Pull")]
-        // 찌 점이 길이 제약에 끌리는 정도 (작을수록 무거움, 공중과 수면 모두 같은 값)
-        [SerializeField, Range(0f, 1f)] private float lineWeight = 0.2f;
-        // 정지 마찰: 물에서 이보다 약하게 끌리면 움직이지 않음
-        [SerializeField] private float pullDeadSpeed = 0f;
-        // 정지 마찰을 넘어 끌릴 때 물이 잡는 정도 (클수록 천천히 따라옴, 0 이면 넘는 만큼 그대로 움직임)
-        [SerializeField] private float pullDrag = 5f;
+        // 찌 몸통이 다 잠기는 깊이: 이 깊이까지는 잠긴 만큼 부력이 커지고, 더 깊으면 buoyancy 로 일정함
+        private const float FloatDepth = 0.03f;
 
+        [Header("Tilt")]
         // 끌리는 속도를 기울기 비율로 바꾸는 배율 (속도 x 배율 이 1 이면 줄 방향까지 완전히 기움)
         [SerializeField] private float tiltScale = 1f;
         [SerializeField] private float tiltSpeed = 10f;
@@ -43,8 +39,6 @@ namespace ClimbGames.ProjectF
         [Header("Break Out")]
         // 찌 점이 수면보다 이만큼 높이 들리면 물에서 빠짐
         [SerializeField] private float breakoutHeight = 0.25f;
-        // 수면이 찌를 잡는 힘: 줄이 위로 당기는 속도에서 빼는 값 (클수록 세게 당겨야 들림)
-        [SerializeField] private float surfaceHold = 0.5f;
 
         [Header("Model")]
         [SerializeField] private float modelAlignSpeed = 8f;
@@ -63,12 +57,20 @@ namespace ClimbGames.ProjectF
         public bool IsFloating => RuntimeJoint == null;
 
         // 수면에 떠 있던 찌 점이 줄에 들려 물에서 빠짐
-        public bool ShouldBreakOut => IsFloating && BodyPoint != null && BodyPoint.inWater == false;
+        public bool ShouldBreakOut => IsFloating && BodyPoint != null
+            && (BodyPoint.HasWater == false || BodyPoint.position.y > BodyPoint.waterHeight + breakoutHeight);
 
-        FishingLineBody.LinePoint BodyPoint => LinePoint != null ? LinePoint.BodyPoint : null;
+        FishingLineBody.Segment BodyPoint => LinePoint != null ? LinePoint.Segment : null;
 
         // 찌는 줄의 점을 고정점으로 추적하지 않고, 줄의 찌 점을 따라감
         protected override bool TracksLinePoint => false;
+
+        // 컴포넌트를 처음 붙일 때 기본값: 찌(+ 아래 채비)는 줄보다 수백 배 무거워서 진자처럼 줄을 끌고 다님
+        void Reset()
+        {
+            mass = 0.008f;
+            waterDrag = 5f;
+        }
 
         void Awake()
         {
@@ -88,17 +90,6 @@ namespace ClimbGames.ProjectF
             if (point == null)
                 return;
 
-            // 찌 점 속성 (인스펙터에서 바꾼 값이 바로 반영되게 매번 설정함)
-            point.weight = lineWeight;
-            point.waterFriction = pullDeadSpeed;
-            point.waterDrag = pullDrag;
-            point.leaveHeight = breakoutHeight;
-            point.surfaceHold = surfaceHold;
-            point.buoyancy = buoyancy;
-            point.buoyancyDamping = buoyancyDamping;
-            // 입질로 찌가 잠기는 높이 (기존처럼 꺼 둠)
-            // point.surfaceOffset = IsFloating ? biteInfo.bobberHeight : 0f;
-
             if (IsFloating)
             {
                 FollowPoint(Time.fixedDeltaTime);
@@ -111,7 +102,23 @@ namespace ClimbGames.ProjectF
             }
         }
 
-        void LandOnWater(FishingLineBody.LinePoint point)
+        // 줄 계산 중 (서브스텝마다 적분 직후): 잠긴 깊이만큼 부력으로 띄우고 (몸통이 다 잠기면 buoyancy 로 일정), 위아래 움직임은 물이 잡아 줌
+        // 줄이 부력보다 세게 당기면 잠긴 채로 끌려가고, 풀리면 수면으로 떠오름
+        public override void OnSubStep(FishingLineBody.Segment segment, float deltaTime)
+        {
+            if (segment.IsPinned || segment.HasWater == false)
+                return;
+
+            float depth = segment.waterHeight - segment.position.y;
+            if (depth <= 0f)
+                return;
+
+            float velocityY = (segment.position.y - segment.previous.y) / (1f + buoyancyDamping * deltaTime);
+            float lift = buoyancy * Mathf.Clamp01(depth / FloatDepth);
+            segment.position.y = segment.previous.y + velocityY + lift * deltaTime * deltaTime;
+        }
+
+        void LandOnWater(FishingLineBody.Segment point)
         {
             Debug.Log("[FishingBobber] LandOnWater!!!");
             canLand = false;
@@ -210,6 +217,9 @@ namespace ClimbGames.ProjectF
         // 이벤트
         protected override void OnCastingTypeChanged(FishingEvent.OnCastingTypeChanged param)
         {
+            if (RuntimeJoint == null)
+                return;
+
             RuntimeJoint.angularXMotion = param.type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
             RuntimeJoint.angularZMotion = param.type == CastingType.Pitching ? ConfigurableJointMotion.Locked : ConfigurableJointMotion.Free;
         }

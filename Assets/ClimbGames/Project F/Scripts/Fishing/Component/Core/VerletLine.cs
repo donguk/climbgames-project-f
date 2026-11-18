@@ -7,7 +7,7 @@ namespace ClimbGames.ProjectF
     [Serializable]
     public class VerletLine
     {
-        public struct Point
+        public struct Position
         {
             public Vector3 current;
             public Vector3 previous;
@@ -101,23 +101,23 @@ namespace ClimbGames.ProjectF
             positionCount++;
         }
 
-        public void InsertPositions(int index, List<Point> points)
+        public void InsertPositions(int index, List<Position> list)
         {
-            if (points == null || points.Count <= 0)
+            if (list == null || list.Count <= 0)
                 return;
 
-            ResizePositionArray(positionCount + points.Count);
+            ResizePositionArray(positionCount + list.Count);
 
-            Array.Copy(_positions, index, _positions, index + points.Count, positionCount - index);
-            Array.Copy(_prevPositions, index, _prevPositions, index + points.Count, positionCount - index);
+            Array.Copy(_positions, index, _positions, index + list.Count, positionCount - index);
+            Array.Copy(_prevPositions, index, _prevPositions, index + list.Count, positionCount - index);
 
-            for (int i = 0; i < points.Count; ++i)
+            for (int i = 0; i < list.Count; ++i)
             {
-                _positions[index + i] = points[i].current;
-                _prevPositions[index + i] = points[i].previous;
+                _positions[index + i] = list[i].current;
+                _prevPositions[index + i] = list[i].previous;
             }
 
-            positionCount += points.Count;
+            positionCount += list.Count;
         }
 
         public void RemovePosition(int startIndex, int count = 1)

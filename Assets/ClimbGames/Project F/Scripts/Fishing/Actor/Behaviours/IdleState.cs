@@ -1,5 +1,7 @@
 ﻿
 using R3;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace ClimbGames.ProjectF
 {
@@ -24,6 +26,27 @@ namespace ClimbGames.ProjectF
             {
                 Actor.Character.SetParameter(FishingAnimation.CastingType, (int)type);
                 Player.MessageBroker.Publish(new FishingEvent.OnCastingTypeChanged() { type = type, leftHandle = Actor.Character.LeftHandle });
+            }
+
+
+            protected override void OnFixedUpdate()
+            {
+                base.OnFixedUpdate();
+
+                float reelingValue = Player.Model.reelingValue;
+                if (reelingValue > 0f)
+                {
+                    if (Keyboard.current != null && Keyboard.current.ctrlKey.isPressed)
+                    {
+                        Actor.Line.Release(reelingValue * Time.fixedDeltaTime);
+                    }
+                    else
+                    {
+                        // 릴 감기
+                        if (Actor.Line.TotalLength > 1f)
+                            Actor.Line.Reeling(reelingValue * Time.fixedDeltaTime);
+                    }
+                }
             }
         }
     }
