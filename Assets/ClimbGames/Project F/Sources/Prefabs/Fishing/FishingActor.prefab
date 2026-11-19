@@ -355,7 +355,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingFloat
   mass: 0.001
-  drag: 0.03
+  drag: 1.03
   waterDrag: 5
   groundFriction: 0.2
   modelRoot: {fileID: 9118781878722574380}
@@ -1186,15 +1186,19 @@ MonoBehaviour:
     stability: 2
     groundOffset: 0.02
     waterOffset: 0.01
+    teleportDistance: 0.5
   bobberPoint: {fileID: 8666444395038434717}
   sinkerPoint: {fileID: 9013240444821476681}
   endPoint: {fileID: 8333694936421398241}
   handlePoint: {fileID: 2722746951955469620}
-  totalLength: 0
+  totalLength: 1
   showDebug: 0
   stiffness: 150
-  damping: 0.1
-  targetLength: 0
+  overheadTipLength: 0.25
+  pitchingLineLength: 1
+  maxAttachDistance: 2
+  equipmentSlideSpeed: 2
+  castingTypeTransitionTime: 0.5
 --- !u!1 &3188397222867896724
 GameObject:
   m_ObjectHideFlags: 0

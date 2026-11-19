@@ -26,7 +26,8 @@ namespace ClimbGames.ProjectF
 
     // 낚싯줄 물리
     // - 점(Segment)을 팁(0번)부터 바늘(마지막)까지 높이 순으로 둠, 높이 = 줄 끝(바늘)에서 잰 줄 길이, 점 사이 줄 길이 = 높이 차
-    // - 장비 점(팁, 손, 찌, 봉돌, 바늘) 사이는 segmentLength 간격에 가까운 일반 줄 점으로 채움 (구간 길이가 바뀌면 점 수를 다시 맞춤)
+    // - 장비 점(팁, 손, 찌, 봉돌, 바늘) 사이는 segmentLength 간격의 일반 줄 점으로 채움, 줄 점 높이는 한 번 정하면 바뀌지 않음
+    //   줄이 풀리면 팁에서 새 점이 나오고 감기면 팁 쪽 점이 들어감 (팁 구간만 0.5 ~ 1.5 · segmentLength)
     // - 점 사이는 최대 길이 제약: 늘어났을 때만 당김, 실제 강성(stiffness, N)으로 늘어남을 표현 (XPBD)
     //   줄 전체를 한 번에 푸는 직접 풀이(삼중대각)라 가벼운 줄 점과 무거운 찌가 이어져 있어도 수렴함
     // - 점마다 질량, 공기 저항, 물 저항, 땅 마찰을 따로 가짐 (나중에 바람, 물흐름도 점마다 줄 수 있게)
@@ -60,14 +61,47 @@ namespace ClimbGames.ProjectF
             internal float inverseMass;
             internal float solveInverseMass;    // 길이 제약 풀이에만 쓰는 역질량 (장력이 크면 가벼운 줄 점을 무겁게 해서 튀지 않게)
 
+            // 추적 대상까지 시간을 두고 따라가기 (StartTracking)
+            internal Vector3 trackingBlendFrom;
+            internal float trackingBlendTime;
+            internal float trackingBlendDuration;
+
             public bool IsLine => kind == SegmentKind.Line;
             public bool IsTip => kind == SegmentKind.Tip;
             public bool IsPinned => IsTip || trackingTarget != null;
             public bool HasWater => float.IsNegativeInfinity(waterHeight) == false;
+
+            // target 을 따라가는 고정점이 됨: 지금 위치에서 target 까지 duration 동안 부드럽게 옮겨감 (0 이면 바로)
+            public void StartTracking(Transform target, float duration)
+            {
+                trackingTarget = target;
+                trackingBlendFrom = position;
+                trackingBlendTime = 0f;
+                trackingBlendDuration = target != null ? Mathf.Max(0f, duration) : 0f;
+            }
+
+            // 이번 서브스텝의 추적 위치 (보간 중이면 시작 위치에서 target 쪽으로 smoothstep)
+            internal Vector3 GetTrackingPosition(float deltaTime)
+            {
+                if (trackingBlendDuration <= 0f)
+                    return trackingTarget.position;
+
+                trackingBlendTime += deltaTime;
+                float t = Mathf.Clamp01(trackingBlendTime / trackingBlendDuration);
+                if (t >= 1f)
+                    trackingBlendDuration = 0f;
+
+                return Vector3.Lerp(trackingBlendFrom, trackingTarget.position, t * t * (3f - 2f * t));
+            }
         }
 
         private const float MinSpanLength = 0.005f;
         private const float MinMass = 0.000001f;
+
+        // 팁이 한 스텝에 이보다 많이 움직이면 줄 전체를 같이 옮김 (m)
+        // (처음 만든 뒤 애니메이션이 적용될 때, 캐릭터 이동 등: 줄이 한 프레임에 끌려가 튀지 않게,
+        //  로드를 휘두르는 속도로는 걸리지 않음: 한 스텝 0.02초에 0.5m = 25 m/s)
+        private const float RepositionDistance = 0.5f;
         private const float AirDensity = 1.2f;          // kg/m³
         private const float AirViscosity = 0.000015f;   // 공기 동점성 계수 (m²/s)
         private const float CastHeight = 50f;
@@ -94,10 +128,13 @@ namespace ClimbGames.ProjectF
         [SerializeField] private float groundOffset = 0.02f;
         [SerializeField] private float waterOffset = 0.01f;
 
-        private List<Segment> segments = new List<Segment>();
-        private List<Segment> layoutBuffer = new List<Segment>();
-        private readonly List<Segment> sectionLines = new List<Segment>();
+        private readonly List<Segment> segments = new List<Segment>();
         private bool hasWaterContact;
+
+        // 다음 스텝에 서브스텝마다 나눠 적용할 줄 늘림: 그 점과 위 점들(팁 포함) 높이를 같이 올려 그 점 바로 아래 구간만 길어짐
+        private readonly List<(Segment segment, float amount)> pendingFeeds = new List<(Segment, float)>();
+        private readonly List<(int index, float amount)> feedSteps = new List<(int, float)>();
+        private readonly List<float> relaxStretches = new List<float>();   // RelaxStretch 에서 구간마다 늘어난 길이
 
         // 길이 제약 풀이용 (구간마다)
         private Vector3[] normals = new Vector3[16];
@@ -113,8 +150,20 @@ namespace ClimbGames.ProjectF
         public int SpanCount => Mathf.Max(0, segments.Count - 1);
         public float SegmentLength => segmentLength;
 
-        // 팁 높이 = 전체 줄 길이
-        public float TotalLength { get; set; }
+        // 팁 (로드 끝, 항상 0번)
+        public Segment Tip => segments[0];
+
+        // 전체 줄 길이 = 팁 높이 + 아직 적용 안 된 Feed 양 (이번 프레임에 예약한 것까지)
+        public float Length
+        {
+            get
+            {
+                float length = segments.Count > 0 ? segments[0].height : 0f;
+                foreach (var (_, amount) in pendingFeeds)
+                    length += amount;
+                return length;
+            }
+        }
 
         // 구간 j (점 j ~ j+1) 의 줄 길이와 장력 (N)
         public float GetSpanLength(int span) => Mathf.Max(MinSpanLength, segments[span].height - segments[span + 1].height);
@@ -126,17 +175,66 @@ namespace ClimbGames.ProjectF
             hasWaterContact = isEnabled;
         }
 
+        // segment 바로 아래 구간에서 줄을 amount 만큼 늘림 (음수면 줄임): 그 점과 위 점들(팁 포함) 높이가 같이 올라가 위쪽 구간 길이는 그대로
+        // 다음 Step 에서 서브스텝마다 나눠 적용 (어느 점에서 늘려도 전체 줄 길이 Length 가 amount 만큼 늘어남)
+        // 릴 감기/풀기처럼 팁에서 늘릴 땐 Feed(Tip, amount)
+        public void Feed(Segment segment, float amount)
+        {
+            if (segment == null || Mathf.Abs(amount) < 0.0000001f)
+                return;
+
+            for (int i = 0; i < pendingFeeds.Count; ++i)
+            {
+                if (pendingFeeds[i].segment == segment)
+                {
+                    pendingFeeds[i] = (segment, pendingFeeds[i].amount + amount);
+                    return;
+                }
+            }
+            pendingFeeds.Add((segment, amount));
+        }
+
+        // 팁부터 segment 까지 늘어난 구간마다 그 구간을 실제 거리만큼 늘려 장력을 없앰 (바로 적용), 늘린 길이 합(= 전체 줄 길이 증가량)을 돌려줌
+        // - 구간 j 의 정해진 길이 = 높이[j] − 높이[j+1] 이므로, 구간 j 만 s 늘리려면 0 ~ j 번 점 높이를 s 올림
+        // - 손 바로 위 구간부터 팁 쪽으로 올라가며 늘어난 길이를 누적해서 위 점들 높이에 더함
+        // - 팁 구간 하나만 늘리면 나머지 구간의 장력이 그대로 남아, 놓는 순간 그 사이 장비(찌 등)가 튕겨 오름
+        // - 줄을 늘리는 쪽이라 한 번에 적용해도 튀지 않음, 길어진 구간은 다음 스텝 NormalizeSegments 가 줄 점으로 채움
+        public float RelaxStretch(Segment segment)
+        {
+            int index = segments.IndexOf(segment);
+            if (index <= 0)
+                return 0f;
+
+            // 높이를 바꾸기 전에 구간마다 늘어난 길이를 먼저 구함 (바꾸면서 구하면 아래 점이 올라간 만큼 위 구간 길이가 줄어 보임)
+            relaxStretches.Clear();
+            for (int j = 0; j < index; ++j)
+            {
+                float distance = (segments[j].position - segments[j + 1].position).magnitude;
+                relaxStretches.Add(Mathf.Max(0f, distance - GetSpanLength(j)));
+            }
+
+            // 점 j 는 j 번 구간부터 아래(손 쪽) 구간들이 늘어난 합만큼 올라감
+            float total = 0f;
+            for (int j = index - 1; j >= 0; --j)
+            {
+                total += relaxStretches[j];
+                segments[j].height += total;
+            }
+            return total;
+        }
+
         // 팁 점만 있는 줄로 시작
-        public void Build(Vector3 tipPosition, float totalLength)
+        public void Build(Vector3 tipPosition, float length)
         {
             segments.Clear();
-            TotalLength = totalLength;
-            segments.Add(new Segment() { kind = SegmentKind.Tip, height = totalLength, position = tipPosition, previous = tipPosition });
+            pendingFeeds.Clear();
+            segments.Add(new Segment() { kind = SegmentKind.Tip, height = length, position = tipPosition, previous = tipPosition });
         }
 
         // 장비 점 추가 (높이 순 위치에 넣음, 사이 줄 점은 다음 스텝에 맞춰짐)
-        // 고정점이면 추적 대상 위치, 아니면 위아래 장비 점 사이 높이 비율 위치, 아래가 없으면 위에서 아래로 매달림
-        public Segment AddSegment(SegmentKind kind, float height, Transform trackingTarget = null)
+        // 고정점이면 추적 대상 위치, 아니면 위아래 점 사이 높이 비율 위치(줄 위), 아래가 없으면 위에서 아래로 매달림
+        // blendDuration > 0 인 고정점은 줄 위의 그 높이 위치에서 시작해 대상까지 blendDuration 동안 옮겨감 (손이 줄을 잡으러 가듯)
+        public Segment AddSegment(SegmentKind kind, float height, Transform trackingTarget = null, float blendDuration = 0f)
         {
             var segment = CreateSegment(kind);
             segment.height = ClampHeight(height);
@@ -147,7 +245,7 @@ namespace ClimbGames.ProjectF
                 index++;
             segments.Insert(index, segment);
 
-            if (segment.IsPinned)
+            if (segment.IsPinned && blendDuration <= 0f)
             {
                 segment.position = trackingTarget.position;
             }
@@ -166,20 +264,71 @@ namespace ClimbGames.ProjectF
                 }
             }
             segment.previous = segment.stepStart = segment.position;
+
+            if (trackingTarget != null)
+                segment.StartTracking(trackingTarget, blendDuration);
             return segment;
         }
 
-        // 장비 점 제거 (양쪽 줄 점은 다음 스텝에 한 구간으로 다시 맞춰짐)
+        // 장비 점 제거 (빈 간격은 다음 스텝에 줄 점으로 채워짐)
         public void RemoveSegment(Segment segment)
         {
             if (segment != null && segment.IsTip == false)
                 segments.Remove(segment);
         }
 
+        // 장비 점 높이 변경: 줄은 그대로 두고 장비 점이 줄을 따라 미끄러짐
+        // (높이만 바꾸면 위아래 구간 길이가 갑자기 바뀌어 가벼운 이웃 줄 점이 무거운 장비 쪽으로 끌려가며 튐)
         public void SetHeight(Segment segment, float height)
         {
-            if (segment != null && segment.IsTip == false)
-                segment.height = ClampHeight(height);
+            if (segment == null || segment.IsTip)
+                return;
+
+            float target = ClampHeight(height);
+            float delta = target - segment.height;
+            if (Mathf.Abs(delta) < 0.000001f)
+                return;
+
+            // 고정점(손 등)은 따라가는 대상이 위치를 정함
+            if (segment.IsPinned == false)
+                SlideAlongLine(segment, delta);
+
+            segment.height = target;
+        }
+
+        // 점을 줄을 따라 delta 만큼 옮김 (양수: 팁 쪽, 음수: 바늘 쪽), 구간마다 정해진 길이 비율로 실제 위치를 보간
+        // 이전 위치도 같이 옮겨서 속도가 생기지 않게 함
+        void SlideAlongLine(Segment segment, float delta)
+        {
+            int index = segments.IndexOf(segment);
+            if (index < 0)
+                return;
+
+            int step = delta > 0f ? -1 : 1;
+            float remaining = Mathf.Abs(delta);
+            float height = segment.height;
+            Vector3 position = segment.position;
+
+            for (int next = index + step; next >= 0 && next < segments.Count && remaining > 0f; next += step)
+            {
+                Segment neighbor = segments[next];
+                float restLength = Mathf.Abs(neighbor.height - height);
+                if (restLength <= 0.000001f)
+                {
+                    position = neighbor.position;
+                    continue;
+                }
+
+                float t = Mathf.Clamp01(remaining / restLength);
+                position = Vector3.Lerp(position, neighbor.position, t);
+                remaining -= restLength * t;
+                height = neighbor.height;
+            }
+
+            Vector3 shift = position - segment.position;
+            segment.position += shift;
+            segment.previous += shift;
+            segment.stepStart = segment.position;
         }
 
         // 점에서 위(팁 쪽) 점으로 향하는 방향
@@ -215,7 +364,7 @@ namespace ClimbGames.ProjectF
 
         float ClampHeight(float height)
         {
-            return Mathf.Clamp(height, 0f, Mathf.Max(0f, TotalLength - MinSpanLength));
+            return Mathf.Clamp(height, 0f, Mathf.Max(0f, Length - MinSpanLength));
         }
 
         // stiffness: 줄을 1 배 늘리는 데 드는 힘 (N)
@@ -224,7 +373,9 @@ namespace ClimbGames.ProjectF
             if (segments.Count < 2 || deltaTime <= 0f)
                 return;
 
-            UpdateLayout();
+            RepositionWithTip(tipPosition);
+            NormalizeSegments();
+            PrepareFeeds();
             EnsureBuffers();
             ResetLineProperties();
 
@@ -244,6 +395,7 @@ namespace ClimbGames.ProjectF
             for (int s = 0; s < stepCount; ++s)
             {
                 float t = (s + 1f) / stepCount;
+                ApplyFeeds(1f / stepCount);
                 Integrate(subDeltaTime, tipPosition, t);
 
                 foreach (var segment in segments)
@@ -257,40 +409,31 @@ namespace ClimbGames.ProjectF
                     tensions[j] = Mathf.Max(0f, -lambdas[j] / (subDeltaTime * subDeltaTime));
             }
 
+            pendingFeeds.Clear();
+
             UpdateContactStates();
             ApplyGroundFriction();
         }
 
-        // 길이 제약 풀이용 질량: 점 양쪽 장력 T 가 크면 m ≥ stability · T · Δt² / 점 간격
-        // 가벼운 줄 점에 큰 장력이 걸리면 이웃 구간 방향이 조금만 어긋나도 보정이 옆으로 크게 튀어 수렴하지 못함
-        // (줄 점의 옆 흔들림 ω·Δt 가 2 를 넘음), 풀이에서만 질량을 올려 막음 (적분·중력·저항은 원래 질량)
-        void UpdateSolveMasses(float deltaTime)
+        // 팁이 RepositionDistance 보다 많이 움직였으면 팁과 고정되지 않은 점을 같은 만큼 옮겨 위치를 다시 잡음 (줄 모양과 속도는 그대로)
+        // 고정점(손, 추적 중인 바늘)은 대상이 위치를 정하므로 그대로, 다만 대상으로 옮겨가는 중이면 시작 위치를 같이 옮김
+        void RepositionWithTip(Vector3 tipPosition)
         {
-            int spanCount = SpanCount;
-            float deltaTime2 = deltaTime * deltaTime;
-            for (int i = 0; i < segments.Count; ++i)
+            Vector3 offset = tipPosition - segments[0].position;
+            if (offset.sqrMagnitude <= RepositionDistance * RepositionDistance)
+                return;
+
+            foreach (var segment in segments)
             {
-                Segment segment = segments[i];
-                if (segment.inverseMass <= 0f)
+                if (segment.IsPinned && segment.IsTip == false)
                 {
-                    segment.solveInverseMass = 0f;
+                    segment.trackingBlendFrom += offset;
                     continue;
                 }
 
-                float tension = 0f, spacing = float.MaxValue;
-                if (i > 0)
-                {
-                    tension = Mathf.Max(tension, tensions[i - 1]);
-                    spacing = Mathf.Min(spacing, GetSpanLength(i - 1));
-                }
-                if (i < spanCount)
-                {
-                    tension = Mathf.Max(tension, tensions[i]);
-                    spacing = Mathf.Min(spacing, GetSpanLength(i));
-                }
-
-                float stableMass = stability * tension * deltaTime2 / spacing;
-                segment.solveInverseMass = 1f / Mathf.Max(1f / segment.inverseMass, stableMass);
+                segment.position += offset;
+                segment.previous += offset;
+                segment.stepStart += offset;
             }
         }
 
@@ -312,107 +455,130 @@ namespace ClimbGames.ProjectF
             }
         }
 
-        // 장비 점 사이 구간마다 줄 점 수를 segmentLength 간격에 맞추고, 줄 점 높이를 고르게 나눔
-        void UpdateLayout()
+        // 장비 점(찌 높이 변경, 손 점 추가·제거)이 바뀐 곳만 정리 (평소에는 아무 점도 바뀌지 않음)
+        // - 높이 내림차순 정렬 (팁은 항상 0 번): 장비 점이 줄 점 사이로 지나가도 순서가 맞음
+        // - 장비 점과 0.1 · segmentLength 보다 가까운 줄 점은 지움 (장비가 줄을 따라 미끄러져 와서 거의 겹친 뒤 지우므로 구간이 합쳐질 때 느슨함이 거의 없음)
+        // - 팁 구간을 포함해 1.5 · segmentLength 보다 긴 간격은 아래 점에서 segmentLength 씩 위로 줄 점을 채움
+        void NormalizeSegments()
         {
-            segments[0].height = TotalLength;
+            float length = Mathf.Max(0.01f, segmentLength);
 
-            // 장비 점 높이 순서가 바뀌었으면 (예: 찌를 봉돌 아래로 내림) 장비 점만 다시 정렬하고 줄 점은 새로 채움
-            bool isSorted = true;
-            Segment lastAnchor = null;
-            foreach (var segment in segments)
+            for (int i = 1; i < segments.Count; ++i)
             {
-                if (segment.IsLine)
+                if (segments[i].IsLine == false)
+                    segments[i].height = ClampHeight(segments[i].height);
+            }
+
+            // 삽입 정렬 (거의 정렬되어 있음)
+            for (int i = 2; i < segments.Count; ++i)
+            {
+                Segment segment = segments[i];
+                int k = i - 1;
+                while (k >= 1 && segments[k].height < segment.height)
+                {
+                    segments[k + 1] = segments[k];
+                    k--;
+                }
+                segments[k + 1] = segment;
+            }
+
+            // 장비 점에 너무 가까운 줄 점 제거
+            for (int i = segments.Count - 1; i >= 1; --i)
+            {
+                Segment segment = segments[i];
+                if (segment.IsLine == false)
                     continue;
 
-                if (segment.IsTip == false)
-                    segment.height = ClampHeight(segment.height);
-                if (lastAnchor != null && segment.height > lastAnchor.height)
-                    isSorted = false;
-                lastAnchor = segment;
+                bool isNearAbove = segments[i - 1].IsLine == false && segments[i - 1].height - segment.height < length * 0.1f;
+                bool isNearBelow = i < segments.Count - 1 && segments[i + 1].IsLine == false && segment.height - segments[i + 1].height < length * 0.1f;
+                if (isNearAbove || isNearBelow)
+                    segments.RemoveAt(i);
             }
 
-            if (isSorted == false)
+            // 긴 간격 채우기 (팁 구간 포함: 줄 길이는 그대로인데 장비가 내려와 팁 구간이 길어질 때도 채움)
+            for (int i = 0; i < segments.Count - 1; ++i)
             {
-                segments.RemoveAll(x => x.IsLine);
-                segments.Sort(1, segments.Count - 1, Comparer<Segment>.Create((a, b) => b.height.CompareTo(a.height)));
+                while (segments[i].height - segments[i + 1].height > length * 1.5f)
+                    InsertLine(i + 1, segments[i + 1].height + length);
             }
-
-            layoutBuffer.Clear();
-            int index = 0;
-            while (index < segments.Count)
-            {
-                Segment above = segments[index];
-                layoutBuffer.Add(above);
-
-                // 다음 장비 점까지의 줄 점
-                sectionLines.Clear();
-                int next = index + 1;
-                while (next < segments.Count && segments[next].IsLine)
-                    sectionLines.Add(segments[next++]);
-
-                // 마지막 장비 점 아래로 남은 줄 점은 버림
-                if (next >= segments.Count)
-                    break;
-
-                Segment below = segments[next];
-                float length = Mathf.Max(MinSpanLength, above.height - below.height);
-                int count = Mathf.Max(0, Mathf.RoundToInt(length / Mathf.Max(0.01f, segmentLength)) - 1);
-                if (sectionLines.Count != count)
-                    Resample(above, below, count);
-
-                float spacing = length / (count + 1);
-                for (int k = 0; k < sectionLines.Count; ++k)
-                {
-                    sectionLines[k].height = above.height - spacing * (k + 1);
-                    layoutBuffer.Add(sectionLines[k]);
-                }
-
-                index = next;
-            }
-
-            (segments, layoutBuffer) = (layoutBuffer, segments);
         }
 
-        // above ~ below 사이 줄 점을 count 개로: 지금 줄 모양을 따라 길이 비율로 다시 놓음
-        void Resample(Segment above, Segment below, int count)
+        // 이번 스텝의 줄 늘림 준비 (Feed 로 예약된 것만, 팁 몫도 FishingLine 이 Feed(Tip, …) 로 넘김)
+        // - 늘리는 점마다 바로 아래에서 줄 점을 넣고 뺌, 서브스텝마다 적용할 점 번호와 양을 정해 둠
+        void PrepareFeeds()
         {
-            int oldCount = sectionLines.Count + 2;
-            var positions = new Vector3[oldCount];
-            var previous = new Vector3[oldCount];
-            var cumulative = new float[oldCount];
+            for (int i = 0; i < pendingFeeds.Count; ++i)
+                UpdateFeedSegments(pendingFeeds[i].segment, pendingFeeds[i].amount);
 
-            positions[0] = above.position;
-            previous[0] = above.previous;
-            for (int k = 0; k < sectionLines.Count; ++k)
+            feedSteps.Clear();
+            foreach (var (segment, amount) in pendingFeeds)
             {
-                positions[k + 1] = sectionLines[k].position;
-                previous[k + 1] = sectionLines[k].previous;
+                int index = segments.IndexOf(segment);
+                if (index >= 0)
+                    feedSteps.Add((index, amount));
             }
-            positions[oldCount - 1] = below.position;
-            previous[oldCount - 1] = below.previous;
+        }
 
-            for (int k = 1; k < oldCount; ++k)
-                cumulative[k] = cumulative[k - 1] + (positions[k] - positions[k - 1]).magnitude;
-            float total = Mathf.Max(0.000001f, cumulative[oldCount - 1]);
-
-            while (sectionLines.Count > count)
-                sectionLines.RemoveAt(sectionLines.Count - 1);
-            while (sectionLines.Count < count)
-                sectionLines.Add(CreateSegment(SegmentKind.Line));
-
-            int cursor = 0;
-            for (int k = 0; k < count; ++k)
+        // 늘리는 점 바로 아래에서 줄 점을 넣고 뺌: 줄이 풀리면 새 점이 나오고, 감기면 그 점 쪽 줄 점이 들어감
+        // - 줄 점 높이는 그 점 아래에서는 바뀌지 않음 → 풀려 나간 구간은 모두 정확히 segmentLength
+        // - 늘리는 점 바로 아래 구간만 0.5 ~ 1.5 · segmentLength 사이에서 바뀜 (넣는 기준과 빼는 기준을 달리 해서 경계에서 점이 생겼다 사라졌다 하지 않음,
+        //   0 근처까지 짧아지면 강성 = stiffness / 길이 가 아주 커져서 튈 수 있음)
+        // - 넣기는 지금 간격과 늘린 뒤 간격이 모두 길 때만 (서브스텝 중에도 새 구간 길이가 0.5 · L 이상)
+        void UpdateFeedSegments(Segment feed, float amount)
+        {
+            float length = Mathf.Max(0.01f, segmentLength);
+            while (true)
             {
-                float target = total * (k + 1) / (count + 1);
-                while (cursor < oldCount - 2 && cumulative[cursor + 1] < target)
-                    cursor++;
+                int index = segments.IndexOf(feed);
+                if (index < 0 || index >= segments.Count - 1)
+                    return;
 
-                float range = Mathf.Max(0.000001f, cumulative[cursor + 1] - cumulative[cursor]);
-                float t = Mathf.Clamp01((target - cumulative[cursor]) / range);
-                sectionLines[k].position = Vector3.Lerp(positions[cursor], positions[cursor + 1], t);
-                sectionLines[k].previous = Vector3.Lerp(previous[cursor], previous[cursor + 1], t);
+                Segment below = segments[index + 1];
+                float gap = feed.height - below.height;
+                float finalGap = gap + amount;
+
+                if (gap > length * 1.5f && finalGap > length * 1.5f)
+                {
+                    InsertLine(index + 1, below.height + length);
+                    continue;
+                }
+
+                if (finalGap < length * 0.5f && below.IsLine)
+                {
+                    segments.RemoveAt(index + 1);
+                    continue;
+                }
+
+                return;
             }
+        }
+
+        // 서브스텝마다 늘리는 양의 ratio 만큼: 그 점과 위 점들(팁 포함) 높이를 올림 → 그 점 바로 아래 구간만 길어짐
+        // (한 번에 바꾸면 줄인 길이만큼 첫 서브스텝에 아래 줄 점이 확 끌려가 지나쳤다 돌아오며 튐)
+        void ApplyFeeds(float ratio)
+        {
+            foreach (var (index, amount) in feedSteps)
+            {
+                float move = amount * ratio;
+                for (int i = 0; i <= index && i < segments.Count; ++i)
+                    segments[i].height += move;
+            }
+        }
+
+        // index 위치(위 점 index - 1 과 아래 점 index 사이)에 줄 점 추가: 위치·이전 위치는 높이 비율로 보간해서 지금 줄 모양과 속도를 이어받음
+        void InsertLine(int index, float height)
+        {
+            Segment above = segments[index - 1];
+            Segment below = segments[index];
+            float range = Mathf.Max(MinSpanLength, above.height - below.height);
+            float t = Mathf.Clamp01((above.height - height) / range);
+
+            var segment = CreateSegment(SegmentKind.Line);
+            segment.height = height;
+            segment.position = Vector3.Lerp(above.position, below.position, t);
+            segment.previous = Vector3.Lerp(above.previous, below.previous, t);
+            segment.stepStart = segment.position;
+            segments.Insert(index, segment);
         }
 
         void EnsureBuffers()
@@ -489,7 +655,10 @@ namespace ClimbGames.ProjectF
 
                 if (segment.IsPinned)
                 {
-                    segment.position = Vector3.Lerp(segment.stepStart, segment.trackingTarget.position, t);
+                    // StartTracking 으로 옮겨가는 중이면 시간에 맞춰 대상 쪽으로, 아니면 이번 스텝 대상 위치까지 t 비율로
+                    segment.position = segment.trackingBlendDuration > 0f
+                        ? segment.GetTrackingPosition(deltaTime)
+                        : Vector3.Lerp(segment.stepStart, segment.trackingTarget.position, t);
                     continue;
                 }
 
@@ -501,6 +670,39 @@ namespace ClimbGames.ProjectF
                     velocity /= 1f + segment.waterDrag * deltaTime;
 
                 segment.position += velocity + gravityMove;
+            }
+        }
+
+        // 길이 제약 풀이용 질량: 점 양쪽 장력 T 가 크면 m ≥ stability · T · Δt² / 점 간격
+        // 가벼운 줄 점에 큰 장력이 걸리면 이웃 구간 방향이 조금만 어긋나도 보정이 옆으로 크게 튀어 수렴하지 못함
+        // (줄 점의 옆 흔들림 ω·Δt 가 2 를 넘음), 풀이에서만 질량을 올려 막음 (적분·중력·저항은 원래 질량)
+        void UpdateSolveMasses(float deltaTime)
+        {
+            int spanCount = SpanCount;
+            float deltaTime2 = deltaTime * deltaTime;
+            for (int i = 0; i < segments.Count; ++i)
+            {
+                Segment segment = segments[i];
+                if (segment.inverseMass <= 0f)
+                {
+                    segment.solveInverseMass = 0f;
+                    continue;
+                }
+
+                float tension = 0f, spacing = float.MaxValue;
+                if (i > 0)
+                {
+                    tension = Mathf.Max(tension, tensions[i - 1]);
+                    spacing = Mathf.Min(spacing, GetSpanLength(i - 1));
+                }
+                if (i < spanCount)
+                {
+                    tension = Mathf.Max(tension, tensions[i]);
+                    spacing = Mathf.Min(spacing, GetSpanLength(i));
+                }
+
+                float stableMass = stability * tension * deltaTime2 / spacing;
+                segment.solveInverseMass = 1f / Mathf.Max(1f / segment.inverseMass, stableMass);
             }
         }
 

@@ -21,14 +21,30 @@ namespace ClimbGames.ProjectF
         [Header("Stretch")]
         [SerializeField] private float stiffness = 150f;            // 줄을 1 배 늘리는 데 드는 힘 (N), 높을수록 덜 늘어나고 빠르게 떨림
 
+        [Header("Over Head")]
+        // 오버헤드 대기: 팁–찌 줄 길이, 찌 높이(찌–바늘 길이)를 바꾸면 찌 아래에서 줄이 늘고 줆 (팁–찌는 그대로)
+        [SerializeField] private float overheadTipLength = 0.4f;
+
+        [Header("Pitching")]
+        [SerializeField] private float pitchingLineLength = 1f;     // 피칭으로 잡고 있을 때 전체 줄 길이 (m)
+        // 장비를 설치할 수 있는 최대 길이 (m): 피칭에서는 팁·바늘을 뺀 장비(찌, 봉돌, 손)를 팁–바늘 사이 height / 이 값 비율 위치에 둠
+        [SerializeField] private float maxAttachDistance = 2f;
+        // 장비가 목표 높이로 줄을 따라 미끄러지는 최대 속도 (m/s): 피칭 ↔ 던지기에서 높이 기준이 바뀔 때 순간이동하지 않게
+        [SerializeField] private float equipmentSlideSpeed = 2f;
+
+        // 피칭 ↔ 오버헤드 전환 시간 (초): 손이 줄을 잡으러 가는 시간, 줄 길이가 바뀌는 시간
+        [SerializeField] private float castingTypeTransitionTime = 0.5f;
+
+        private bool isOverhead;
+        private bool isPitching;
+
         private readonly List<Vector3> drawPoints = new List<Vector3>();
         private Vector3[] drawBuffer = new Vector3[64];
 
         private FishingLineDrawer[] lineDrawers;
         private FishingPlayer player;
         private Transform rodTip;
-        public float targetLength;
-        private NormalizedTimer targetLengthTimer = new NormalizedTimer(1f);
+        private float lengthSpeed = float.PositiveInfinity;   // 줄 길이를 목표(totalLength)로 맞추는 속도 (m/s), SetLength 의 duration 으로 정함
 
         public float TotalLength => totalLength;
         public FishingLineBody Body => lineBody;
@@ -72,10 +88,20 @@ namespace ClimbGames.ProjectF
                 if (Keyboard.current != null)
                 {
                     if (Keyboard.current.pageUpKey.isPressed)
-                        bobberPoint.SetHeight(bobberPoint.Height + 0.005f);
+                    {
+                        if (Keyboard.current.ctrlKey.isPressed)
+                            bobberPoint.SetHeight(bobberPoint.Height + 0.005f);
+                        else
+                            Reeling(0.005f);
+                    }
 
                     if (Keyboard.current.pageDownKey.isPressed)
-                        bobberPoint.SetHeight(bobberPoint.Height - 0.005f);
+                    {
+                        if (Keyboard.current.ctrlKey.isPressed)
+                            bobberPoint.SetHeight(bobberPoint.Height - 0.005f);
+                        else
+                            Release(0.005f);
+                    }
                 }
             }
         }
@@ -83,16 +109,35 @@ namespace ClimbGames.ProjectF
         // FishingActorMachine.OnFixedUpdate 에서 호출
         public void UpdateLine(float deltaTime)
         {
-            // 전체 줄 길이 = 팁 높이 (SetLength 의 duration 만큼 보간, 가장 높은 장비 점보다 5cm 이상 길게)
-            targetLengthTimer.Update(deltaTime);
-            float length = Mathf.Lerp(lineBody.TotalLength, targetLength, targetLengthTimer.Value);
-            lineBody.TotalLength = Mathf.Max(length, GetMinLength());
+            // 오버헤드: 찌 높이가 바뀌면 찌 아래에서 줄을 늘리고 줄임 (팁–찌 길이 그대로, 전체 줄 길이도 같이)
+            // 한 프레임 양은 equipmentSlideSpeed 로 제한 (피칭에서 바뀔 때 높이 기준 차이를 한 번에 넣으면 채비가 툭 떨어짐)
+            if (isOverhead && bobberPoint.Segment != null)
+            {
+                float current = bobberPoint.Segment.height;
+                float amount = Mathf.MoveTowards(current, bobberPoint.Height, equipmentSlideSpeed * deltaTime) - current;
+                if (Mathf.Abs(amount) > 0.000001f)
+                {
+                    lineBody.Feed(bobberPoint.Segment, amount);
+                    totalLength += amount;
+                    player.Model.SetLineLength(totalLength);
+                }
+            }
 
-            // FishingLinePoint 높이 → 줄 점 높이
-            SyncHeight(bobberPoint);
-            SyncHeight(sinkerPoint);
-            SyncHeight(handlePoint);
-            SyncHeight(endPoint);
+            // 팁에서 줄을 늘리고 줄여 전체 줄 길이를 목표(totalLength)로 맞춤 (lengthSpeed 로 일정하게, 가장 높은 장비 점보다 5cm 이상 길게)
+            // lineBody.Length 는 위의 찌 Feed 까지 반영한 길이
+            float length = Mathf.MoveTowards(lineBody.Length, totalLength, lengthSpeed * deltaTime);
+            if (length == totalLength)
+                lengthSpeed = float.PositiveInfinity;   // 다 맞추면 이후 감기·풀기는 바로 적용
+
+            length = Mathf.Max(length, GetMinLength());
+            lineBody.Feed(lineBody.Tip, length - lineBody.Length);
+
+            // FishingLinePoint 높이 → 줄 점 높이 (오버헤드의 찌는 위에서 Feed 로 처리)
+            if (isOverhead == false)
+                SyncHeight(bobberPoint, deltaTime);
+            SyncHeight(sinkerPoint, deltaTime);
+            SyncHeight(handlePoint, deltaTime);
+            SyncHeight(endPoint, deltaTime);
 
             lineBody.Step(deltaTime, rodTip.position, stiffness);
 
@@ -109,18 +154,25 @@ namespace ClimbGames.ProjectF
             if (handlePoint.Segment != null)
                 return;
 
-            // 팁–손 구간 줄 길이 = 실제 거리 · (1 + slack) 이 원래 식, 지금은 테스트용 고정 길이
-            SetLength(1f);
-
-            lineBody.TotalLength = totalLength;
-            handlePoint.BindSegment(lineBody.AddSegment(SegmentKind.Handle, handlePoint.Height, leftHandle));
+            // 손 점은 줄 위의 그 높이에서 시작해 손 위치로 옮겨가며 줄을 잡음, 줄 길이도 같은 시간 동안 맞춤
+            SetLength(pitchingLineLength, castingTypeTransitionTime);
+            handlePoint.BindSegment(lineBody.AddSegment(SegmentKind.Handle, GetPointHeight(handlePoint), leftHandle, castingTypeTransitionTime));
         }
 
         // 손을 놓음: 채비는 팁에 매달림
+        // 손으로 잡은 팁–손 줄은 팽팽하게 늘어나 있으므로, 놓기 전에 늘어난 구간마다 그 구간을 늘려 장력을 없앰 (놓는 순간 고무줄처럼 튕기지 않게)
+        // 목표 길이(totalLength) 갱신은 던질 때를 위한 것 (오버헤드 전환은 뒤의 SetLength 가 목표를 다시 정하고, 풀린 길이에서 천천히 감음)
         void DetachHandle()
         {
             if (handlePoint.Segment == null)
                 return;
+
+            float stretch = lineBody.RelaxStretch(handlePoint.Segment);
+            if (stretch > 0f)
+            {
+                totalLength += stretch;
+                player.Model.SetLineLength(totalLength);
+            }
 
             lineBody.RemoveSegment(handlePoint.Segment);
             handlePoint.BindSegment(null);
@@ -133,15 +185,31 @@ namespace ClimbGames.ProjectF
             foreach (var point in new[] { bobberPoint, sinkerPoint, endPoint, handlePoint })
             {
                 if (point.Segment != null)
-                    height = Mathf.Max(height, point.Height);
+                    height = Mathf.Max(height, GetPointHeight(point));
             }
             return height + 0.05f;
         }
 
-        void SyncHeight(FishingLinePoint point)
+        // 장비 점 높이: 피칭이면 팁·바늘을 뺀 장비는 팁–바늘 사이 height / maxAttachDistance 비율 위치, 아니면 height 그대로
+        float GetPointHeight(FishingLinePoint point)
         {
-            if (point.Segment != null)
-                lineBody.SetHeight(point.Segment, point.Height);
+            if (isPitching && point != endPoint)
+                return pitchingLineLength * Mathf.Clamp01(point.Height / Mathf.Max(0.01f, maxAttachDistance));
+            return point.Height;
+        }
+
+        // 줄 점 높이를 목표 높이로 (바늘 제외 장비는 equipmentSlideSpeed 로 줄을 따라 미끄러짐)
+        void SyncHeight(FishingLinePoint point, float deltaTime)
+        {
+            var segment = point.Segment;
+            if (segment == null)
+                return;
+
+            float height = GetPointHeight(point);
+            if (point != endPoint)
+                height = Mathf.MoveTowards(segment.height, height, equipmentSlideSpeed * deltaTime);
+
+            lineBody.SetHeight(segment, height);
         }
 
         void SyncPose(FishingLinePoint point)
@@ -188,7 +256,7 @@ namespace ClimbGames.ProjectF
                 return;
 
             GUI.Label(new Rect(10f, 10f, 400f, 60f),
-                $"Line: {lineBody.TotalLength:F2} m, Segments: {lineBody.Segments.Count}\nTip Tension: {lineBody.GetTension(0):F3} N");
+                $"Line: {lineBody.Length:F2} m, Segments: {lineBody.Segments.Count}\nTip Tension: {lineBody.GetTension(0):F3} N");
         }
 #endif
 
@@ -196,7 +264,7 @@ namespace ClimbGames.ProjectF
         public LineLengthInfo GetLengthInfo(Transform target)
         {
             float straightLength = Vector3.Distance(rodTip.position, target.position);
-            float lineLength = lineBody.TotalLength;
+            float lineLength = lineBody.Length;
             Vector3 lineDirection = Vector3.zero;
 
             var segments = lineBody.Segments;
@@ -204,7 +272,7 @@ namespace ClimbGames.ProjectF
             {
                 if (segments[i].IsPinned || segments[i].kind == SegmentKind.Bobber)
                 {
-                    lineLength = lineBody.TotalLength - segments[i].height;
+                    lineLength = lineBody.Length - segments[i].height;
                     lineDirection = (rodTip.position - segments[i].position).normalized;
                     break;
                 }
@@ -218,10 +286,11 @@ namespace ClimbGames.ProjectF
             };
         }
 
+        // 목표 줄 길이를 정함: duration 동안 지금 길이에서 일정한 속도로 맞춰짐 (0 이면 바로)
         public void SetLength(float length, float duration = 0f)
         {
-            targetLength = totalLength = length;
-            targetLengthTimer.Reset(duration);
+            totalLength = length;
+            lengthSpeed = duration > 0f ? Mathf.Abs(length - lineBody.Length) / duration : float.PositiveInfinity;
 
             // 데이터 설정
             player.Model.SetLineLength(totalLength);
@@ -233,7 +302,7 @@ namespace ClimbGames.ProjectF
                 totalLength += amount;
 
             player.Model.SetLineLength(totalLength);
-            return targetLength = totalLength;
+            return totalLength;
         }
 
         public float Reeling(float amount)
@@ -243,7 +312,7 @@ namespace ClimbGames.ProjectF
                 totalLength = Mathf.Max(GetMinLength(), totalLength - amount);
 
             player.Model.SetLineLength(totalLength);
-            return targetLength = totalLength;
+            return totalLength;
         }
 
 
@@ -257,6 +326,8 @@ namespace ClimbGames.ProjectF
             lineBody.SetWaterContact(false);
 
             Transform leftHandle = param.type == CastingType.Pitching ? param.leftHandle : null;
+            isOverhead = param.type == CastingType.OverHead;
+            isPitching = param.type == CastingType.Pitching;
             if (leftHandle != null)
             {
                 AttachHandle(leftHandle);
@@ -264,14 +335,20 @@ namespace ClimbGames.ProjectF
             else
             {
                 DetachHandle();
-                SetLength(totalLength, 1f);
+
+                // 오버헤드: 팁–찌를 overheadTipLength 로
+                // 찌가 아직 피칭 비율 위치에 있을 수 있으므로 지금 찌 점 높이 기준 (실제 height 와의 차이는 UpdateLine 의 Feed 가 찌 아래에서 늘리며 줄 길이에도 더함)
+                float bobberHeight = bobberPoint.Segment != null ? bobberPoint.Segment.height : bobberPoint.Height;
+                SetLength(isOverhead ? bobberHeight + overheadTipLength : totalLength, castingTypeTransitionTime);
             }
         }
 
-        // 손을 놓음 (바늘 점은 FishingHook 이 Detach 하면서 날아가는 바늘을 추적)
+        // 손을 놓음 (바늘 점은 FishingHook 이 Detach 하면서 날아가는 바늘을 추적), 이후 줄 길이는 팁에서만
         protected override void OnCastingThrow(FishingEvent.OnCastingThrow param)
         {
             DetachHandle();
+            isOverhead = false;
+            isPitching = false;
         }
 
         // 찌 착수 (찌 점이 수면에 닿아 inWater 가 켜지면 FishingBobber 가 보냄): 줄이 수면에 얹힘
@@ -299,7 +376,7 @@ namespace ClimbGames.ProjectF
         protected override void OnPullOut(FishingEvent.OnPullOut param)
         {
             lineBody.SetWaterContact(false);
-            SetLength(1, 1f);
+            SetLength(1.6f, 1f);
 
             // 물고기가 잡혔다면 연결
             if (param.hookedFish != null)
@@ -314,7 +391,6 @@ namespace ClimbGames.ProjectF
 
             // 바늘을 로드 가이드로 (다음 Idle 진입 때 OnCastingTypeChanged 에서 놓음)
             endPoint.SetTrackingTarget(param.rod.LineGuide);
-            targetLength = 1.6f;
         }
     }
 }
