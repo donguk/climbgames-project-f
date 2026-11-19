@@ -97,11 +97,6 @@ namespace ClimbGames.ProjectF
 
         private const float MinSpanLength = 0.005f;
         private const float MinMass = 0.000001f;
-
-        // 팁이 한 스텝에 이보다 많이 움직이면 줄 전체를 같이 옮김 (m)
-        // (처음 만든 뒤 애니메이션이 적용될 때, 캐릭터 이동 등: 줄이 한 프레임에 끌려가 튀지 않게,
-        //  로드를 휘두르는 속도로는 걸리지 않음: 한 스텝 0.02초에 0.5m = 25 m/s)
-        private const float RepositionDistance = 0.5f;
         private const float AirDensity = 1.2f;          // kg/m³
         private const float AirViscosity = 0.000015f;   // 공기 동점성 계수 (m²/s)
         private const float CastHeight = 50f;
@@ -373,7 +368,6 @@ namespace ClimbGames.ProjectF
             if (segments.Count < 2 || deltaTime <= 0f)
                 return;
 
-            RepositionWithTip(tipPosition);
             NormalizeSegments();
             PrepareFeeds();
             EnsureBuffers();
@@ -413,28 +407,6 @@ namespace ClimbGames.ProjectF
 
             UpdateContactStates();
             ApplyGroundFriction();
-        }
-
-        // 팁이 RepositionDistance 보다 많이 움직였으면 팁과 고정되지 않은 점을 같은 만큼 옮겨 위치를 다시 잡음 (줄 모양과 속도는 그대로)
-        // 고정점(손, 추적 중인 바늘)은 대상이 위치를 정하므로 그대로, 다만 대상으로 옮겨가는 중이면 시작 위치를 같이 옮김
-        void RepositionWithTip(Vector3 tipPosition)
-        {
-            Vector3 offset = tipPosition - segments[0].position;
-            if (offset.sqrMagnitude <= RepositionDistance * RepositionDistance)
-                return;
-
-            foreach (var segment in segments)
-            {
-                if (segment.IsPinned && segment.IsTip == false)
-                {
-                    segment.trackingBlendFrom += offset;
-                    continue;
-                }
-
-                segment.position += offset;
-                segment.previous += offset;
-                segment.stepStart += offset;
-            }
         }
 
         // 모든 점을 줄 기본 속성으로: 질량 = 줄 밀도 · 점이 맡은 줄 길이 (위아래 구간의 절반씩), 장비 공기 저항은 0

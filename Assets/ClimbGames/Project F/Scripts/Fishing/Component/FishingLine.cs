@@ -72,10 +72,18 @@ namespace ClimbGames.ProjectF
             bobberPoint.BindSegment(lineBody.AddSegment(SegmentKind.Bobber, bobberPoint.Height));
             sinkerPoint.BindSegment(lineBody.AddSegment(SegmentKind.Sinker, sinkerPoint.Height));
             endPoint.BindSegment(lineBody.AddSegment(SegmentKind.Hook, endPoint.Height));
+
+            // 장비를 달기 전에 점의 위치와 줄 방향을 맞춤 (조인트는 붙는 순간의 상대 회전을 기준으로 삼음)
+            SyncPose(bobberPoint);
+            SyncPose(sinkerPoint);
+            SyncPose(endPoint);
         }
 
         void Update()
         {
+            if (lineDrawers == null)
+                return;
+
             int drawerIndex = DrawLine();
 
             // 사용안하는 라인 끄기

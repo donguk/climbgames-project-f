@@ -57,11 +57,16 @@ namespace ClimbGames.ProjectF
                 joint.connectedBody = null;
             }
 
-            // 초기 회전 리셋
-            transform.rotation = transform.rotation;
+            // 점의 자세로 맞춘 뒤 연결 (조인트는 연결 순간의 상대 회전을 기준으로 삼으므로 회전 차이 0 에서 시작)
+            Vector3 position = linePoint.transform.position;
+            Quaternion rotation = linePoint.transform.rotation;
+            transform.SetPositionAndRotation(position, rotation);
+            Body.position = position;
+            Body.rotation = rotation;
             joint.connectedBody = linePoint.Body;
 
             RuntimeJoint = joint;
+            OnAttachToLine(linePoint, joint);
         }
 
 

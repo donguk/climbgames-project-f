@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -20,7 +21,7 @@ namespace ClimbGames.ProjectF
         public FishingHook Hook => fishingHook;
         public FishingBobber Bobber => fishingBobber;
 
-        public void Initialize(FishingPlayer player, FishingSpot spot)
+        public async UniTask Initialize(FishingPlayer player, FishingSpot spot)
         {
             this.player = player;
 
@@ -37,6 +38,7 @@ namespace ClimbGames.ProjectF
             // 착용
             fishingRod.transform.SetParent(fishingCharacter.RodHandle, false);
             fishingRod.transform.localPosition = Vector3.zero;
+            await UniTask.NextFrame();
 
             // 라인 생성
             fishingLine.Initialize(player, fishingRod.PoleTip, 1f);

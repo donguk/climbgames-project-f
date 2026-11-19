@@ -51,7 +51,7 @@ namespace ClimbGames.ProjectF
                 handler = AssetManager.Instantiate<FishingInputHandler>("FishingInputHandler");
 
             actor.gameObject.SetActive(true);
-            actor.Initialize(this, spot);
+            await actor.Initialize(this, spot);
 
             actorMachine.InitializeAndStart(this);
             fishMachine.InitializeAndStart(this);
