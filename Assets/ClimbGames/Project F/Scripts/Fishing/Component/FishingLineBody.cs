@@ -109,6 +109,9 @@ namespace ClimbGames.ProjectF
         [SerializeField] private float lineDiameter = 0.0003f;      // 줄 굵기 (m), 공기 저항 계산에 씀
         [SerializeField, Min(0f)] private float lineDamping = 0.5f; // 줄 점 속도 비례 감쇠 (1/s), 0 이면 공기 저항만
         [SerializeField] private float lineWaterDrag = 3f;          // 줄 점 물 저항 (1/s)
+        [SerializeField, Min(0f)] private float lineWaterVerticalDrag = 20f;    // 물속 줄 점 위아래 물 저항 (1/s), 착수 튕김과 출렁임을 잡음
+        [SerializeField, Min(0f)] private float lineFloatStiffness = 200f;      // 찌 위쪽 줄 점이 잠긴 깊이 1m 당 떠오르는 가속 (1/s²)
+        [SerializeField, Min(0f)] private float lineFloatMaxLift = 20f;         // 떠오르는 가속 최대값 (m/s², 중력 포함), 이 값이 줄 장력과 겨룸
         [SerializeField, Range(0f, 1f)] private float lineGroundFriction = 0.2f;
 
         [Header("Physics")]
@@ -125,6 +128,9 @@ namespace ClimbGames.ProjectF
 
         private readonly List<Segment> segments = new List<Segment>();
         private bool hasWaterContact;
+        private Segment releaseSegment;     // null 이 아니면 팁 ~ 이 점 사이가 당기는 만큼 풀림 (캐스팅 중 베일을 연 상태)
+        private float releaseAllowance;     // 풀지 않고 남겨 둘 늘어남 (m): 던질 때 손으로 늘어나 있던 양, 탄성으로 줄어든 만큼 같이 줄어듦
+        private float releaseAllowanceRate; // 남겨 둘 양을 1초에 줄이는 양 (m/s): keepTime 동안 0 까지 (로드가 펴지는 시간)
 
         // 다음 스텝에 서브스텝마다 나눠 적용할 줄 늘림: 그 점과 위 점들(팁 포함) 높이를 같이 올려 그 점 바로 아래 구간만 길어짐
         private readonly List<(Segment segment, float amount)> pendingFeeds = new List<(Segment, float)>();
@@ -170,6 +176,52 @@ namespace ClimbGames.ProjectF
             hasWaterContact = isEnabled;
         }
 
+        // 이번 Step 에서 당겨져 풀린 줄 길이 (SetFreeRelease 가 켜져 있을 때)
+        public float ReleasedLength { get; private set; }
+
+        // 팁 ~ segment 사이가 당기는 만큼 풀림 (null 이면 끔)
+        // 서브스텝마다 길이 제약을 푼 뒤 늘어난 구간을 실제 거리만큼 늘려서, 장력이 쌓이지 않고 줄이 따라 풀려 나감
+        // segment 아래(장비 사이) 길이는 그대로
+        // keepTime: 지금 늘어나 있는 양을 이 시간 동안 0 까지 줄여 가며 남겨 둠 (로드가 펴지는 시간)
+        //   피칭에서 손으로 늘어난 줄은 그동안 줄 길이가 되지 않고 탄성으로 줄어들며 채비를 당김, 줄어들지 않으면 시간이 지나며 조금씩 풀림
+        //   0 이면 남겨 두지 않고 바로 당기는 만큼 풀림
+        public void SetFreeRelease(Segment segment, float keepTime = 0f)
+        {
+            releaseSegment = segment;
+            releaseAllowance = segment != null && keepTime > 0f ? GetStretch(segment) : 0f;
+            releaseAllowanceRate = keepTime > 0f ? releaseAllowance / keepTime : 0f;
+        }
+
+        // 서브스텝마다: 남겨 둘 양보다 더 늘어난 만큼만 풀림
+        void ApplyFreeRelease(float deltaTime)
+        {
+            if (releaseSegment == null)
+                return;
+
+            float stretch = GetStretch(releaseSegment);
+            releaseAllowance = Mathf.Max(0f, releaseAllowance - releaseAllowanceRate * deltaTime);
+            releaseAllowance = Mathf.Min(releaseAllowance, stretch);
+            if (stretch > releaseAllowance + 0.000001f)
+                ReleasedLength += RelaxStretch(releaseSegment, (stretch - releaseAllowance) / stretch);
+        }
+
+        // 팁 ~ segment 구간들의 늘어난 길이 합 (m, 높이는 바꾸지 않음)
+        public float GetStretch(Segment segment)
+        {
+            int index = segments.IndexOf(segment);
+            float total = 0f;
+            for (int j = 0; j < index; ++j)
+                total += GetSpanStretch(j);
+            return total;
+        }
+
+        // 구간 j 가 정해진 길이보다 늘어난 길이 (m)
+        float GetSpanStretch(int span)
+        {
+            float distance = (segments[span].position - segments[span + 1].position).magnitude;
+            return Mathf.Max(0f, distance - GetSpanLength(span));
+        }
+
         // segment 바로 아래 구간에서 줄을 amount 만큼 늘림 (음수면 줄임): 그 점과 위 점들(팁 포함) 높이가 같이 올라가 위쪽 구간 길이는 그대로
         // 다음 Step 에서 서브스텝마다 나눠 적용 (어느 점에서 늘려도 전체 줄 길이 Length 가 amount 만큼 늘어남)
         // 릴 감기/풀기처럼 팁에서 늘릴 땐 Feed(Tip, amount)
@@ -194,7 +246,8 @@ namespace ClimbGames.ProjectF
         // - 손 바로 위 구간부터 팁 쪽으로 올라가며 늘어난 길이를 누적해서 위 점들 높이에 더함
         // - 팁 구간 하나만 늘리면 나머지 구간의 장력이 그대로 남아, 놓는 순간 그 사이 장비(찌 등)가 튕겨 오름
         // - 줄을 늘리는 쪽이라 한 번에 적용해도 튀지 않음, 길어진 구간은 다음 스텝 NormalizeSegments 가 줄 점으로 채움
-        public float RelaxStretch(Segment segment)
+        // - ratio: 늘어난 길이 중 이 비율만큼만 늘림 (1 이면 장력이 다 없어짐)
+        public float RelaxStretch(Segment segment, float ratio = 1f)
         {
             int index = segments.IndexOf(segment);
             if (index <= 0)
@@ -203,10 +256,7 @@ namespace ClimbGames.ProjectF
             // 높이를 바꾸기 전에 구간마다 늘어난 길이를 먼저 구함 (바꾸면서 구하면 아래 점이 올라간 만큼 위 구간 길이가 줄어 보임)
             relaxStretches.Clear();
             for (int j = 0; j < index; ++j)
-            {
-                float distance = (segments[j].position - segments[j + 1].position).magnitude;
-                relaxStretches.Add(Mathf.Max(0f, distance - GetSpanLength(j)));
-            }
+                relaxStretches.Add(GetSpanStretch(j) * ratio);
 
             // 점 j 는 j 번 구간부터 아래(손 쪽) 구간들이 늘어난 합만큼 올라감
             float total = 0f;
@@ -365,6 +415,7 @@ namespace ClimbGames.ProjectF
         // stiffness: 줄을 1 배 늘리는 데 드는 힘 (N)
         public void Step(float deltaTime, Vector3 tipPosition, float stiffness)
         {
+            ReleasedLength = 0f;
             if (segments.Count < 2 || deltaTime <= 0f)
                 return;
 
@@ -397,6 +448,9 @@ namespace ClimbGames.ProjectF
 
                 UpdateSolveMasses(subDeltaTime);
                 SolveLength(subDeltaTime, stiffness);
+
+                // 당기는 만큼 풀림: 늘어난 구간을 늘려 장력을 없앰 (길어진 구간은 다음 Step 의 NormalizeSegments 가 줄 점으로 채움)
+                ApplyFreeRelease(subDeltaTime);
 
                 // 다음 서브스텝 풀이용 질량에 씀
                 for (int j = 0; j < SpanCount; ++j)
@@ -613,9 +667,14 @@ namespace ClimbGames.ProjectF
         // 나머지: 속도 + 공기 저항·감쇠 + 물 저항(잠겼을 때) + 중력
         void Integrate(float deltaTime, Vector3 tipPosition, float t)
         {
-            Vector3 gravityMove = gravity * deltaTime * deltaTime;
+            float deltaTime2 = deltaTime * deltaTime;
+            Vector3 gravityMove = gravity * deltaTime2;
+            bool isAboveBobber = true;
             foreach (var segment in segments)
             {
+                if (segment.kind == SegmentKind.Bobber)
+                    isAboveBobber = false;
+
                 Vector3 velocity = segment.position - segment.previous;
                 segment.previous = segment.position;
 
@@ -637,11 +696,24 @@ namespace ClimbGames.ProjectF
                 float speed = velocity.magnitude / deltaTime;
                 velocity /= 1f + GetDragRate(segment, speed) * deltaTime;
 
-                // 수면에 얹힌 줄 점도 물 저항을 받음
+                // 수면에 얹힌 줄 점도 물 저항을 받음, 줄 점은 위아래 움직임을 물이 더 잡아 줌 (착수 시 튀지 않음)
                 if (segment.position.y <= segment.waterHeight + waterOffset)
+                {
                     velocity /= 1f + segment.waterDrag * deltaTime;
+                    if (segment.IsLine)
+                        velocity.y /= 1f + lineWaterVerticalDrag * deltaTime;
+                }
 
                 segment.position += velocity + gravityMove;
+
+                // 찌 위쪽 줄 점은 잠긴 깊이만큼 수면으로 떠오름 (수면에서 중력과 비김, 최대 lineFloatMaxLift)
+                // 서브스텝마다 작은 이동만 주므로, 줄이 당기면 장력이 이겨 물속에 남음 (팁이 물속이어도 줄이 늘어나지 않음)
+                float depth = segment.waterHeight - segment.position.y;
+                if (hasWaterContact && isAboveBobber && segment.IsLine && depth > 0f)
+                {
+                    float lift = Mathf.Min(-gravity.y + lineFloatStiffness * depth, lineFloatMaxLift);
+                    segment.position.y += lift * deltaTime2;
+                }
             }
         }
 
@@ -774,7 +846,7 @@ namespace ClimbGames.ProjectF
                 deltaLambdas[j] = rhs[j] - upper[j] * deltaLambdas[j + 1];
         }
 
-        // 땅 아래로 내려가지 않게, 수면 접촉이 켜져 있으면 일반 줄 점은 수면 위에 얹힘
+        // 땅 아래로 내려가지 않게 (수면 처리는 Integrate 의 물 저항 + 떠오름)
         void ClampContacts()
         {
             for (int i = 1; i < segments.Count; ++i)
@@ -788,9 +860,6 @@ namespace ClimbGames.ProjectF
                     segment.position.y = segment.groundHeight;
                     segment.previous.y = Mathf.Min(segment.previous.y, segment.groundHeight);
                 }
-
-                if (hasWaterContact && segment.IsLine && segment.position.y < segment.waterHeight)
-                    segment.position.y = segment.waterHeight;
             }
         }
 

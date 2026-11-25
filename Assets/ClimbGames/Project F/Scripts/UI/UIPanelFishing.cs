@@ -7,6 +7,7 @@ using R3.Triggers;
 
 namespace ClimbGames.ProjectF
 {
+    [DefaultExecutionOrder(-1)]
     public class UIPanelFishing : UIBase
     {
         enum CastingState

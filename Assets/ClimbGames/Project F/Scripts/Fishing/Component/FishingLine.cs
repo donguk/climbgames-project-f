@@ -35,7 +35,13 @@ namespace ClimbGames.ProjectF
         // 피칭 ↔ 오버헤드 전환 시간 (초): 손이 줄을 잡으러 가는 시간, 줄 길이가 바뀌는 시간
         [SerializeField] private float castingTypeTransitionTime = 0.5f;
 
+        // 찌 착수 뒤에도 줄이 당기는 만큼 계속 풀리는 시간 (초): 공중에 떠 있던 줄이 수면에 내려앉으며 찌를 끌어당기지 않게
+        [SerializeField] private float landingReleaseTime = 1f;
+        // 던진 뒤 로드가 펴지는 시간 (초): 이 시간 동안 손으로 늘어나 있던 줄이 바로 줄 길이가 되지 않고 채비를 앞으로 당김
+        [SerializeField] private float rodRecoverTime = 0.2f;
+
         private bool isOverhead;
+        private float releaseTimer = -1f;   // 착수 뒤 풀림이 남은 시간 (음수면 타이머 없음)
         private bool isPitching;
 
         private readonly List<Vector3> drawPoints = new List<Vector3>();
@@ -117,6 +123,14 @@ namespace ClimbGames.ProjectF
         // FishingActorMachine.OnFixedUpdate 에서 호출
         public void UpdateLine(float deltaTime)
         {
+            // 착수 뒤 풀림 시간이 끝나면 줄 풀림을 멈춤
+            if (releaseTimer >= 0f)
+            {
+                releaseTimer -= deltaTime;
+                if (releaseTimer <= 0f)
+                    StopFreeRelease();
+            }
+
             // 오버헤드: 찌 높이가 바뀌면 찌 아래에서 줄을 늘리고 줄임 (팁–찌 길이 그대로, 전체 줄 길이도 같이)
             // 한 프레임 양은 equipmentSlideSpeed 로 제한 (피칭에서 바뀔 때 높이 기준 차이를 한 번에 넣으면 채비가 툭 떨어짐)
             if (isOverhead && bobberPoint.Segment != null)
@@ -149,6 +163,13 @@ namespace ClimbGames.ProjectF
 
             lineBody.Step(deltaTime, rodTip.position, stiffness);
 
+            // 캐스팅 중 당겨져 풀린 만큼 목표 길이에 더함 (다음 프레임에 팁 Feed 가 다시 감지 않게)
+            if (lineBody.ReleasedLength > 0f)
+            {
+                totalLength += lineBody.ReleasedLength;
+                player.Model.SetLineLength(totalLength);
+            }
+
             // 줄 점 위치 → FishingLinePoint (찌/바늘/물고기가 따라옴)
             SyncPose(bobberPoint);
             SyncPose(sinkerPoint);
@@ -169,13 +190,14 @@ namespace ClimbGames.ProjectF
 
         // 손을 놓음: 채비는 팁에 매달림
         // 손으로 잡은 팁–손 줄은 팽팽하게 늘어나 있으므로, 놓기 전에 늘어난 구간마다 그 구간을 늘려 장력을 없앰 (놓는 순간 고무줄처럼 튕기지 않게)
-        // 목표 길이(totalLength) 갱신은 던질 때를 위한 것 (오버헤드 전환은 뒤의 SetLength 가 목표를 다시 정하고, 풀린 길이에서 천천히 감음)
-        void DetachHandle()
+        // 오버헤드 전환은 뒤의 SetLength 가 목표를 다시 정하고, 풀린 길이에서 천천히 감음
+        // relaxStretch false (던질 때): 늘어난 양을 줄 길이로 만들지 않음, 늘어난 줄은 탄성으로 줄어들며 채비를 앞으로 당김 (로드 휨 반동처럼)
+        void DetachHandle(bool relaxStretch = true)
         {
             if (handlePoint.Segment == null)
                 return;
 
-            float stretch = lineBody.RelaxStretch(handlePoint.Segment);
+            float stretch = relaxStretch ? lineBody.RelaxStretch(handlePoint.Segment) : 0f;
             if (stretch > 0f)
             {
                 totalLength += stretch;
@@ -184,6 +206,25 @@ namespace ClimbGames.ProjectF
 
             lineBody.RemoveSegment(handlePoint.Segment);
             handlePoint.BindSegment(null);
+        }
+
+        // 줄 풀림을 멈춤 (착수 뒤 타이머도 정리)
+        void StopFreeRelease()
+        {
+            lineBody.SetFreeRelease(null);
+            releaseTimer = -1f;
+        }
+
+        // 팁 바로 아래의 장비 점 (찌가 있으면 찌): 캐스팅 중 팁 ~ 이 점 사이가 당기는 만큼 풀림
+        FishingLineBody.Segment GetTopEquipmentSegment()
+        {
+            FishingLineBody.Segment top = null;
+            foreach (var point in new[] { bobberPoint, sinkerPoint, endPoint })
+            {
+                if (point.Segment != null && (top == null || point.Segment.height > top.height))
+                    top = point.Segment;
+            }
+            return top;
         }
 
         // 줄이 버틸 최소 길이: 가장 높은 장비 점보다 5cm 위
@@ -332,6 +373,7 @@ namespace ClimbGames.ProjectF
         {
             endPoint.SetTrackingTarget(null);
             lineBody.SetWaterContact(false);
+            StopFreeRelease();
 
             Transform leftHandle = param.type == CastingType.Pitching ? param.leftHandle : null;
             isOverhead = param.type == CastingType.OverHead;
@@ -354,21 +396,37 @@ namespace ClimbGames.ProjectF
         // 손을 놓음 (바늘 점은 FishingHook 이 Detach 하면서 날아가는 바늘을 추적), 이후 줄 길이는 팁에서만
         protected override void OnCastingThrow(FishingEvent.OnCastingThrow param)
         {
-            DetachHandle();
+            DetachHandle(false);
             isOverhead = false;
             isPitching = false;
+
+            // 찌가 착수할 때까지 줄이 당기는 만큼 풀림 (베일을 연 상태)
+            // 손으로 늘어나 있던 양은 로드가 펴지는 동안 줄여 가며 남겨 두고, 그보다 더 당겨질 때만 풀림
+            lineBody.SetFreeRelease(GetTopEquipmentSegment(), rodRecoverTime);
         }
 
         // 찌 착수 (찌 점이 수면에 닿아 inWater 가 켜지면 FishingBobber 가 보냄): 줄이 수면에 얹힘
         protected override void OnBobberEnterWater(FishingEvent.OnBobberEnterWater param)
         {
             lineBody.SetWaterContact(true);
+
+            // 공중에 있던 줄이 내려앉을 때까지 조금 더 풀림
+            releaseTimer = landingReleaseTime;
+            if (releaseTimer <= 0f)
+                StopFreeRelease();
+        }
+
+        // (찌 없는 경우) 바늘이 땅에 닿음: 줄 풀림 멈춤
+        protected override void OnHookGrounded(FishingEvent.OnHookGrounded param)
+        {
+            StopFreeRelease();
         }
 
         protected override void OnFishBite(FishingEvent.OnFishBite param)
         {
             // 물고기 추적
             endPoint.SetTrackingTarget(param.hookedFish.ModelRoot);
+            StopFreeRelease();
 
             // 물고기를 향해 물속으로 들어가는 줄은 수면에 걸리지 않음
             lineBody.SetWaterContact(false);
@@ -384,6 +442,7 @@ namespace ClimbGames.ProjectF
         protected override void OnPullOut(FishingEvent.OnPullOut param)
         {
             lineBody.SetWaterContact(false);
+            StopFreeRelease();
             SetLength(1.6f, 1f);
 
             // 물고기가 잡혔다면 연결

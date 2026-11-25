@@ -21,6 +21,7 @@ namespace ClimbGames.ProjectF
             messageBroker.Receive<FishingEvent.OnCastingTypeChanged>().Subscribe(_ => OnCastingTypeChanged(_)).AddTo(this);
             messageBroker.Receive<FishingEvent.OnCastingThrow>().Subscribe(_ => OnCastingThrow(_)).AddTo(this);
             messageBroker.Receive<FishingEvent.OnBobberEnterWater>().Subscribe(_ => OnBobberEnterWater(_)).AddTo(this);
+            messageBroker.Receive<FishingEvent.OnHookGrounded>().Subscribe(_ => OnHookGrounded(_)).AddTo(this);
             messageBroker.Receive<FishingEvent.OnFishBite>().Subscribe(_ => OnFishBite(_)).AddTo(this);
             messageBroker.Receive<FishingEvent.OnFishFlee>().Subscribe(_ => OnFishFlee(_)).AddTo(this);
             messageBroker.Receive<FishingEvent.OnFishSubmit>().Subscribe(_ => OnFishSubmit(_)).AddTo(this);
@@ -36,6 +37,10 @@ namespace ClimbGames.ProjectF
         }
 
         protected virtual void OnBobberEnterWater(FishingEvent.OnBobberEnterWater param)
+        {
+        }
+
+        protected virtual void OnHookGrounded(FishingEvent.OnHookGrounded param)
         {
         }
 

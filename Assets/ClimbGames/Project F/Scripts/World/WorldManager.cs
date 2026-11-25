@@ -4,6 +4,7 @@ using R3;
 using Unity.Cinemachine;
 using UnityEditor.AI;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace ClimbGames.ProjectF
 {
@@ -20,6 +21,18 @@ namespace ClimbGames.ProjectF
         private ReactiveProperty<WorldMode> currentMode = new ReactiveProperty<WorldMode>();
 
         public ReadOnlyReactiveProperty<WorldMode> CurrentMode => currentMode;
+
+        void Update()
+        {
+            if (Keyboard.current != null)
+            {
+                if (Keyboard.current.escapeKey.wasReleasedThisFrame)
+                {
+                    if (CurrentMode.CurrentValue == WorldMode.Fishing)
+                        TransitionToMap().Forget();
+                }
+            }
+        }
 
         public async UniTaskVoid TransitionToFishing(FishingSpot spot)
         {

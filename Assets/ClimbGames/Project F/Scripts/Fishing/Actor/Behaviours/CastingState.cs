@@ -29,18 +29,6 @@ namespace ClimbGames.ProjectF
                 Player.MessageBroker.Receive<FishingEvent.OnBobberEnterWater>().Subscribe(_ => fsm.ChangeState(FishingActorState.Waiting)).AddTo(this);
             }
 
-            protected override void OnFixedUpdate()
-            {
-                base.OnFixedUpdate();
-
-                if (Actor.Hook.IsFlying)
-                {
-                    float dist = Vector3.Distance(Actor.Line.RodTip.position, Actor.Line.EndPoint.transform.position);
-                    if (Actor.Line.TotalLength < dist)
-                        Actor.Line.SetLength(dist);
-                }
-            }
-
             public void Throw()
             {
                 var character = Player.Actor.Character;
