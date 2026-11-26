@@ -3,7 +3,7 @@ using UnityEngine.UIElements;
 
 namespace ClimbGames.ProjectF
 {
-    public class HookedFish : MonoBehaviour, ILineAttachable
+    public class HookedFish : MonoBehaviour
     {
         [SerializeField] private Transform modelRoot;
         [SerializeField] private Transform moveTarget;
@@ -22,7 +22,6 @@ namespace ClimbGames.ProjectF
 
         public Transform ModelRoot => modelRoot;
         public Transform MoveTarget => moveTarget;
-        public Transform Target => transform;
         public Rigidbody Body
         {
             get
@@ -124,17 +123,34 @@ namespace ClimbGames.ProjectF
             this.tensionInfo = tensionInfo;
         }
 
-        void ILineAttachable.OnAttached(FishingLinePoint point, ConfigurableJoint joint)
+        // 줄 점에 조인트로 매달림 (위치는 그대로, 회전만 점에 맞춤)
+        public void AttachToLine(FishingLinePoint point)
         {
+            Body.isKinematic = false;
+
+            var joint = GetComponent<ConfigurableJoint>();
+            if (joint == null)
+            {
+                joint = gameObject.AddComponent<ConfigurableJoint>();
+                joint.autoConfigureConnectedAnchor = false;
+                joint.xMotion = ConfigurableJointMotion.Locked;
+                joint.yMotion = ConfigurableJointMotion.Locked;
+                joint.zMotion = ConfigurableJointMotion.Locked;
+            }
+            else
+            {
+                joint.connectedBody = null;
+            }
+
+            // 초기 회전 리셋
+            transform.rotation = point.transform.rotation;
+            joint.connectedBody = point.Body;
+
             joint.angularXDrive = new JointDrive() { positionDamper = 0.1f, maximumForce = float.MaxValue };
             joint.angularYZDrive = new JointDrive() { positionDamper = 0.1f, maximumForce = float.MaxValue };
 
             joint.projectionMode = JointProjectionMode.PositionAndRotation;
             joint.projectionDistance = 0.1f;
-        }
-
-        void ILineAttachable.OnDetached(FishingLinePoint point)
-        {
         }
 
 #if UNITY_EDITOR

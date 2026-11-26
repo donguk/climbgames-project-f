@@ -1,5 +1,4 @@
 ﻿using System;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace ClimbGames.ProjectF
@@ -52,40 +51,6 @@ namespace ClimbGames.ProjectF
         {
             if (Segment != null)
                 Segment.trackingTarget = target;
-        }
-
-        // 현재 포인트에 오브젝트 붙이기
-        public void Attach(ILineAttachable attachable)
-        {
-            attachable.Body.isKinematic = false;
-
-            var joint = attachable.Target.GetComponent<ConfigurableJoint>();
-            if (joint == null)
-            {
-                joint = attachable.Target.AddComponent<ConfigurableJoint>();
-                joint.autoConfigureConnectedAnchor = false;
-                joint.xMotion = ConfigurableJointMotion.Locked;
-                joint.yMotion = ConfigurableJointMotion.Locked;
-                joint.zMotion = ConfigurableJointMotion.Locked;
-            }
-            else
-            {
-                joint.connectedBody = null;
-            }
-
-            // 초기 회전 리셋
-            attachable.Target.rotation = transform.rotation;
-            joint.connectedBody = body;
-
-            attachable.OnAttached(this, joint);
-        }
-
-        public void Detach(ILineAttachable attachable)
-        {
-            if (attachable.Target.TryGetComponent<ConfigurableJoint>(out var joint))
-                Destroy(joint);
-
-            attachable.OnDetached(this);
         }
 
         void OnDrawGizmos()

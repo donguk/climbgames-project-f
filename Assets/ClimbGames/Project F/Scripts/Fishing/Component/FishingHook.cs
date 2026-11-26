@@ -6,6 +6,14 @@ namespace ClimbGames.ProjectF
     {
         public bool IsFlying => RuntimeJoint == null && Body.isKinematic == false;
 
+        // 컴포넌트를 처음 붙일 때 기본값: 가는 철사를 구부린 모양이라 지름은 작고 옆으로 받는 저항이 큼
+        void Reset()
+        {
+            bodyDiameter = 0.002f;
+            bodyDragScale = 2f;
+            bodyDensity = 7850f;    // 강철
+        }
+
         void OnTriggerEnter(Collider other)
         {
             if (other.gameObject.layer == FishingLayer.Water)
@@ -32,7 +40,7 @@ namespace ClimbGames.ProjectF
         // 이벤트 
         protected override void OnCastingThrow(FishingEvent.OnCastingThrow param)
         {
-            LinePoint.Detach(this);
+            DetachFromLine();
 
             var body = Body;
             body.isKinematic = false;
@@ -43,7 +51,7 @@ namespace ClimbGames.ProjectF
 
         protected override void OnBobberEnterWater(FishingEvent.OnBobberEnterWater param)
         {
-            LinePoint.Attach(this);
+            AttachToLine(LinePoint);
         }
     }
 }

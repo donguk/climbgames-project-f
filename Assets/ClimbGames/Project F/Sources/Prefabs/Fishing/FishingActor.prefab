@@ -355,8 +355,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingFloat
   mass: 0.001
-  drag: 1.03
-  waterDrag: 5
+  bodyDiameter: 0.005
+  bodyDragScale: 1
+  bodyDensity: 330
   groundFriction: 0.2
   modelRoot: {fileID: 9118781878722574380}
   landingClip:
@@ -474,11 +475,17 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     duration: 8
-  tiltScale: 1
-  tiltSpeed: 5
+  maxTiltAngle: 100
+  tiltMoveSpeed: 0.3
+  tiltShakeTension: 0.01
+  tiltSensitivity: 0.01
+  tiltSpeed: 10
   tiltRecoverSpeed: 1.5
-  buoyancy: 30
+  tiltTurnSpeed: 10
+  buoyancyLoad: 0.012
+  floatHeight: 0.03
   buoyancyDamping: 14
+  waterHold: 10
   breakoutHeight: 0.2
   modelAlignSpeed: 2
   rotationSpeed: 2
@@ -617,6 +624,55 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.04
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &1910273163506231965
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 152922296083484312}
+  - component: {fileID: 3421774692516611652}
+  m_Layer: 0
+  m_Name: FishinSinker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &152922296083484312
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1910273163506231965}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1660799581146449646}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3421774692516611652
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1910273163506231965}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 660fc85339d44c44c96b95c4e5e8de4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.ProjectF.FishingSinker
+  mass: 0.01
+  bodyDiameter: 0.001
+  bodyDragScale: 1
+  bodyDensity: 11340
+  groundFriction: 0.2
 --- !u!1 &2138609534202513518
 GameObject:
   m_ObjectHideFlags: 0
@@ -1178,15 +1234,17 @@ MonoBehaviour:
     lineDensity: 0.0001
     lineDiameter: 0.0003
     lineDamping: 0.5
-    lineWaterDrag: 3
+    lineFloatStiffness: 200
+    lineFloatMaxLift: 20
     lineGroundFriction: 0.2
     gravity: {x: 0, y: -9.81, z: 0}
     subStepCount: 8
-    iterationCount: 4
+    iterationCount: 16
+    solveTolerance: 0.00001
     stability: 2
+    maxSegmentCount: 2000
     groundOffset: 0.02
     waterOffset: 0.01
-    teleportDistance: 0.5
   bobberPoint: {fileID: 8666444395038434717}
   sinkerPoint: {fileID: 9013240444821476681}
   endPoint: {fileID: 8333694936421398241}
@@ -1199,6 +1257,8 @@ MonoBehaviour:
   maxAttachDistance: 2
   equipmentSlideSpeed: 2
   castingTypeTransitionTime: 0.5
+  landingReleaseTime: 1
+  rodRecoverTime: 0.2
 --- !u!1 &3188397222867896724
 GameObject:
   m_ObjectHideFlags: 0
@@ -1651,6 +1711,7 @@ Transform:
   - {fileID: 6778170814192907588}
   - {fileID: 2403641997849806357}
   - {fileID: 7178098911225865597}
+  - {fileID: 152922296083484312}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8083905833194198376
@@ -1670,7 +1731,7 @@ MonoBehaviour:
   fishingLine: {fileID: 3964598790634156645}
   fishingBobber: {fileID: 8279095951030254376}
   fishingHook: {fileID: 3750939044426369172}
-  fishingSinker: {fileID: 0}
+  fishingSinker: {fileID: 3421774692516611652}
 --- !u!1 &7224669056578320652
 GameObject:
   m_ObjectHideFlags: 0
@@ -2040,8 +2101,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.Project_HC.FishingHook
   mass: 0.00005
-  drag: 0.03
-  waterDrag: 3
+  bodyDiameter: 0.005
+  bodyDragScale: 2
+  bodyDensity: 7850
   groundFriction: 0.2
 --- !u!1 &8524173999618154673
 GameObject:

@@ -41,13 +41,13 @@ namespace ClimbGames.ProjectF
             await UniTask.NextFrame();
 
             // 라인 생성
-            fishingLine.Initialize(player, fishingRod.PoleTip, 1f);
+            fishingLine.Initialize(player, fishingRod.PoleTip, fishingHook.transform, 1f);
 
             // 채비 설정
             fishingBobber.AttachToLine(fishingLine.BobberPoint);
             fishingHook.AttachToLine(fishingLine.EndPoint);
             if (fishingSinker != null)
-                fishingSinker.BindToLine(fishingLine.SinkerPoint);
+                fishingSinker.AttachToLine(fishingLine.SinkerPoint);
         }
 
         void OnDrawGizmos()

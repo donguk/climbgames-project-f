@@ -41,9 +41,12 @@ namespace ClimbGames.ProjectF
 
             // 속성
             public float mass;                  // 질량 (kg)
-            public float drag;                  // 장비 공기 저항: 장비 몫 감속 = drag · v² (1/m), 줄 몫 공기 저항은 줄 굵기로 따로 계산
+            public float bodyDiameter;          // 장비 몸체 지름 (m), 0 이면 몸체 없음 (줄 점)
+            public float bodyDragScale = 1f;    // 장비 몸체 구 대비 저항 배율
+            public float bodyVolume;            // 장비 몸체 부력 부피 (m³), 질량 / 재질 밀도
+            public float bodyHeight;            // 몸체 잠김 비율을 재는 높이 (m), 0 이면 몸체 없음
+            public float bodyPivot;             // 점이 몸체 높이의 어디에 있는지 (0 아래 끝 ~ 1 위 끝, 구는 0.5)
             public float damping;               // 속도 비례 감쇠: 1초에 줄어드는 속도 비율 (1/s), 작은 흔들림까지 줄임
-            public float waterDrag;             // 물 저항: 물에 잠기면 1초에 줄어드는 속도 비율 (1/s)
             public float lineLength;            // 이 점이 맡은 줄 길이 (위아래 구간의 절반씩, m)
             public float groundFriction;        // 땅에 닿았을 때 스텝마다 줄어드는 속도 비율 (0 ~ 1)
             public Transform trackingTarget;    // 있으면 이 위치를 따라가는 고정점 (손, 날아가는 바늘, 물고기, 로드 가이드)
@@ -56,6 +59,7 @@ namespace ClimbGames.ProjectF
             public float groundHeight = float.NegativeInfinity; // 아래 땅 높이 + groundOffset
             public bool inWater;
             public bool onGround;
+            public float upperTension;          // 위쪽(팁 쪽) 구간 장력 (N), 이번 Step 서브스텝 중 최대값 (짧게 튀는 장력도 잡음)
 
             internal Vector3 stepStart;
             internal float inverseMass;
@@ -99,6 +103,8 @@ namespace ClimbGames.ProjectF
         private const float MinMass = 0.000001f;
         private const float AirDensity = 1.2f;          // kg/m³
         private const float AirViscosity = 0.000015f;   // 공기 동점성 계수 (m²/s)
+        public const float WaterDensity = 1000f;        // kg/m³
+        private const float WaterViscosity = 0.000001f; // 물 동점성 계수 (m²/s)
         private const float CastHeight = 50f;
         private const float CastDistance = 100f;
         private const float ContactEpsilon = 0.001f;
@@ -106,10 +112,8 @@ namespace ClimbGames.ProjectF
         [Header("Line Segment")]
         [SerializeField] private float segmentLength = 0.2f;        // 일반 줄 점 간격 (m)
         [SerializeField] private float lineDensity = 0.0001f;       // 줄 1m 의 질량 (kg/m), 줄 점 질량 = 이 값 · 점 간격
-        [SerializeField] private float lineDiameter = 0.0003f;      // 줄 굵기 (m), 공기 저항 계산에 씀
-        [SerializeField, Min(0f)] private float lineDamping = 0.5f; // 줄 점 속도 비례 감쇠 (1/s), 0 이면 공기 저항만
-        [SerializeField] private float lineWaterDrag = 3f;          // 줄 점 물 저항 (1/s)
-        [SerializeField, Min(0f)] private float lineWaterVerticalDrag = 20f;    // 물속 줄 점 위아래 물 저항 (1/s), 착수 튕김과 출렁임을 잡음
+        [SerializeField] private float lineDiameter = 0.0003f;      // 줄 굵기 (m), 공기·물 저항과 부력 계산에 씀
+        [SerializeField, Min(0f)] private float lineDamping = 0.5f; // 줄 점 속도 비례 감쇠 (1/s), 0 이면 공기·물 저항만
         [SerializeField, Min(0f)] private float lineFloatStiffness = 200f;      // 찌 위쪽 줄 점이 잠긴 깊이 1m 당 떠오르는 가속 (1/s²)
         [SerializeField, Min(0f)] private float lineFloatMaxLift = 20f;         // 떠오르는 가속 최대값 (m/s², 중력 포함), 이 값이 줄 장력과 겨룸
         [SerializeField, Range(0f, 1f)] private float lineGroundFriction = 0.2f;
@@ -117,17 +121,24 @@ namespace ClimbGames.ProjectF
         [Header("Physics")]
         [SerializeField] private Vector3 gravity = new Vector3(0f, -9.81f, 0f);
         [SerializeField, Min(1)] private int subStepCount = 8;
-        [SerializeField, Min(1)] private int iterationCount = 4;    // 서브스텝마다 길이 제약을 푸는 횟수
+        // 서브스텝마다 길이 제약을 푸는 최대 횟수 (수렴하면 일찍 끝남)
+        // 수면에 일직선으로 놓인 긴 줄은 거의 모든 구간이 정해진 길이 경계에 걸쳐 반복마다 당김/처짐 판정이 바뀌므로, 적으면 남은 오차로 장력이 튀어 찌가 떨림
+        [SerializeField, Min(1)] private int iterationCount = 16;
+        // 수렴 기준 (m): 당기는 구간들의 남은 오차(늘어남 − 탄성 몫)가 모두 이보다 작고 당기는 구간 판정이 바뀌지 않으면 끝냄
+        [SerializeField, Min(0f)] private float solveTolerance = 0.00001f;
         // 장력이 클 때 가벼운 줄 점이 옆으로 튀지 않게, 풀이에서만 질량을 최소 stability · 장력 · Δt² / 점 간격 으로 올림
         // (장력이 작으면 원래 질량 그대로, 클수록 안정적이지만 팽팽한 줄의 옆 흔들림이 조금 느려짐)
         [SerializeField, Min(0f)] private float stability = 2f;
+        // 줄 점 개수 상한: 수치가 발산하거나 줄이 비정상적으로 길어져도 점을 끝없이 넣다가 멈추지 않게
+        [SerializeField, Min(16)] private int maxSegmentCount = 2000;
 
         [Header("Contact")]
         [SerializeField] private float groundOffset = 0.02f;
-        [SerializeField] private float waterOffset = 0.01f;
+        [SerializeField] private float waterOffset = 0.01f;     // 수면 판정 오차 (m): 접촉 상태(inWater)와 줄 잠김 비율의 경계 폭
 
         private readonly List<Segment> segments = new List<Segment>();
         private bool hasWaterContact;
+        private bool hasWarnedSegmentLimit;
         private Segment releaseSegment;     // null 이 아니면 팁 ~ 이 점 사이가 당기는 만큼 풀림 (캐스팅 중 베일을 연 상태)
         private float releaseAllowance;     // 풀지 않고 남겨 둘 늘어남 (m): 던질 때 손으로 늘어나 있던 양, 탄성으로 줄어든 만큼 같이 줄어듦
         private float releaseAllowanceRate; // 남겨 둘 양을 1초에 줄이는 양 (m/s): keepTime 동안 0 까지 (로드가 펴지는 시간)
@@ -146,6 +157,7 @@ namespace ClimbGames.ProjectF
         private float[] rhs = new float[16];
         private float[] deltaLambdas = new float[16];
         private float[] tensions = new float[16];
+        private bool[] actives = new bool[16];      // 이번 반복에서 당기는(풀이 대상) 구간인지
 
         public IReadOnlyList<Segment> Segments => segments;
         public int SpanCount => Mathf.Max(0, segments.Count - 1);
@@ -198,7 +210,11 @@ namespace ClimbGames.ProjectF
             if (releaseSegment == null)
                 return;
 
+            // 수치가 발산해 늘어난 길이가 무한대·NaN 이면 줄 높이에 넣지 않음 (줄 점을 끝없이 채우다 멈추지 않게)
             float stretch = GetStretch(releaseSegment);
+            if (float.IsFinite(stretch) == false)
+                return;
+
             releaseAllowance = Mathf.Max(0f, releaseAllowance - releaseAllowanceRate * deltaTime);
             releaseAllowance = Mathf.Min(releaseAllowance, stretch);
             if (stretch > releaseAllowance + 0.000001f)
@@ -256,7 +272,10 @@ namespace ClimbGames.ProjectF
             // 높이를 바꾸기 전에 구간마다 늘어난 길이를 먼저 구함 (바꾸면서 구하면 아래 점이 올라간 만큼 위 구간 길이가 줄어 보임)
             relaxStretches.Clear();
             for (int j = 0; j < index; ++j)
-                relaxStretches.Add(GetSpanStretch(j) * ratio);
+            {
+                float stretch = GetSpanStretch(j) * ratio;
+                relaxStretches.Add(float.IsFinite(stretch) ? stretch : 0f);
+            }
 
             // 점 j 는 j 번 구간부터 아래(손 쪽) 구간들이 늘어난 합만큼 올라감
             float total = 0f;
@@ -402,7 +421,6 @@ namespace ClimbGames.ProjectF
                 mass = lineDensity * segmentLength,
                 lineLength = segmentLength,
                 damping = lineDamping,
-                waterDrag = lineWaterDrag,
                 groundFriction = lineGroundFriction,
             };
         }
@@ -430,6 +448,7 @@ namespace ClimbGames.ProjectF
                 segment.controller?.OnPreStep(segment);
                 segment.inverseMass = segment.IsPinned ? 0f : 1f / Mathf.Max(MinMass, segment.mass);
                 segment.stepStart = segment.position;
+                segment.upperTension = 0f;
             }
             UpdateContactHeights();
 
@@ -454,7 +473,12 @@ namespace ClimbGames.ProjectF
 
                 // 다음 서브스텝 풀이용 질량에 씀
                 for (int j = 0; j < SpanCount; ++j)
+                {
                     tensions[j] = Mathf.Max(0f, -lambdas[j] / (subDeltaTime * subDeltaTime));
+
+                    Segment lower = segments[j + 1];
+                    lower.upperTension = Mathf.Max(lower.upperTension, tensions[j]);
+                }
             }
 
             pendingFeeds.Clear();
@@ -463,7 +487,7 @@ namespace ClimbGames.ProjectF
             ApplyGroundFriction();
         }
 
-        // 모든 점을 줄 기본 속성으로: 질량 = 줄 밀도 · 점이 맡은 줄 길이 (위아래 구간의 절반씩), 장비 공기 저항은 0
+        // 모든 점을 줄 기본 속성으로: 질량 = 줄 밀도 · 점이 맡은 줄 길이 (위아래 구간의 절반씩), 장비 몸체 없음
         void ResetLineProperties()
         {
             for (int i = 0; i < segments.Count; ++i)
@@ -474,9 +498,12 @@ namespace ClimbGames.ProjectF
                 Segment segment = segments[i];
                 segment.lineLength = (upperLength + lowerLength) * 0.5f;
                 segment.mass = lineDensity * segment.lineLength;
-                segment.drag = 0f;
+                segment.bodyDiameter = 0f;
+                segment.bodyDragScale = 1f;
+                segment.bodyVolume = 0f;
+                segment.bodyHeight = 0f;
+                segment.bodyPivot = 0f;
                 segment.damping = lineDamping;
-                segment.waterDrag = lineWaterDrag;
                 segment.groundFriction = lineGroundFriction;
             }
         }
@@ -524,9 +551,23 @@ namespace ClimbGames.ProjectF
             // 긴 간격 채우기 (팁 구간 포함: 줄 길이는 그대로인데 장비가 내려와 팁 구간이 길어질 때도 채움)
             for (int i = 0; i < segments.Count - 1; ++i)
             {
-                while (segments[i].height - segments[i + 1].height > length * 1.5f)
+                while (segments[i].height - segments[i + 1].height > length * 1.5f && CanInsertLine())
                     InsertLine(i + 1, segments[i + 1].height + length);
             }
+        }
+
+        // 줄 점 개수 상한 (넘으면 더 넣지 않고 처음 한 번만 경고, 구간은 길어진 채로 남음)
+        bool CanInsertLine()
+        {
+            if (segments.Count < maxSegmentCount)
+                return true;
+
+            if (hasWarnedSegmentLimit == false)
+            {
+                hasWarnedSegmentLimit = true;
+                Debug.LogWarning($"[FishingLineBody] 줄 점이 상한({maxSegmentCount})에 닿아 더 넣지 않음 (수치 발산이나 비정상적으로 긴 줄)");
+            }
+            return false;
         }
 
         // 이번 스텝의 줄 늘림 준비 (Feed 로 예약된 것만, 팁 몫도 FishingLine 이 Feed(Tip, …) 로 넘김)
@@ -563,7 +604,7 @@ namespace ClimbGames.ProjectF
                 float gap = feed.height - below.height;
                 float finalGap = gap + amount;
 
-                if (gap > length * 1.5f && finalGap > length * 1.5f)
+                if (gap > length * 1.5f && finalGap > length * 1.5f && CanInsertLine())
                 {
                     InsertLine(index + 1, below.height + length);
                     continue;
@@ -622,6 +663,7 @@ namespace ClimbGames.ProjectF
             rhs = new float[size];
             deltaLambdas = new float[size];
             tensions = new float[size];
+            actives = new bool[size];
         }
 
         // 점마다 땅과 수면 높이를 스텝에 한 번 구함
@@ -645,26 +687,69 @@ namespace ClimbGames.ProjectF
             }
         }
 
-        // 공기 저항 + 감쇠를 "1초에 줄어드는 속도 비율" 로 (암시적으로 v /= 1 + 값 · Δt 에 씀)
-        // - 줄 몫: 가는 원기둥, 힘 = 0.5 · ρ · Cd · 굵기 · 맡은 길이 · v², Cd = 1 + 10 / Re^(2/3), Re = v · 굵기 / ν
-        //   0.3mm 줄은 Re 가 작아서(1 m/s 에 20) Cd 가 2 ~ 7 로 큼 → 느릴수록 속도에 비례하는 저항에 가까워짐
-        // - 장비 몫: 장비 질량 · drag · v²
-        float GetDragRate(Segment segment, float speed)
+        // 공기·물 저항 + 감쇠를 "1초에 줄어드는 속도 비율" 로 (암시적으로 v /= 1 + 값 · Δt 에 씀)
+        // 저항 힘을 모양으로 구하고 전체 질량으로 나눔 (같은 크기면 무거운 점일수록 덜 감속)
+        // - 줄 몫: 가는 원기둥, 힘 = 0.5 · ρ · Cd · 굵기 · 맡은 길이 · v², Cd = 1 + 10 / Re^(2/3)
+        //   0.3mm 줄은 Re 가 작아서(공기 1 m/s 에 20) Cd 가 2 ~ 7 로 큼 → 느릴수록 속도에 비례하는 저항에 가까워짐
+        //   물은 밀도가 공기의 약 800 배라 물에 잠긴 줄은 1 m/s 에서 약 1800/s (수면에 떠 있으면 절반, 공기 약 4/s)
+        // - 몸체 몫(장비): 구, 힘 = 0.5 · ρ · Cd · bodyDragScale · π(d/2)² · v², Cd = 24/Re + 6/(1 + √Re) + 0.4 (느리면 점성 저항, 빠르면 약 0.4 ~ 0.5)
+        // lineSubmerged, bodySubmerged (0 ~ 1): 줄 몫, 몸체 몫이 물에 잠긴 비율 (잠긴 만큼 공기 → 물)
+        float GetDragRate(Segment segment, float speed, float lineSubmerged, float bodySubmerged)
         {
-            float lineMass = lineDensity * segment.lineLength;
-            float equipmentMass = Mathf.Max(0f, segment.mass - lineMass);
             float totalMass = Mathf.Max(MinMass, segment.mass);
 
-            float reynolds = Mathf.Max(0.1f, speed * lineDiameter / AirViscosity);
-            float dragCoefficient = 1f + 10f / Mathf.Pow(reynolds, 2f / 3f);
-            float lineForce = 0.5f * AirDensity * dragCoefficient * lineDiameter * segment.lineLength;   // · v²
-            float equipmentForce = equipmentMass * segment.drag;                                        // · v²
+            float lineForce = GetLineDragForce(segment.lineLength, speed, AirDensity, AirViscosity);
+            if (lineSubmerged > 0f)
+                lineForce = Mathf.Lerp(lineForce, GetLineDragForce(segment.lineLength, speed, WaterDensity, WaterViscosity), lineSubmerged);
 
-            return (lineForce + equipmentForce) * speed / totalMass + segment.damping;
+            float bodyForce = 0f;
+            if (segment.bodyDiameter > 0f)
+            {
+                bodyForce = GetBodyDragForce(segment, speed, AirDensity, AirViscosity);
+                if (bodySubmerged > 0f)
+                    bodyForce = Mathf.Lerp(bodyForce, GetBodyDragForce(segment, speed, WaterDensity, WaterViscosity), bodySubmerged);
+            }
+
+            return (lineForce + bodyForce) * speed / totalMass + segment.damping;
+        }
+
+        // 가는 원기둥 저항 계수 (힘 = 이 값 · v²), Cd = 1 + 10 / Re^(2/3), Re = v · 굵기 / ν
+        float GetLineDragForce(float length, float speed, float density, float viscosity)
+        {
+            float reynolds = Mathf.Max(0.1f, speed * lineDiameter / viscosity);
+            float dragCoefficient = 1f + 10f / Mathf.Pow(reynolds, 2f / 3f);
+            return 0.5f * density * dragCoefficient * lineDiameter * length;
+        }
+
+        // 장비 몸체(구) 저항 계수 (힘 = 이 값 · v²), Cd = 24/Re + 6/(1 + √Re) + 0.4 (White 근사), Re = v · 지름 / ν
+        float GetBodyDragForce(Segment segment, float speed, float density, float viscosity)
+        {
+            float diameter = segment.bodyDiameter;
+            float reynolds = Mathf.Max(0.1f, speed * diameter / viscosity);
+            float dragCoefficient = 24f / reynolds + 6f / (1f + Mathf.Sqrt(reynolds)) + 0.4f;
+            float area = Mathf.PI * diameter * diameter * 0.25f;
+            return 0.5f * density * dragCoefficient * segment.bodyDragScale * area;
+        }
+
+        // 물에 잠긴 부피만큼 중력을 줄이는 비율 (물 밀도 · 잠긴 부피 / 전체 질량)
+        // 줄 부피 = π(굵기/2)² · 맡은 길이 (줄 밀도 0.0001 kg/m 면 무게의 약 70% 상쇄), 장비 몸체 부피 = bodyVolume (질량 / 재질 밀도)
+        // 몸체 부력은 잠긴 깊이에 비례하는 스프링 (세기 = g · 다 잠겼을 때 비율 / bodyHeight)
+        // 수치 안정: √세기 · Δt ≤ 1 로 묶음 (넘으면 서브스텝마다 지나쳤다 돌아오며 발산, 3cm 찌·Δt 0.0025s 면 약 490 배까지라 실제 찌 부력 범위엔 영향 없음)
+        float GetBuoyancyRatio(Segment segment, float lineSubmerged, float bodySubmerged, float deltaTime)
+        {
+            float mass = Mathf.Max(MinMass, segment.mass);
+            float lineVolume = Mathf.PI * lineDiameter * lineDiameter * 0.25f * segment.lineLength;
+            float lineRatio = WaterDensity * lineVolume / mass;
+
+            float bodyRatio = WaterDensity * segment.bodyVolume / mass;
+            if (segment.bodyHeight > 0f)
+                bodyRatio = Mathf.Min(bodyRatio, segment.bodyHeight / (Mathf.Max(0.01f, -gravity.y) * deltaTime * deltaTime));
+
+            return lineRatio * lineSubmerged + bodyRatio * bodySubmerged;
         }
 
         // 고정점: 스텝 목표 위치까지 t 비율로
-        // 나머지: 속도 + 공기 저항·감쇠 + 물 저항(잠겼을 때) + 중력
+        // 나머지: 속도 + 공기·물 저항·감쇠 + 수면 줄 물 저항 + 중력(잠긴 만큼 부력으로 줄어듦)
         void Integrate(float deltaTime, Vector3 tipPosition, float t)
         {
             float deltaTime2 = deltaTime * deltaTime;
@@ -693,18 +778,21 @@ namespace ClimbGames.ProjectF
                     continue;
                 }
 
+                // 잠긴 비율
+                // - 줄 몫: 줄 중심이 수면이면 반쯤 잠김 (떠 있는 줄도 물 원기둥 저항을 절반 받아 물에 붙잡힘, 처진 줄이 쉽게 펴지지 않아 로드의 작은 움직임이 찌까지 가지 않음)
+                //   waterOffset 만큼 위면 0, 아래면 다 잠김 (줄 굵기로 경계를 잡으면 수면에서 0 과 반 사이를 오가며 떨림)
+                // - 몸체 몫: 몸체 높이(bodyHeight) 중 수면 아래 비율, 점 위치는 bodyPivot (구는 중심 0.5: 중심이 수면이면 반, 찌는 아래 끝 0: 몸통 높이만큼 잠기면 다 잠김)
+                // 잠긴 만큼 물 저항과 부력 (찌 밑 채비가 공기 중처럼 흔들리지 않고 물에 붙잡혀 천천히 따라감, 착수 시 수면 줄 출렁임도 잡음)
+                float waterDepth = segment.waterHeight - segment.position.y;
+                float lineSubmerged = Mathf.Clamp01(0.5f + waterDepth / (2f * Mathf.Max(0.001f, waterOffset)));
+                float bodySubmerged = segment.bodyHeight > 0f ? Mathf.Clamp01(waterDepth / segment.bodyHeight + segment.bodyPivot) : 0f;
+
                 float speed = velocity.magnitude / deltaTime;
-                velocity /= 1f + GetDragRate(segment, speed) * deltaTime;
+                velocity /= 1f + GetDragRate(segment, speed, lineSubmerged, bodySubmerged) * deltaTime;
 
-                // 수면에 얹힌 줄 점도 물 저항을 받음, 줄 점은 위아래 움직임을 물이 더 잡아 줌 (착수 시 튀지 않음)
-                if (segment.position.y <= segment.waterHeight + waterOffset)
-                {
-                    velocity /= 1f + segment.waterDrag * deltaTime;
-                    if (segment.IsLine)
-                        velocity.y /= 1f + lineWaterVerticalDrag * deltaTime;
-                }
-
-                segment.position += velocity + gravityMove;
+                // 부력: 잠긴 부피만큼 중력이 줄어듦 (물보다 가벼운 찌는 잠긴 만큼 떠오름)
+                float buoyancyRatio = lineSubmerged > 0f || bodySubmerged > 0f ? GetBuoyancyRatio(segment, lineSubmerged, bodySubmerged, deltaTime) : 0f;
+                segment.position += velocity + gravityMove * (1f - buoyancyRatio);
 
                 // 찌 위쪽 줄 점은 잠긴 깊이만큼 수면으로 떠오름 (수면에서 중력과 비김, 최대 lineFloatMaxLift)
                 // 서브스텝마다 작은 이동만 주므로, 줄이 당기면 장력이 이겨 물속에 남음 (팁이 물속이어도 줄이 늘어나지 않음)
@@ -771,6 +859,8 @@ namespace ClimbGames.ProjectF
                     normals[j] = distance > 0.000001f ? offset / distance : Vector3.up;
                 }
 
+                bool activeChanged = false;
+                float maxError = 0f;
                 for (int j = 0; j < spanCount; ++j)
                 {
                     Segment a = segments[j], b = segments[j + 1];
@@ -779,7 +869,12 @@ namespace ClimbGames.ProjectF
                     float constraint = (a.position - b.position).magnitude - restLength;
 
                     // 처져 있고 쌓인 장력도 없는 구간은 풀지 않음 (Δλ = 0)
-                    if (weightSum <= 0f || (constraint <= 0f && lambdas[j] >= 0f))
+                    bool active = weightSum > 0f && (constraint > 0f || lambdas[j] < 0f);
+                    if (active != actives[j])
+                        activeChanged = true;
+                    actives[j] = active;
+
+                    if (active == false)
                     {
                         diagonal[j] = 1f;
                         lower[j] = upper[j] = rhs[j] = 0f;
@@ -792,7 +887,12 @@ namespace ClimbGames.ProjectF
                     lower[j] = j > 0 ? -a.solveInverseMass * Vector3.Dot(normals[j], normals[j - 1]) : 0f;
                     upper[j] = j < spanCount - 1 ? -b.solveInverseMass * Vector3.Dot(normals[j], normals[j + 1]) : 0f;
                     rhs[j] = -constraint - compliance * lambdas[j];
+                    maxError = Mathf.Max(maxError, Mathf.Abs(rhs[j]));
                 }
+
+                // 수렴: 당기는 구간 판정이 그대로이고 남은 오차가 모두 작으면 끝냄 (처진 줄·짧은 줄은 일찍 끝나고, 길고 팽팽한 줄만 많이 돎)
+                if (iteration > 0 && activeChanged == false && maxError < solveTolerance)
+                    break;
 
                 SolveTridiagonal(spanCount);
 

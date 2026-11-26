@@ -50,6 +50,7 @@ namespace ClimbGames.ProjectF
         private FishingLineDrawer[] lineDrawers;
         private FishingPlayer player;
         private Transform rodTip;
+        private Transform hook;
         private float lengthSpeed = float.PositiveInfinity;   // 줄 길이를 목표(totalLength)로 맞추는 속도 (m/s), SetLength 의 duration 으로 정함
 
         public float TotalLength => totalLength;
@@ -60,10 +61,11 @@ namespace ClimbGames.ProjectF
         public FishingLinePoint EndPoint => endPoint;
         public FishingLinePoint HandlePoint => handlePoint;
 
-        public void Initialize(FishingPlayer player, Transform rodTip, float length)
+        public void Initialize(FishingPlayer player, Transform rodTip, Transform hook, float length)
         {
             this.player = player;
             this.rodTip = rodTip;
+            this.hook = hook;
             lineDrawers = GetComponentsInChildren<FishingLineDrawer>();
 
             SetLength(Mathf.Max(1f, length));
@@ -393,9 +395,10 @@ namespace ClimbGames.ProjectF
             }
         }
 
-        // 손을 놓음 (바늘 점은 FishingHook 이 Detach 하면서 날아가는 바늘을 추적), 이후 줄 길이는 팁에서만
+        // 손을 놓음 (바늘은 줄에서 떨어져 날아가고 바늘 점이 그 바늘을 추적), 이후 줄 길이는 팁에서만
         protected override void OnCastingThrow(FishingEvent.OnCastingThrow param)
         {
+            endPoint.SetTrackingTarget(hook);
             DetachHandle(false);
             isOverhead = false;
             isPitching = false;
@@ -408,6 +411,8 @@ namespace ClimbGames.ProjectF
         // 찌 착수 (찌 점이 수면에 닿아 inWater 가 켜지면 FishingBobber 가 보냄): 줄이 수면에 얹힘
         protected override void OnBobberEnterWater(FishingEvent.OnBobberEnterWater param)
         {
+            // 바늘이 다시 줄 끝에 매달리므로 바늘 점 추적을 끊음
+            endPoint.SetTrackingTarget(null);
             lineBody.SetWaterContact(true);
 
             // 공중에 있던 줄이 내려앉을 때까지 조금 더 풀림
@@ -453,7 +458,7 @@ namespace ClimbGames.ProjectF
                 hookedFish.transform.position = hookedFish.ModelRoot.position;
                 hookedFish.ModelRoot.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
 
-                endPoint.Attach(param.hookedFish);
+                hookedFish.AttachToLine(endPoint);
             }
 
             // 바늘을 로드 가이드로 (다음 Idle 진입 때 OnCastingTypeChanged 에서 놓음)
