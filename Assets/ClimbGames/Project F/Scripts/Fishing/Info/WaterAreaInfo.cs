@@ -2,21 +2,6 @@
 
 namespace ClimbGames.ProjectF
 {
-    public struct WaterAreaInfo
-    {
-        private static WaterAreaInfo _default = new WaterAreaInfo();
-        public static WaterAreaInfo Default => _default;
-
-        public Vector3 center;
-        public float range;
-
-        public void Reset()
-        {
-            center = Vector3.zero;
-            range = 0f;
-        }
-    }
-
     public struct WaterSegmentInfo
     {
         private static WaterSegmentInfo _default = new WaterSegmentInfo();

@@ -57,6 +57,11 @@ namespace ClimbGames.ProjectF
             public HookedFish hookedFish;
         }
 
+        public struct OnFishFightStateChanged : IFishingEvent
+        {
+            public FishFightState state;
+        }
+
         public struct OnFishFlee : IFishingEvent
         {
         }

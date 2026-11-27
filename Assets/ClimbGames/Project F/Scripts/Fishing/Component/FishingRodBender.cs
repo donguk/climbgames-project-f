@@ -46,10 +46,15 @@ namespace ClimbGames.ProjectF
         private float[] boneOffsets;        // 루트 로컬 Y: 각 본 원점, 마지막은 팁
         private Vector2[] tipTable;         // 총 휨 각 θ(0 ~ maxBendAngle) → 루트 로컬 (횡, 축) 팁 위치
         private float[] polarTable;         // θ → 팁 위치각 (deg)
+        private float[] radiusByPolarLocal; // 위치각 0 ~ maxPolar 균등 간격 → 그립 ~ 팁 거리 (루트 로컬)
+        private float[] radiusByPolarWorld; // 위 표에 루트 스케일을 곱한 값 (줄 물리에 넘김)
+        private float radiusScale = -1f;    // radiusByPolarWorld 를 만들 때의 루트 스케일
+        private float maxPolar;             // 최대 휨일 때 팁 위치각 (deg)
         private bool isCached;
 
         private Vector3 loadDirection;
         private float loadTension;
+        private Vector3 lineDirection;      // 팁 → 다음 줄 점 (월드), zero 면 휨 한계 없음
 
         private Vector2 bend;               // 루트 로컬 (x, z) 평면의 총 휨 벡터 (deg)
 
@@ -140,6 +145,55 @@ namespace ClimbGames.ProjectF
                 tipTable[i] = EvaluateTip(theta);
                 polarTable[i] = Mathf.Atan2(tipTable[i].x, tipTable[i].y) * Mathf.Rad2Deg;
             }
+
+            // 위치각 → 팁 반지름 (줄 물리가 팁을 휜 로드가 닿을 수 있는 궤적 위에 묶을 때 씀, ApplyTip 과 같은 변환)
+            maxPolar = polarTable[TableSize - 1];
+            radiusByPolarLocal = new float[TableSize];
+            for (int k = 0; k < TableSize; ++k)
+            {
+                float polar = maxPolar * k / (TableSize - 1);
+                radiusByPolarLocal[k] = SampleTip(PolarToBend(polar)).magnitude;
+            }
+            radiusScale = -1f;
+        }
+
+        // 총 휨 각 θ → 팁 위치각 (deg), PolarToBend 의 역
+        private float BendToPolar(float bendDegrees)
+        {
+            float f = Mathf.Clamp01(bendDegrees / maxBendAngle) * (TableSize - 1);
+            int i = Mathf.Clamp((int)f, 0, TableSize - 2);
+            return Mathf.Lerp(polarTable[i], polarTable[i + 1], f - i);
+        }
+
+        // 총 휨 각 한계: 끝 접선(= 총 휨 각)은 줄이 당기는 방향을 넘어서 돌지 않음
+        // 로드 축(그립 로컬 +Y)과 팁 구간 줄 방향 사이 각도까지, 줄 방향이 없으면 maxBendAngle
+        private float GetLineBendLimit()
+        {
+            if (lineDirection.sqrMagnitude < 1e-8f)
+                return maxBendAngle;
+
+            Vector3 local = root.InverseTransformDirection(lineDirection);
+            float angle = Vector3.Angle(Vector3.up, local);
+            return float.IsFinite(angle) ? Mathf.Min(maxBendAngle, angle) : maxBendAngle;
+        }
+
+        // 루트 스케일이 바뀔 때만 월드 반지름 표를 다시 만듦 (매 프레임 할당하지 않음)
+        // 균등 스케일을 가정함 (x·z 와 y 스케일이 다르면 ApplyTip 메시 팁과 어긋나 SnapTip 이 팁 구간을 늘림)
+        private float[] GetRadiusByPolarWorld()
+        {
+            if (radiusByPolarLocal == null)
+                return null;
+
+            float scale = Mathf.Abs(root.lossyScale.y);
+            if (radiusByPolarWorld == null || radiusByPolarWorld.Length != radiusByPolarLocal.Length || Mathf.Abs(scale - radiusScale) > 1e-6f)
+            {
+                if (radiusByPolarWorld == null || radiusByPolarWorld.Length != radiusByPolarLocal.Length)
+                    radiusByPolarWorld = new float[radiusByPolarLocal.Length];
+                for (int k = 0; k < radiusByPolarLocal.Length; ++k)
+                    radiusByPolarWorld[k] = radiusByPolarLocal[k] * scale;
+                radiusScale = scale;
+            }
+            return radiusByPolarWorld;
         }
 
         private Vector2 SampleTip(float bendDegrees)
@@ -194,6 +248,11 @@ namespace ClimbGames.ProjectF
 
         // IRodTip ---------------------------------------------------------------
 
+        public void SetLineDirection(Vector3 direction)
+        {
+            lineDirection = float.IsFinite(direction.x) && float.IsFinite(direction.y) && float.IsFinite(direction.z) ? direction : Vector3.zero;
+        }
+
         // ① 정적 휨 각도: 로드 자중 + Fighting 게임 텐션 (그립 로컬 x·z, deg) — 줄·관성으로 지금 휜 각도는 쓰지 않음
         // ② BendToLocalTip: 본 체인 표(tipTable)에서 그 각도일 때 그립 로컬 팁 위치 (0 이면 곧은 로드 끝)
         // ③ root.TransformPoint: 그립의 지금 위치·회전으로 월드 변환
@@ -222,6 +281,10 @@ namespace ClimbGames.ProjectF
                 referenceDistance = Vector2.Distance(SampleTip(Mathf.Min(referenceBendAngle, maxBendAngle * 0.95f)), rest),
                 maxDistance = Vector2.Distance(SampleTip(maxBendAngle), rest),
                 pivot = root.position,
+                axis = root.up,
+                radiusByPolar = GetRadiusByPolarWorld(),
+                tablePolarRange = maxPolar,
+                maxPolar = BendToPolar(GetLineBendLimit()),   // 줄 방향을 넘어서 휘지 않는 팁 위치각
             };
         }
 
@@ -236,8 +299,9 @@ namespace ClimbGames.ProjectF
 
             if (lateralLength > 1e-6f && float.IsNaN(lateralLength) == false)
             {
+                // 줄 물리 투영이 같은 한계로 이미 막으므로 보통 같은 값 (안전망)
                 float polar = Mathf.Atan2(lateralLength, local.y) * Mathf.Rad2Deg;
-                bend = lateral / lateralLength * PolarToBend(polar);
+                bend = lateral / lateralLength * Mathf.Min(PolarToBend(polar), GetLineBendLimit());
             }
             else
             {

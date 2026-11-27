@@ -204,6 +204,15 @@ namespace ClimbGames.ProjectF
             public float referenceDistance; // 기준 하중일 때 처짐 (m)
             public float maxDistance;       // 최대 처짐 (m)
             public Vector3 pivot;           // 로드 그립 위치 (월드): 팁은 그립에서 앵커까지 거리를 반지름으로 하는 구면 위에서만 움직임 (로드는 축 방향으로 줄어들지 않음)
+
+            // 휜 로드가 닿을 수 있는 팁 궤적 (있으면 구면 대신 씀): 휠수록 팁이 그립 쪽으로 가까워지는 것을 반영
+            // 메시 팁(ApplyTip)과 같은 자리라 SnapTip 이 줄 팁을 옮기지 않음 (옮기면 그만큼 팁 구간이 늘어난 채 남음)
+            public Vector3 axis;            // 로드 축 (월드, 그립 루트 up)
+            public float[] radiusByPolar;   // 극각 0 ~ tablePolarRange 균등 간격마다 그립 ~ 팁 거리 (월드 m)
+            public float tablePolarRange;   // radiusByPolar 표가 덮는 극각 범위 (deg, 최대 휨일 때 극각)
+            public float maxPolar;          // 이번 스텝 팁이 갈 수 있는 최대 극각 (deg): 최대 휨, 또는 끝 접선이 줄 방향에 닿는 휨 중 작은 쪽
+
+            public readonly bool HasRodShape => radiusByPolar != null && radiusByPolar.Length >= 2 && tablePolarRange > 0.001f && axis.sqrMagnitude > 1e-8f;
         }
 
         private TipSpring tipSpring;
@@ -212,6 +221,8 @@ namespace ClimbGames.ProjectF
         private Vector3 tipAnchor;          // 이번 서브스텝 앵커
         private Vector3 tipPivotStart;
         private Vector3 tipPivot;           // 이번 서브스텝 그립 위치
+        private Vector3 tipAxisStart;
+        private Vector3 tipAxis;            // 이번 서브스텝 로드 축
         private float tipAnchorLambda;
         private float tipSubDeltaTime;
         private bool hasTipAnchor;
@@ -521,6 +532,7 @@ namespace ClimbGames.ProjectF
         {
             ReleasedLength = 0f;
             tipPivotStart = tipSpring.enabled && hasTipAnchor ? tipSpring.pivot : spring.pivot;
+            tipAxisStart = tipSpring.HasRodShape && hasTipAnchor ? tipSpring.axis : spring.axis;
             tipSpring = spring;
             tipAnchorStart = hasTipAnchor ? tipAnchorEnd : tipPosition;
             tipAnchorEnd = tipPosition;
@@ -900,6 +912,8 @@ namespace ClimbGames.ProjectF
                         Vector3 previousAnchor = tipAnchor;
                         tipAnchor = Vector3.Lerp(tipAnchorStart, tipAnchorEnd, t);
                         tipPivot = Vector3.Lerp(tipPivotStart, tipSpring.pivot, t);
+                        if (tipSpring.HasRodShape)
+                            tipAxis = tipAxisStart.sqrMagnitude > 1e-8f ? Vector3.Slerp(tipAxisStart, tipSpring.axis, t) : tipSpring.axis;
                         Vector3 anchorMove = tipAnchor - previousAnchor;
 
                         float omega = 2f * Mathf.PI * tipSpring.frequency;
@@ -1099,11 +1113,61 @@ namespace ClimbGames.ProjectF
             if (deflection.sqrMagnitude > maxDistance * maxDistance)
                 tip.position = tipAnchor + deflection.normalized * maxDistance;
 
-            // 로드는 축 방향으로 줄어들거나 늘어나지 않음: 그립에서 앵커까지 거리의 구면 위로
-            float radius = (tipAnchor - tipPivot).magnitude;
+            // 로드는 축 방향으로 줄어들거나 늘어나지 않음
+            // 휜 로드 팁 궤적이 있으면 그 위로 (휠수록 그립에 가까움), 없으면 그립에서 앵커까지 거리의 구면 위로
             Vector3 fromPivot = tip.position - tipPivot;
-            if (radius > 0.01f && fromPivot.sqrMagnitude > 1e-8f)
+            if (!(fromPivot.sqrMagnitude > 1e-8f))   // NaN 도 여기서 걸러짐
+                return;
+
+            if (tipSpring.HasRodShape)
+            {
+                tip.position = ProjectToRodShape(fromPivot);
+                return;
+            }
+
+            float radius = (tipAnchor - tipPivot).magnitude;
+            if (radius > 0.01f)
                 tip.position = tipPivot + fromPivot.normalized * radius;
+        }
+
+        // 그립에서 본 방향의 극각(로드 축 기준)으로 팁 궤적 반지름을 찾아 그 위로 옮김
+        // 극각이 maxPolar 를 넘으면 로드가 더 휘지 못하므로 방향을 축 쪽으로 maxPolar 까지 되돌림
+        Vector3 ProjectToRodShape(Vector3 fromPivot)
+        {
+            Vector3 axis = tipAxis.sqrMagnitude > 1e-8f ? tipAxis.normalized : tipSpring.axis.normalized;
+            Vector3 direction = fromPivot.normalized;
+
+            // 극각: ApplyTip 과 같은 atan2(횡, 축) (acos 보다 0° 근처에서 정확)
+            Vector3 lateral = Vector3.ProjectOnPlane(direction, axis);
+            float polar = Mathf.Atan2(lateral.magnitude, Vector3.Dot(direction, axis)) * Mathf.Rad2Deg;
+            if (float.IsFinite(polar) == false)
+                return tipPivot + fromPivot;
+
+            float maxPolar = Mathf.Clamp(tipSpring.maxPolar, 0f, tipSpring.tablePolarRange);
+            if (polar > maxPolar)
+            {
+                // 축과 거의 정반대면 횡 방향이 없으므로 앵커 쪽 횡 방향(없으면 축에 수직인 아무 방향)으로
+                if (lateral.sqrMagnitude <= 1e-8f)
+                {
+                    lateral = Vector3.ProjectOnPlane(tipAnchor - tipPivot, axis);
+                    if (lateral.sqrMagnitude <= 1e-8f)
+                        lateral = Vector3.Cross(axis, Mathf.Abs(axis.x) < 0.9f ? Vector3.right : Vector3.up);
+                }
+
+                float rad = maxPolar * Mathf.Deg2Rad;
+                direction = axis * Mathf.Cos(rad) + lateral.normalized * Mathf.Sin(rad);
+                polar = maxPolar;
+            }
+
+            float[] table = tipSpring.radiusByPolar;
+            float f = Mathf.Clamp01(polar / tipSpring.tablePolarRange) * (table.Length - 1);
+            int i = Mathf.Clamp((int)f, 0, table.Length - 2);
+            float radius = Mathf.Lerp(table[i], table[i + 1], f - i);
+
+            if (float.IsFinite(radius) == false || radius <= 0.01f)
+                return tipPivot + fromPivot;
+
+            return tipPivot + direction * radius;
         }
 
         // Thomas 알고리즘: lower[j] · x[j-1] + diagonal[j] · x[j] + upper[j] · x[j+1] = rhs[j]

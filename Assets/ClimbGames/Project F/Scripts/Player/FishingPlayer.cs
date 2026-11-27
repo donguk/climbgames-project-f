@@ -10,6 +10,7 @@ namespace ClimbGames.ProjectF
         private FishingPlayerModel model;
         private FishData fishData;
         private FishBiteClip biteClip;
+        private FishFightPattern fightPattern;
 
         private FishingSpot spot;
         private FishingActor actor;
@@ -98,6 +99,15 @@ namespace ClimbGames.ProjectF
             return biteClip;
         }
 
+        // 파이팅 패턴 (지금은 FightPattern_0 하나)
+        public FishFightPattern FetchFightPattern()
+        {
+            if (fightPattern == null)
+                fightPattern = AssetManager.LoadAsset<FishFightPattern>("FightPattern/FightPattern_0.asset");
+
+            return fightPattern;
+        }
+
         public HookedFish CreateHookedFish(FishingHook hook)
         {
             model.FishStatus.Initialize();
@@ -122,9 +132,13 @@ namespace ClimbGames.ProjectF
             if (biteClip != null)
                 AssetManager.Release(biteClip);
 
+            if (fightPattern != null)
+                AssetManager.Release(fightPattern);
+
             hookedFish = null;
             fishData = null;
             biteClip = null;
+            fightPattern = null;
         }
 
         public float GetFishNoise()

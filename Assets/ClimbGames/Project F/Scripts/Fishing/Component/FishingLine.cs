@@ -59,6 +59,7 @@ namespace ClimbGames.ProjectF
         private float lengthSpeed = float.PositiveInfinity;   // 줄 길이를 목표(totalLength)로 맞추는 속도 (m/s), SetLength 의 duration 으로 정함
 
         public float TotalLength => totalLength;
+        public float Stiffness => stiffness;
         public FishingLineBody Body => lineBody;
         public Transform RodTip => rodTip;
         public FishingLinePoint BobberPoint => bobberPoint;
@@ -200,6 +201,9 @@ namespace ClimbGames.ProjectF
             if (rodTipSpring != null)
             {
                 // 팁은 앵커에 스프링으로 묶인 질점: 줄 장력과 같이 풀고, 그 위치로 로드 본을 휜 뒤 메시 팁에 줄 시작을 맞춤
+                // 로드 끝은 줄 방향을 넘어서 휘지 않음: 지난 스텝 줄 방향으로 휨 한계를 정함
+                // (Step 의 팁 궤적 제한과 ApplyTip 본 휨이 같은 한계를 써야 시뮬 팁과 메시 팁이 같은 자리)
+                rodTipSpring.SetLineDirection(GetTipLineDirection());
                 lineBody.Step(deltaTime, rodTipSpring.GetTipAnchor(), stiffness, rodTipSpring.GetTipSpring());
                 lineBody.SnapTip(rodTipSpring.ApplyTip(lineBody.Tip.position));
             }
@@ -220,6 +224,27 @@ namespace ClimbGames.ProjectF
             SyncPose(sinkerPoint);
             SyncPose(handlePoint);
             SyncPose(endPoint);
+        }
+
+        // 팁에서 줄이 나가는 방향: 팁에서 TipDirectionReach 이상 떨어진 첫 줄 점까지 (팁 구간이 아주 짧을 때 방향이 프레임마다 튀지 않게)
+        // 점이 2개 미만이거나 모두 겹쳐 있으면 zero
+        const float TipDirectionReach = 0.1f;
+
+        Vector3 GetTipLineDirection()
+        {
+            var segments = lineBody.Segments;
+            if (segments.Count < 2)
+                return Vector3.zero;
+
+            Vector3 tip = segments[0].position;
+            Vector3 direction = Vector3.zero;
+            for (int i = 1; i < segments.Count; ++i)
+            {
+                direction = segments[i].position - tip;
+                if (direction.sqrMagnitude >= TipDirectionReach * TipDirectionReach)
+                    break;
+            }
+            return direction.sqrMagnitude > 1e-8f ? direction.normalized : Vector3.zero;
         }
 
         // 피칭: 손 점을 붙이고 팁–손 구간 길이를 맞춤
@@ -474,7 +499,7 @@ namespace ClimbGames.ProjectF
         protected override void OnFishBite(FishingEvent.OnFishBite param)
         {
             // 물고기 추적
-            endPoint.SetTrackingTarget(param.hookedFish.ModelRoot);
+            endPoint.SetTrackingTarget(param.hookedFish.transform);
             StopFreeRelease();
 
             // 물고기를 향해 물속으로 들어가는 줄은 수면에 걸리지 않음
@@ -497,16 +522,9 @@ namespace ClimbGames.ProjectF
             // 물고기가 잡혔다면 연결
             if (param.hookedFish != null)
             {
-                // 포지션 리셋
-                var hookedFish = param.hookedFish;
-                hookedFish.transform.position = hookedFish.ModelRoot.position;
-                hookedFish.ModelRoot.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-
-                hookedFish.AttachToLine(endPoint);
+                param.hookedFish.AttachToLine(endPoint);
+                endPoint.SetTrackingTarget(null);
             }
-
-            // 바늘을 로드 가이드로 (다음 Idle 진입 때 OnCastingTypeChanged 에서 놓음)
-            endPoint.SetTrackingTarget(param.rod.LineGuide);
         }
     }
 }

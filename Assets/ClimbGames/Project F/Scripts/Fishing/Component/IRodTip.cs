@@ -11,6 +11,10 @@ namespace ClimbGames.ProjectF
         // - 로드를 움직이면 앵커는 바로 따라가고, 질량이 있는 팁이 뒤처진 만큼 휨이 됨
         Vector3 GetTipAnchor();
 
+        // 팁에서 줄 쪽(팁 → 다음 줄 점) 월드 방향 (줄 물리가 Step 전에 지난 스텝 결과로 넘김, zero 면 없음)
+        // 로드 끝 접선은 줄이 당기는 방향을 넘어서 휘지 않으므로 휨 한계에 씀
+        void SetLineDirection(Vector3 direction);
+
         // 팁 스프링 속성 (진동수, 감쇠, 기준 하중·처짐, 최대 처짐)
         FishingLineBody.TipSpring GetTipSpring();
 

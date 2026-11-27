@@ -7,16 +7,23 @@ namespace ClimbGames.ProjectF
     {
         public float stamina;          // 0~1
         public float noiseSeed;
+        public FishFightState fightState;
 
         public void Initialize()
         {
             stamina = 1f;
             noiseSeed = Random.Range(0f, 1000f);
+            fightState = FishFightState.Run;
         }
 
         public void DecreaseStamina(float value)
         {
             stamina = Mathf.Clamp01(stamina - value);
+        }
+
+        public void RecoverStamina(float value)
+        {
+            stamina = Mathf.Clamp01(stamina + value);
         }
     }
 
@@ -32,7 +39,9 @@ namespace ClimbGames.ProjectF
 
         public float lineTension;
         public float currentTension;
-        public float tensionOverTime;
+        public float tensionOverTime;   // 끊김 한계를 넘은 시간
+        public float slackOverTime;     // 줄이 느슨한 시간
+        public bool isDragging;         // 드랙으로 줄이 풀리는 중
 
         private ReactiveProperty<float> lineLength = new ReactiveProperty<float>();
         private ReactiveProperty<CastingType> castingType = new ReactiveProperty<CastingType>();

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace ClimbGames
+namespace ClimbGames.ProjectF
 {
     // 입질: 물고기가 바늘을 당기는 힘 (찌의 잠김·기울기·로드 휨은 이 힘이 줄을 타고 전해진 물리 결과)
     [CreateAssetMenu(menuName = "Project HC/Fish BiteClip")]

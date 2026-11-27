@@ -1,27 +1,36 @@
 ﻿using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace ClimbGames.ProjectF
 {
+    // 바늘을 문 물고기: 자기 위치(transform) 하나로 움직임
+    // 이동 = 헤엄(의도, 수역 안으로 제한) + 줄 복원(줄 물리의 실제 장력만큼 줄 방향으로)
     public class HookedFish : MonoBehaviour
     {
         [SerializeField] private Transform modelRoot;
-        [SerializeField] private Transform moveTarget;
-        [SerializeField] private float rotationSpeed = 6.0f;
-        [SerializeField] private float steerAngleThreshold = 180f;
-        [SerializeField] private float closeDistanceThreshold = 0.1f;
-        [SerializeField] private Vector2 heightLimit = new Vector2(0f, 0.2f);
+        [SerializeField, Min(0f)] private float rotationSpeed = 6.0f;
+        [SerializeField, Range(0f, 180f)] private float steerAngleThreshold = 180f;
+        [SerializeField, Min(0f)] private float depthGain = 2f;            // 목표 깊이로 붙는 정도 (1/s)
+        [SerializeField, Min(0.1f)] private float maxRestoreSpeed = 10f;   // 줄에 끌려오는 최대 속도 (m/s)
 
-        private float hookHeight;
-        private float prevDistance;
-        private Vector3 targetPosition;
-        private FishStruggleInfo struggleInfo;
-        private LineTensionInfo tensionInfo;
-        private WaterAreaInfo areaInfo;
+        private FishingSpot spot;
+        private FishDepthSetting depth;
+        private float verticalSpeed = 1f;
+        private FishIntentInfo intent;
+
+        // 줄 끝(바늘) 구간의 실제 장력: 위쪽 줄 방향, 힘(N), 그 힘으로 줄이 늘어난 양(m, 한 스텝 최대 이동 제한용)
+        private Vector3 lineDirection;
+        private float lineForce;
+        private float lineStretch;
+
         private Rigidbody body;
 
+#if UNITY_EDITOR
+        private float debugTopY;
+        private float debugFloorY;
+#endif
+
         public Transform ModelRoot => modelRoot;
-        public Transform MoveTarget => moveTarget;
+        public FishIntentInfo Intent => intent;
         public Rigidbody Body
         {
             get
@@ -34,93 +43,103 @@ namespace ClimbGames.ProjectF
 
         public void Initialize()
         {
-            hookHeight = transform.position.y;
-            targetPosition = transform.position;
-            modelRoot.localPosition = Vector3.zero;
-            moveTarget.localPosition = Vector3.zero;
+            modelRoot.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            intent = default;
+            ClearLineForce();
+        }
+
+        // 헤엄칠 수역과 깊이 설정
+        public void SetWater(FishingSpot spot, in FishDepthSetting depth, float verticalSpeed)
+        {
+            this.spot = spot;
+            this.depth = depth;
+            this.verticalSpeed = Mathf.Max(0.01f, verticalSpeed);
+        }
+
+        public void SetIntent(in FishIntentInfo intent)
+        {
+            this.intent = intent;
+        }
+
+        // 줄 물리가 물고기를 당기는 힘: direction = 바늘 점에서 위쪽 줄 점 방향, force = 그 구간 장력 (N)
+        // stretch = 그 힘으로 줄이 늘어난 양 (m): 한 스텝에 이보다 많이 끌려오면 느슨해졌다 다시 당겨지며 떨림
+        public void SetLineForce(Vector3 direction, float force, float stretch)
+        {
+            lineDirection = direction.sqrMagnitude > 1e-8f ? direction.normalized : Vector3.zero;
+            lineForce = float.IsFinite(force) ? Mathf.Max(0f, force) : 0f;
+            lineStretch = float.IsFinite(stretch) ? Mathf.Max(0f, stretch) : 0f;
+        }
+
+        public void ClearLineForce()
+        {
+            lineDirection = Vector3.zero;
+            lineForce = 0f;
+            lineStretch = 0f;
         }
 
         void FixedUpdate()
         {
-            if (body == null || body.isKinematic)
-            {
-                SimulatePull();
-                SimulateStruggle();
-
-                struggleInfo.Reset();
-                tensionInfo.Reset();
-            }
-        }
-
-        void SimulatePull()
-        {
-            // 물고기의 목표 텐션을 위한 움직임
-            Vector3 lineDir = tensionInfo.direction;
-            if (lineDir.sqrMagnitude > 0.0001f)
-            {
-                Vector3 veclocity = lineDir.normalized * tensionInfo.intensity;
-                moveTarget.position += veclocity * Time.fixedDeltaTime;
-            }
-        }
-
-        void SimulateStruggle()
-        {
-            // 위치 재설정
-            float distance = Vector3.Distance(modelRoot.position, targetPosition);
-            if (prevDistance < distance || distance < 0.1f)
-            {
-                Vector2 randomCircle = Random.insideUnitCircle * areaInfo.range;
-                targetPosition = areaInfo.center + new Vector3(randomCircle.x, 0f, randomCircle.y);
-                targetPosition.y = hookHeight + Random.Range(heightLimit.x, heightLimit.y);
-
-                // 위치 보정
-                if (Vector3.Distance(modelRoot.position, targetPosition) < 0.1f)
-                    targetPosition += (targetPosition - modelRoot.position).normalized * 0.1f;
-            }
-            prevDistance = distance;
-
-            // 이동
-            Vector3 directionToTarget = targetPosition - modelRoot.position;
-            distance = directionToTarget.magnitude;
-
-            float maxMoveStep = struggleInfo.speed * Time.fixedDeltaTime;
-            if (distance <= maxMoveStep)
-            {
-                modelRoot.SetPositionAndRotation(targetPosition, Quaternion.LookRotation(directionToTarget.normalized));
+            // 줄에 조인트로 매달린 뒤(회수)에는 물리가 움직임
+            if (body != null && body.isKinematic == false)
                 return;
-            }
 
-            Vector3 normalizedDirection = directionToTarget.normalized;
-            float angle = Vector3.Angle(modelRoot.forward, normalizedDirection);
-            Quaternion targetRotation = Quaternion.LookRotation(normalizedDirection);
+            if (spot == null)
+                return;
 
-            // 제한 각도 보다 작고 먼 경우는 부드럽게 이동
-            if (angle <= steerAngleThreshold && distance > closeDistanceThreshold)
+            float dt = Time.fixedDeltaTime;
+            Vector3 position = transform.position;
+
+            // 높이 범위
+            spot.GetDepthRange(position, depth, out float topY, out float floorY);
+            floorY = Mathf.Min(floorY, topY);
+#if UNITY_EDITOR
+            debugTopY = topY;
+            debugFloorY = floorY;
+#endif
+
+            // 1. 목표 깊이로 상하 속도
+            float targetY = Mathf.Lerp(topY, floorY, intent.depthRatio);
+            float verticalVelocity = Mathf.Clamp((targetY - position.y) * depthGain, -verticalSpeed, verticalSpeed);
+
+            // 2. 회전: heading(+상하) 쪽으로 부드럽게
+            Vector3 heading = intent.heading;
+            heading.y = 0f;
+            if (heading.sqrMagnitude > 0.0001f)
             {
-                modelRoot.rotation = Quaternion.Slerp(
-                    modelRoot.rotation,
-                    targetRotation,
-                    Time.fixedDeltaTime * rotationSpeed
-                );
+                heading.Normalize();
+                Vector3 lookDirection = heading * Mathf.Max(intent.swimSpeed, 0.5f) + Vector3.up * verticalVelocity;
+                Quaternion targetRotation = Quaternion.LookRotation(lookDirection.normalized, Vector3.up);
+
+                float angle = Quaternion.Angle(transform.rotation, targetRotation);
+                transform.rotation = angle <= steerAngleThreshold
+                    ? Quaternion.Slerp(transform.rotation, targetRotation, dt * rotationSpeed)
+                    : targetRotation;
             }
-            else
+
+            // 3. 헤엄: 지금 바라보는 수평 방향으로 (자기 헤엄으로는 수역 밖, 수면 위, 바닥 아래로 못 감)
+            Vector3 forward = transform.forward;
+            forward.y = 0f;
+            forward = forward.sqrMagnitude > 0.0001f ? forward.normalized : Vector3.zero;
+
+            Vector3 swimVelocity = forward * intent.swimSpeed + Vector3.up * verticalVelocity;
+            Vector3 next = position + swimVelocity * dt;
+            if (spot.IsInsideAreas(position))
+                next = spot.ClampInAreas(next);
+            if (position.y <= topY)
+                next.y = Mathf.Min(next.y, topY);
+            next.y = Mathf.Max(next.y, floorY);
+
+            // 4. 줄 복원: 줄의 실제 장력만큼 위쪽 줄 방향으로 (수역/수면 제한 없음, 감으면 끌려 나옴)
+            //    한 스텝 이동은 늘어난 양의 절반까지 (지나쳐서 느슨해졌다 다시 당겨지는 떨림 방지)
+            if (lineForce > 0f && lineDirection != Vector3.zero)
             {
-                modelRoot.rotation = targetRotation;
+                float restoreSpeed = Mathf.Min(maxRestoreSpeed, lineForce * intent.restoreGain);
+                next += lineDirection * Mathf.Min(restoreSpeed * dt, lineStretch * 0.5f);
             }
 
-            // 정면(forward)으로 이동
-            modelRoot.position += modelRoot.forward * struggleInfo.speed * Time.fixedDeltaTime;
-        }
-
-        public void SetStruggleInfo(FishStruggleInfo struggleInfo)
-        {
-            this.struggleInfo = struggleInfo;
-            areaInfo = struggleInfo.areaInfo;
-        }
-
-        public void SetTensionInfo(LineTensionInfo tensionInfo)
-        {
-            this.tensionInfo = tensionInfo;
+            // 바닥은 뚫지 않음
+            next.y = Mathf.Max(next.y, floorY);
+            transform.position = next;
         }
 
         // 줄 점에 조인트로 매달림 (위치는 그대로, 회전만 점에 맞춤)
@@ -156,8 +175,22 @@ namespace ClimbGames.ProjectF
 #if UNITY_EDITOR
         void OnDrawGizmos()
         {
-            UnityEditor.Handles.color = Color.green;
-            UnityEditor.Handles.DrawWireDisc(areaInfo.center, Vector3.up, areaInfo.range);
+            if (spot == null)
+                return;
+
+            Vector3 position = transform.position;
+
+            // 헤엄 방향
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawLine(position, position + intent.heading * Mathf.Max(0.5f, intent.swimSpeed));
+
+            // 수면 ~ 바닥 범위
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(new Vector3(position.x, debugTopY, position.z), new Vector3(position.x, debugFloorY, position.z));
+            UnityEditor.Handles.color = Color.blue;
+            UnityEditor.Handles.DrawWireDisc(new Vector3(position.x, debugFloorY, position.z), Vector3.up, 0.15f);
+
+            UnityEditor.Handles.Label(position + Vector3.up * 0.3f, intent.state.ToString());
         }
 #endif
     }

@@ -4,31 +4,31 @@ namespace ClimbGames.ProjectF
 {
     public class FishingWaterArea : MonoBehaviour
     {
-        [SerializeField] private float radius = 1f;
+        [SerializeField, Min(0.01f)] private float radius = 1f;
 
         public Vector3 Center => transform.position;
         public float Radius => radius;
 
-        public WaterAreaInfo GetInnerAreaInfo(Vector3 position, float range)
+        // 수평 거리 기준으로 원 안인지 (margin 만큼 안쪽)
+        public bool Contains(Vector3 position, float margin = 0f)
         {
-            // 전체 영역 정보
-            Vector3 waterCenter = transform.position;
-            float waterRange = radius;
-            position.y = waterCenter.y;
+            Vector3 offset = position - Center;
+            offset.y = 0f;
 
-            // 원 사이즈 제한
-            float validRange = Mathf.Min(waterRange, range);
-            float maxCenterRadius = waterRange - validRange;
+            float validRadius = Mathf.Max(0f, radius - margin);
+            return offset.sqrMagnitude <= validRadius * validRadius;
+        }
 
-            Vector3 offsetFromCenter = position - waterCenter;
-            Vector3 clampedOffset = Vector3.ClampMagnitude(offsetFromCenter, maxCenterRadius);
-            Vector3 validCenter = waterCenter + clampedOffset;
+        // 원 안으로 수평 clamp 한 점 (높이는 그대로)
+        public Vector3 ClosestPoint(Vector3 position, float margin = 0f)
+        {
+            Vector3 center = Center;
+            Vector3 offset = position - center;
+            offset.y = 0f;
 
-            return new WaterAreaInfo()
-            {
-                center = validCenter,
-                range = validRange,
-            };
+            float validRadius = Mathf.Max(0f, radius - margin);
+            Vector3 clamped = Vector3.ClampMagnitude(offset, validRadius);
+            return new Vector3(center.x + clamped.x, position.y, center.z + clamped.z);
         }
 
         public WaterSegmentInfo GetInnerSegmentInfo(Transform target)
