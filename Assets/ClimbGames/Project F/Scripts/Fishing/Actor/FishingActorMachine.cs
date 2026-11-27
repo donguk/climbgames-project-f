@@ -38,6 +38,9 @@ namespace ClimbGames.ProjectF
 
                     if (Keyboard.current.bKey.wasReleasedThisFrame)
                         Player.FishMachine.ChangeState(FishState.Bite);
+
+                    if (Keyboard.current.nKey.wasReleasedThisFrame)
+                        Player.FishMachine.ChangeState(FishState.Nibble);
                 }
             }
 

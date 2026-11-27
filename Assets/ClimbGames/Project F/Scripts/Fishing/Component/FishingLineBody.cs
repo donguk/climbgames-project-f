@@ -59,7 +59,11 @@ namespace ClimbGames.ProjectF
             public float groundHeight = float.NegativeInfinity; // 아래 땅 높이 + groundOffset
             public bool inWater;
             public bool onGround;
-            public float upperTension;          // 위쪽(팁 쪽) 구간 장력 (N), 이번 Step 서브스텝 중 최대값 (짧게 튀는 장력도 잡음)
+            // 위·아래 구간이 이 점을 당기는 힘 (N, 이 점에서 이웃 점 쪽, 크기는 장력), 이번 Step 서브스텝 중 장력이 가장 큰 순간 (짧게 튀는 장력도 잡음)
+            public Vector3 upperForce;          // 위쪽(팁 쪽) 구간
+            public Vector3 lowerForce;          // 아래쪽(바늘 쪽) 구간
+            public float UpperTension => upperForce.magnitude;
+            public float LowerTension => lowerForce.magnitude;
 
             internal Vector3 stepStart;
             internal float inverseMass;
@@ -543,7 +547,8 @@ namespace ClimbGames.ProjectF
                 segment.controller?.OnPreStep(segment);
                 segment.inverseMass = segment.IsPinned ? 0f : 1f / Mathf.Max(MinMass, segment.mass);
                 segment.stepStart = segment.position;
-                segment.upperTension = 0f;
+                segment.upperForce = Vector3.zero;
+                segment.lowerForce = Vector3.zero;
             }
 
             // 팁 스프링: 팁 질량 = 접선 강성 / ω² (진동수와 기준 휨을 따로 정할 수 있게)
@@ -579,10 +584,23 @@ namespace ClimbGames.ProjectF
                 // 다음 서브스텝 풀이용 질량에 씀
                 for (int j = 0; j < SpanCount; ++j)
                 {
-                    tensions[j] = Mathf.Max(0f, -lambdas[j] / (subDeltaTime * subDeltaTime));
+                    float tension = Mathf.Max(0f, -lambdas[j] / (subDeltaTime * subDeltaTime));
+                    tensions[j] = tension;
+                    if (tension <= 0f || float.IsFinite(tension) == false)
+                        continue;
 
+                    Segment upper = segments[j];
                     Segment lower = segments[j + 1];
-                    lower.upperTension = Mathf.Max(lower.upperTension, tensions[j]);
+                    Vector3 span = lower.position - upper.position;
+                    float spanLength = span.magnitude;
+                    if (float.IsFinite(spanLength) == false || spanLength < 1e-6f)
+                        continue;
+
+                    Vector3 down = span / spanLength;
+                    if (tension > lower.UpperTension)
+                        lower.upperForce = -down * tension;
+                    if (tension > upper.LowerTension)
+                        upper.lowerForce = down * tension;
                 }
 
                 if (SpanCount > 0)

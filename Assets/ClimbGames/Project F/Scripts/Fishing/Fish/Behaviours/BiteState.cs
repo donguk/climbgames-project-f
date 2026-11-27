@@ -6,9 +6,9 @@ namespace ClimbGames.ProjectF
     {
         public class BiteState : FishStateBase
         {
-            private FishData fishData;
+            private FishBiteClip biteClip;
             private NormalizedTimer biteTimer = new NormalizedTimer();
-            private Vector3 angleAxis;
+            private Vector3 pullDirection;
 
             public BiteState(FishingPlayer player, FishMachine fsm) : base(player, fsm)
             {
@@ -16,28 +16,30 @@ namespace ClimbGames.ProjectF
 
             protected override void OnEnter()
             {
-                fishData = Player.FetchFishData();
+                Player.FetchFishData();
+                biteClip = Player.FetchBiteClip();
 
-                biteTimer.Reset(fishData.biteClip.duration);
-                angleAxis = Random.Range(0, 2) > 0 ? Vector3.forward : Vector3.back;
+                biteTimer.Reset(biteClip.duration);
+                pullDirection = GetPullDirection(biteClip);
             }
 
             protected override void OnUpdate()
             {
                 biteTimer.Update(Time.deltaTime);
 
+                // 물고기가 바늘을 당김 (찌가 수면에 떠 있을 때만, 찌의 잠김·기울기는 줄 물리가 만듦)
                 if (Actor.Bobber.IsFloating)
-                {
-                    Actor.Bobber.SetBiteInfo(new FishBiteInfo()
-                    {
-                        bobberHeight = fishData.biteClip.bobberHeight.Evaluate(biteTimer.Value),
-                        bobberRotation = fishData.biteClip.bobberRotation.Evaluate(biteTimer.Value),
-                        angleAxis = angleAxis,
-                    });
-                }
+                    Actor.Hook.SetPull(pullDirection, biteClip.pull.Evaluate(biteTimer.Value));
+                else
+                    Actor.Hook.ClearPull();
 
                 if (biteTimer.IsCompleted)
                     fsm.ChangeState(FishState.Struggle);
+            }
+
+            protected override void OnExit()
+            {
+                Actor.Hook.ClearPull();
             }
         }
     }

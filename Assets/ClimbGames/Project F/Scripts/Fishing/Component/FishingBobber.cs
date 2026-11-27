@@ -62,7 +62,6 @@ namespace ClimbGames.ProjectF
         private Vector3 tiltDirection = Vector3.forward;
         private Vector3 lastPointPosition;
         private NormalizedTimer landingTimer = new NormalizedTimer();
-        private FishBiteInfo biteInfo;
 
         public bool IsFloating => RuntimeJoint == null;
 
@@ -110,7 +109,6 @@ namespace ClimbGames.ProjectF
             {
                 transform.position = LinePoint.transform.position;
                 SimulateRotation(Time.fixedDeltaTime);
-                biteInfo.Reset();
             }
             else if (canLand && point.inWater)
             {
@@ -181,16 +179,23 @@ namespace ClimbGames.ProjectF
             MessageBroker.Publish(new FishingEvent.OnBobberEnterWater() { waterHeight = point.waterHeight });
         }
 
-        // 줄 방향(수평)으로, 찌가 움직이는 속도와 로드를 흔든 장력 변화 중 큰 쪽만큼 기움
-        // 방향과 크기를 따로 따라감: 방향은 줄 방향을 빠르게, 크기는 빠르게 기울고 천천히 회복
+        // 찌에 걸린 줄 힘(위쪽 줄 + 아래쪽 줄)의 수평 방향으로, 찌가 움직이는 속도와 줄 힘 중 큰 쪽만큼 기움
+        // - 위쪽 줄: 로드를 흔들거나 감을 때, 아래쪽 줄: 물고기가 바늘을 당길 때 (입질)
+        // - 바로 아래로 당기면 수평 힘이 없어 기울지 않고 잠기기만 함, 위·아래가 반대로 당기면 서로 상쇄
+        // 방향과 크기를 따로 따라감: 방향은 빠르게, 크기는 빠르게 기울고 천천히 회복
         // (한 회전으로 Slerp 하면 처음 당긴 방향으로 기운 뒤 줄 방향이 바뀌어도 회복 속도로만 따라가서 방향이 어긋남)
         void SimulateRotation(float deltaTime)
         {
-            // 줄이 거의 수직이면 기울 방향이 없으므로 이전 방향 유지
-            Vector3 lineDirection = LinePoint.LineDirection;
-            lineDirection.y = 0f;
-            if (lineDirection.sqrMagnitude > 1e-6f)
-                tiltDirection = Vector3.Slerp(tiltDirection, lineDirection.normalized, tiltTurnSpeed * deltaTime).normalized;
+            var point = BodyPoint;
+            Vector3 lineForce = point != null ? point.upperForce + point.lowerForce : Vector3.zero;
+            lineForce.y = 0f;
+            float lineForceHorizontal = lineForce.magnitude;
+
+            // 줄 힘이 기울기 시작 장력을 넘으면 그 방향, 아니면 위쪽 줄 방향 (줄이 거의 수직이면 이전 방향 유지)
+            Vector3 direction = lineForceHorizontal > tiltShakeTension ? lineForce : LinePoint.LineDirection;
+            direction.y = 0f;
+            if (direction.sqrMagnitude > 1e-6f)
+                tiltDirection = Vector3.Slerp(tiltDirection, direction.normalized, tiltTurnSpeed * deltaTime).normalized;
 
             // 움직임: 찌 점의 수평 속도 (끌려오거나 미끄러질 때)
             Vector3 position = LinePoint.transform.position;
@@ -199,9 +204,8 @@ namespace ClimbGames.ProjectF
             lastPointPosition = position;
             float moveAngle = maxTiltAngle * (1f - Mathf.Exp(-(move.magnitude / deltaTime) / tiltMoveSpeed));
 
-            // 흔들림: tiltShakeTension 을 넘은 장력 (로드를 흔들어 줄이 당겨질 때)
-            float tension = BodyPoint != null ? BodyPoint.upperTension : 0f;
-            float shakeExcess = Mathf.Max(0f, tension - tiltShakeTension);
+            // 줄 힘: tiltShakeTension 을 넘은 수평 줄 힘 (로드를 흔들어 줄이 당겨지거나, 물고기가 바늘을 옆으로 당길 때)
+            float shakeExcess = Mathf.Max(0f, lineForceHorizontal - tiltShakeTension);
             float shakeAngle = maxTiltAngle * (1f - Mathf.Exp(-shakeExcess / tiltSensitivity));
 
             float targetAngle = Mathf.Max(moveAngle, shakeAngle);
@@ -260,11 +264,6 @@ namespace ClimbGames.ProjectF
             canLand = true;
 
             Debug.Log("[FishingBobber] BreakOut");
-        }
-
-        public void SetBiteInfo(FishBiteInfo biteInfo)
-        {
-            this.biteInfo = biteInfo;
         }
 
 

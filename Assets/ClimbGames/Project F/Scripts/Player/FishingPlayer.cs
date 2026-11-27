@@ -9,6 +9,7 @@ namespace ClimbGames.ProjectF
     {
         private FishingPlayerModel model;
         private FishData fishData;
+        private FishBiteClip biteClip;
 
         private FishingSpot spot;
         private FishingActor actor;
@@ -88,6 +89,15 @@ namespace ClimbGames.ProjectF
             return fishData;
         }
 
+        // 입질 클립 (지금은 Nibble, Bite 모두 BiteClip_0)
+        public FishBiteClip FetchBiteClip()
+        {
+            if (biteClip == null)
+                biteClip = AssetManager.LoadAsset<FishBiteClip>("BiteClip/BiteClip_0.asset");
+
+            return biteClip;
+        }
+
         public HookedFish CreateHookedFish(FishingHook hook)
         {
             model.FishStatus.Initialize();
@@ -109,8 +119,12 @@ namespace ClimbGames.ProjectF
             if (fishData != null)
                 AssetManager.Release(fishData);
 
+            if (biteClip != null)
+                AssetManager.Release(biteClip);
+
             hookedFish = null;
             fishData = null;
+            biteClip = null;
         }
 
         public float GetFishNoise()
