@@ -182,6 +182,80 @@ namespace ClimbGames.ProjectF
         public float GetSpanLength(int span) => Mathf.Max(MinSpanLength, segments[span].height - segments[span + 1].height);
         public float GetTension(int span) => span >= 0 && span < SpanCount ? tensions[span] : 0f;
 
+        // 팁 구간(0) 장력의 마지막 Step 서브스텝 평균 (N)
+        public float TipTension => tipTensionAverage;
+        private float tipTensionAverage;
+
+        // 로드 팁 스프링: 켜면 팁은 고정점이 아니라, Step 의 tipPosition(앵커: 정적 휨만 반영한 목표 팁)에 스프링으로 묶인 질점
+        // 줄 길이 제약과 같은 반복 안에서 같이 풀어서, 줄 장력과 로드 휨이 지연 없이 평형을 찾음
+        // 힘(처짐 d) = F0 · −ln(1 − d / maxDistance): 처음엔 무르고 maxDistance 에 가까울수록 단단해짐 (referenceForce 에서 referenceDistance)
+        [Serializable]
+        public struct TipSpring
+        {
+            public bool enabled;
+            public float frequency;         // 하중 없을 때 팁 고유 진동수 (Hz)
+            public float dampingRatio;      // 앵커 기준 감쇠비
+            public float airDrag;           // 공기 저항 (1/s)
+            public float referenceForce;    // 기준 하중 (N)
+            public float referenceDistance; // 기준 하중일 때 처짐 (m)
+            public float maxDistance;       // 최대 처짐 (m)
+            public Vector3 pivot;           // 로드 그립 위치 (월드): 팁은 그립에서 앵커까지 거리를 반지름으로 하는 구면 위에서만 움직임 (로드는 축 방향으로 줄어들지 않음)
+        }
+
+        private TipSpring tipSpring;
+        private Vector3 tipAnchorStart;     // 이번 Step 시작 앵커
+        private Vector3 tipAnchorEnd;       // 이번 Step 끝 앵커 (Step 의 tipPosition)
+        private Vector3 tipAnchor;          // 이번 서브스텝 앵커
+        private Vector3 tipPivotStart;
+        private Vector3 tipPivot;           // 이번 서브스텝 그립 위치
+        private float tipAnchorLambda;
+        private float tipSubDeltaTime;
+        private bool hasTipAnchor;
+
+        public Vector3 TipVelocity => segments.Count > 0 && tipSubDeltaTime > 0f ? (segments[0].position - segments[0].previous) / tipSubDeltaTime : Vector3.zero;
+
+        float TipSpringF0 => tipSpring.referenceForce / -Mathf.Log(1f - Mathf.Clamp(tipSpring.referenceDistance / tipSpring.maxDistance, 0.001f, TipSpringKneeRatio));
+
+        // 처짐 d 에서 할선 강성 (N/m), d → 0 이면 접선 강성 F0 / maxDistance
+        // 0.9 · maxDistance 를 넘으면 그 점의 접선으로 이어서 (힘이 무한대로 가거나 꺾이지 않게) 아주 단단한 선형 스프링
+        const float TipSpringKneeRatio = 0.9f;
+
+        float GetTipForce(float distance)
+        {
+            float dmax = tipSpring.maxDistance;
+            float f0 = TipSpringF0;
+            float ratio = distance / dmax;
+            if (ratio <= TipSpringKneeRatio)
+                return f0 * -Mathf.Log(1f - ratio);
+
+            float kneeForce = f0 * -Mathf.Log(1f - TipSpringKneeRatio);
+            float kneeSlope = f0 / (dmax * (1f - TipSpringKneeRatio));
+            return kneeForce + kneeSlope * (distance - TipSpringKneeRatio * dmax);
+        }
+
+        float GetTipStiffness(float distance)
+        {
+            float dmax = tipSpring.maxDistance;
+            if (distance < dmax * 0.001f)
+                return TipSpringF0 / dmax;
+
+            return GetTipForce(distance) / distance;
+        }
+
+        bool IsTipSpringValid => tipSpring.enabled && tipSpring.maxDistance > 0.001f && tipSpring.referenceDistance > 0f && tipSpring.referenceForce > 0f && tipSpring.frequency > 0f;
+
+        // 팁을 pos 로 옮김 (속도 유지): 로드 본 피팅 결과(메시 팁)에 줄 시작을 맞출 때
+        public void SnapTip(Vector3 position)
+        {
+            if (segments.Count == 0)
+                return;
+
+            Segment tip = segments[0];
+            Vector3 shift = position - tip.position;
+            tip.position += shift;
+            tip.previous += shift;
+        }
+
         // 수면에 닿은 일반 줄 점이 수면 위에 얹힘 (물고기를 향해 물속으로 들어가는 줄은 끔)
         public void SetWaterContact(bool isEnabled)
         {
@@ -293,6 +367,8 @@ namespace ClimbGames.ProjectF
             segments.Clear();
             pendingFeeds.Clear();
             segments.Add(new Segment() { kind = SegmentKind.Tip, height = length, position = tipPosition, previous = tipPosition });
+            tipAnchorEnd = tipAnchor = tipPosition;
+            hasTipAnchor = true;
         }
 
         // 장비 점 추가 (높이 순 위치에 넣음, 사이 줄 점은 다음 스텝에 맞춰짐)
@@ -433,9 +509,28 @@ namespace ClimbGames.ProjectF
         // stiffness: 줄을 1 배 늘리는 데 드는 힘 (N)
         public void Step(float deltaTime, Vector3 tipPosition, float stiffness)
         {
+            Step(deltaTime, tipPosition, stiffness, default);
+        }
+
+        // spring.enabled 면 tipPosition 은 팁 앵커 (정적 휨만 반영한 목표 팁), 아니면 팁 고정 위치
+        public void Step(float deltaTime, Vector3 tipPosition, float stiffness, TipSpring spring)
+        {
             ReleasedLength = 0f;
+            tipPivotStart = tipSpring.enabled && hasTipAnchor ? tipSpring.pivot : spring.pivot;
+            tipSpring = spring;
+            tipAnchorStart = hasTipAnchor ? tipAnchorEnd : tipPosition;
+            tipAnchorEnd = tipPosition;
+            hasTipAnchor = true;
+            if (IsTipSpringValid == false)
+                tipAnchor = tipPosition;
+
             if (segments.Count < 2 || deltaTime <= 0f)
+            {
+                // 줄 점이 없으면 팁은 앵커를 그대로 따라감
+                if (segments.Count > 0)
+                    segments[0].position = segments[0].previous = tipPosition;
                 return;
+            }
 
             NormalizeSegments();
             PrepareFeeds();
@@ -450,12 +545,22 @@ namespace ClimbGames.ProjectF
                 segment.stepStart = segment.position;
                 segment.upperTension = 0f;
             }
+
+            // 팁 스프링: 팁 질량 = 접선 강성 / ω² (진동수와 기준 휨을 따로 정할 수 있게)
+            if (IsTipSpringValid)
+            {
+                float omega = 2f * Mathf.PI * tipSpring.frequency;
+                float tipMass = GetTipStiffness(0f) / (omega * omega);
+                segments[0].inverseMass = 1f / Mathf.Max(MinMass, tipMass);
+            }
             UpdateContactHeights();
 
             stiffness = Mathf.Max(0.0001f, stiffness);
 
             int stepCount = Mathf.Max(1, subStepCount);
             float subDeltaTime = deltaTime / stepCount;
+            tipSubDeltaTime = subDeltaTime;
+            float tipTensionSum = 0f;
             for (int s = 0; s < stepCount; ++s)
             {
                 float t = (s + 1f) / stepCount;
@@ -479,7 +584,13 @@ namespace ClimbGames.ProjectF
                     Segment lower = segments[j + 1];
                     lower.upperTension = Mathf.Max(lower.upperTension, tensions[j]);
                 }
+
+                if (SpanCount > 0)
+                    tipTensionSum += tensions[0];
             }
+
+            // 팁 구간 장력의 이번 Step 서브스텝 평균 (순간값보다 덜 튐, 로드 휨에 씀)
+            tipTensionAverage = tipTensionSum / stepCount;
 
             pendingFeeds.Clear();
 
@@ -765,7 +876,24 @@ namespace ClimbGames.ProjectF
 
                 if (segment.IsTip)
                 {
-                    segment.position = Vector3.Lerp(segment.stepStart, tipPosition, t);
+                    if (IsTipSpringValid)
+                    {
+                        // 앵커 기준 감쇠 + 공기 저항 (중력은 로드 앵커에 이미 들어 있음)
+                        Vector3 previousAnchor = tipAnchor;
+                        tipAnchor = Vector3.Lerp(tipAnchorStart, tipAnchorEnd, t);
+                        tipPivot = Vector3.Lerp(tipPivotStart, tipSpring.pivot, t);
+                        Vector3 anchorMove = tipAnchor - previousAnchor;
+
+                        float omega = 2f * Mathf.PI * tipSpring.frequency;
+                        float damping = 2f * tipSpring.dampingRatio * omega;
+                        Vector3 relative = (velocity - anchorMove) / (1f + damping * deltaTime);
+                        velocity = (anchorMove + relative) / (1f + Mathf.Max(0f, tipSpring.airDrag) * deltaTime);
+                        segment.position += velocity;
+                    }
+                    else
+                    {
+                        segment.position = Vector3.Lerp(segment.stepStart, tipPosition, t);
+                    }
                     continue;
                 }
 
@@ -849,9 +977,13 @@ namespace ClimbGames.ProjectF
 
             for (int j = 0; j < spanCount; ++j)
                 lambdas[j] = 0f;
+            tipAnchorLambda = 0f;
 
             for (int iteration = 0; iteration < iterationCount; ++iteration)
             {
+                // 로드 팁 스프링 (앵커까지 거리 0 제약, 줄 구간과 번갈아 풂)
+                SolveTipAnchor(deltaTime2);
+
                 for (int j = 0; j < spanCount; ++j)
                 {
                     Vector3 offset = segments[j].position - segments[j + 1].position;
@@ -920,6 +1052,40 @@ namespace ClimbGames.ProjectF
 
                 ClampContacts();
             }
+        }
+
+        // 팁 → 앵커 거리 0 제약 (XPBD), 비선형 강성은 지금 처짐의 할선 강성으로
+        void SolveTipAnchor(float deltaTime2)
+        {
+            if (IsTipSpringValid == false || segments.Count == 0)
+                return;
+
+            Segment tip = segments[0];
+            float inverseMass = tip.solveInverseMass > 0f ? tip.solveInverseMass : tip.inverseMass;
+            if (inverseMass <= 0f)
+                return;
+
+            Vector3 offset = tip.position - tipAnchor;
+            float distance = offset.magnitude;
+            if (distance < 1e-7f)
+                return;
+
+            float compliance = 1f / (GetTipStiffness(distance) * deltaTime2);
+            float deltaLambda = (-distance - compliance * tipAnchorLambda) / (inverseMass + compliance);
+            tipAnchorLambda += deltaLambda;
+            tip.position += offset / distance * (deltaLambda * inverseMass);
+
+            // 로드가 휠 수 있는 범위(최대 처짐) 밖으로는 가지 않음: 넘으면 로드 본이 따라가지 못해 메시 팁과 줄 시작이 어긋나고 줄이 꺾임
+            Vector3 deflection = tip.position - tipAnchor;
+            float maxDistance = tipSpring.maxDistance;
+            if (deflection.sqrMagnitude > maxDistance * maxDistance)
+                tip.position = tipAnchor + deflection.normalized * maxDistance;
+
+            // 로드는 축 방향으로 줄어들거나 늘어나지 않음: 그립에서 앵커까지 거리의 구면 위로
+            float radius = (tipAnchor - tipPivot).magnitude;
+            Vector3 fromPivot = tip.position - tipPivot;
+            if (radius > 0.01f && fromPivot.sqrMagnitude > 1e-8f)
+                tip.position = tipPivot + fromPivot.normalized * radius;
         }
 
         // Thomas 알고리즘: lower[j] · x[j-1] + diagonal[j] · x[j] + upper[j] · x[j+1] = rhs[j]

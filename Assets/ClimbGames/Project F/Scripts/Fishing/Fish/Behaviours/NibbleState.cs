@@ -36,7 +36,7 @@ namespace ClimbGames.ProjectF
                 }
 
                 if (nibbleTimer.IsCompleted)
-                    fsm.ChangeState(FishState.Approach);
+                    fsm.ChangeState(FishState.Idle);
             }
         }
     }

@@ -26,11 +26,14 @@ namespace ClimbGames.ProjectF
         [SerializeField] private float overheadTipLength = 0.4f;
 
         [Header("Pitching")]
-        [SerializeField] private float pitchingLineLength = 1f;     // 피칭으로 잡고 있을 때 전체 줄 길이 (m)
+        // 피칭 장비 높이 기준 길이 (m): 손·찌·봉돌을 이 길이의 비율 위치에 둠 (전체 줄 길이는 pitchingHoldTension 으로 정함)
+        [SerializeField] private float pitchingLineLength = 1f;
         // 장비를 설치할 수 있는 최대 길이 (m): 피칭에서는 팁·바늘을 뺀 장비(찌, 봉돌, 손)를 팁–바늘 사이 height / 이 값 비율 위치에 둠
         [SerializeField] private float maxAttachDistance = 2f;
         // 장비가 목표 높이로 줄을 따라 미끄러지는 최대 속도 (m/s): 피칭 ↔ 던지기에서 높이 기준이 바뀔 때 순간이동하지 않게
         [SerializeField] private float equipmentSlideSpeed = 2f;
+        // 손으로 줄을 잡을 때 팁 장력 목표 (N): 오버헤드 → 피칭 전환 동안 팁–손 직선 거리에서 이 장력이 나오는 길이로 줄을 맞추고, 전환이 끝나면 그 길이를 유지
+        [SerializeField, Min(0f)] private float pitchingHoldTension = 1f;
 
         // 피칭 ↔ 오버헤드 전환 시간 (초): 손이 줄을 잡으러 가는 시간, 줄 길이가 바뀌는 시간
         [SerializeField] private float castingTypeTransitionTime = 0.5f;
@@ -43,6 +46,7 @@ namespace ClimbGames.ProjectF
         private bool isOverhead;
         private float releaseTimer = -1f;   // 착수 뒤 풀림이 남은 시간 (음수면 타이머 없음)
         private bool isPitching;
+        private float pitchingTransitionTimer;  // 손이 줄을 잡으러 가는 남은 시간: 이 동안 팁–손 줄 길이를 목표 장력 길이로 맞춤
 
         private readonly List<Vector3> drawPoints = new List<Vector3>();
         private Vector3[] drawBuffer = new Vector3[64];
@@ -50,6 +54,7 @@ namespace ClimbGames.ProjectF
         private FishingLineDrawer[] lineDrawers;
         private FishingPlayer player;
         private Transform rodTip;
+        private IRodTip rodTipSpring;
         private Transform hook;
         private float lengthSpeed = float.PositiveInfinity;   // 줄 길이를 목표(totalLength)로 맞추는 속도 (m/s), SetLength 의 duration 으로 정함
 
@@ -60,6 +65,12 @@ namespace ClimbGames.ProjectF
         public FishingLinePoint SinkerPoint => sinkerPoint;
         public FishingLinePoint EndPoint => endPoint;
         public FishingLinePoint HandlePoint => handlePoint;
+
+        // 로드 팁 스프링을 줄 물리에 넣음 (null 이면 팁은 rodTip 위치 고정점)
+        public void SetRodTip(IRodTip rodTipSpring)
+        {
+            this.rodTipSpring = rodTipSpring;
+        }
 
         public void Initialize(FishingPlayer player, Transform rodTip, Transform hook, float length)
         {
@@ -147,6 +158,29 @@ namespace ClimbGames.ProjectF
                 }
             }
 
+            // 오버헤드 → 피칭 전환: 손이 줄을 잡으러 가는 동안, 팁–손 직선 거리에서 목표 장력이 나오는 길이로 줄을 맞춤
+            // 장력 = stiffness · (거리 − 줄 길이) / 줄 길이 → 줄 길이 = 거리 / (1 + 장력 / stiffness)
+            // - 거리는 앵커(정적 휨만 반영한 목표 팁) ~ 지금 손 점: 휜 팁으로 재면 휠수록 짧게 재어져 줄이 짧아지고 다시 더 휘는 되먹임이 생김
+            // - 손 점이 멀어지면 바로 그만큼 풀고 (늦으면 장력이 튐), 가까워지면 남은 시간에 나눠 감음
+            // - 전환이 끝나면 그 길이를 그대로 유지 (이후 장력 변화는 로드 휨으로만 나타남)
+            if (isPitching && pitchingTransitionTimer > 0f && handlePoint.Segment != null)
+            {
+                Vector3 tipAnchor = rodTipSpring != null ? rodTipSpring.GetTipAnchor() : lineBody.Tip.position;
+                float straight = Vector3.Distance(tipAnchor, handlePoint.Segment.position);
+                float holdLength = straight / (1f + pitchingHoldTension / Mathf.Max(0.0001f, stiffness));
+                float wanted = Mathf.Max(GetMinLength(), handlePoint.Segment.height + holdLength);
+
+                if (wanted > totalLength)
+                    totalLength = wanted;
+                else
+                    totalLength = Mathf.MoveTowards(totalLength, wanted, (totalLength - wanted) / Mathf.Max(pitchingTransitionTimer, deltaTime) * deltaTime);
+
+                lengthSpeed = float.PositiveInfinity;
+                player.Model.SetLineLength(totalLength);
+
+                pitchingTransitionTimer -= deltaTime;
+            }
+
             // 팁에서 줄을 늘리고 줄여 전체 줄 길이를 목표(totalLength)로 맞춤 (lengthSpeed 로 일정하게, 가장 높은 장비 점보다 5cm 이상 길게)
             // lineBody.Length 는 위의 찌 Feed 까지 반영한 길이
             float length = Mathf.MoveTowards(lineBody.Length, totalLength, lengthSpeed * deltaTime);
@@ -163,7 +197,16 @@ namespace ClimbGames.ProjectF
             SyncHeight(handlePoint, deltaTime);
             SyncHeight(endPoint, deltaTime);
 
-            lineBody.Step(deltaTime, rodTip.position, stiffness);
+            if (rodTipSpring != null)
+            {
+                // 팁은 앵커에 스프링으로 묶인 질점: 줄 장력과 같이 풀고, 그 위치로 로드 본을 휜 뒤 메시 팁에 줄 시작을 맞춤
+                lineBody.Step(deltaTime, rodTipSpring.GetTipAnchor(), stiffness, rodTipSpring.GetTipSpring());
+                lineBody.SnapTip(rodTipSpring.ApplyTip(lineBody.Tip.position));
+            }
+            else
+            {
+                lineBody.Step(deltaTime, rodTip.position, stiffness);
+            }
 
             // 캐스팅 중 당겨져 풀린 만큼 목표 길이에 더함 (다음 프레임에 팁 Feed 가 다시 감지 않게)
             if (lineBody.ReleasedLength > 0f)
@@ -186,7 +229,8 @@ namespace ClimbGames.ProjectF
                 return;
 
             // 손 점은 줄 위의 그 높이에서 시작해 손 위치로 옮겨가며 줄을 잡음, 줄 길이도 같은 시간 동안 맞춤
-            SetLength(pitchingLineLength, castingTypeTransitionTime);
+            // 전체 줄 길이는 지금(오버헤드) 길이에서 출발해 전환 동안 UpdateLine 이 목표 장력 길이로 맞춤
+            pitchingTransitionTimer = Mathf.Max(Time.fixedDeltaTime, castingTypeTransitionTime);
             handlePoint.BindSegment(lineBody.AddSegment(SegmentKind.Handle, GetPointHeight(handlePoint), leftHandle, castingTypeTransitionTime));
         }
 

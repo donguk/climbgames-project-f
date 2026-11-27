@@ -49,7 +49,7 @@ namespace ClimbGames.ProjectF
                 // 이동
                 Actor.Character.UpdatePosition(Player.Model.characterMovement, Time.fixedDeltaTime);
 
-                // 라인 업데이트
+                // 라인 업데이트 (로드 팁 휨도 같이 풂)
                 Actor.Line.UpdateLine(Time.fixedDeltaTime);
             }
         }

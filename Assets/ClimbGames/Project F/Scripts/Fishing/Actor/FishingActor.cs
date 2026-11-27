@@ -40,7 +40,8 @@ namespace ClimbGames.ProjectF
             fishingRod.transform.localPosition = Vector3.zero;
             await UniTask.NextFrame();
 
-            // 라인 생성
+            // 라인 생성 (로드 팁은 줄 물리에서 스프링에 묶인 질점으로 풂)
+            fishingLine.SetRodTip(fishingRod.Bender != null ? fishingRod.Bender : null);
             fishingLine.Initialize(player, fishingRod.PoleTip, fishingHook.transform, 1f);
 
             // 채비 설정

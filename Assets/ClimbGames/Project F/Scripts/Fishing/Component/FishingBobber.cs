@@ -54,9 +54,6 @@ namespace ClimbGames.ProjectF
         [Header("Model")]
         [SerializeField] private float modelAlignSpeed = 8f;
 
-        [SerializeField] private float rotationSpeed = 2f;
-        [SerializeField] private float biteMaxAngle = 90f;
-
         private bool canLand;
         private bool isHolding;
         private Vector3 holdPosition;

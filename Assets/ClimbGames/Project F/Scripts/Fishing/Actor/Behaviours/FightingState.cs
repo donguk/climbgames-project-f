@@ -47,6 +47,14 @@ namespace ClimbGames.ProjectF
                     model.tensionOverTime += Time.deltaTime;
                 else
                     model.tensionOverTime = 0f;
+
+                // 로드 휨: 물고기 방향으로 현재 텐션만큼
+                Actor.Rod.SetLoad(Fish.MoveTarget.position - Actor.Rod.PoleTip.position, model.currentTension);
+            }
+
+            protected override void OnExit()
+            {
+                Actor.Rod.ClearLoad();
             }
 
             protected override void OnFixedUpdate()
