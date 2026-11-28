@@ -15,18 +15,8 @@ MonoBehaviour:
   m_GroupName: _data
   m_GUID: 2a4d7a839f8b76f4d87e1dd3cfeba34c
   m_SerializeEntries:
-  - m_GUID: cdd218607bbaa664a887e16c153bfe81
-    m_Address: Fish
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a2dc2f3714d419f40a2b4b6aec0d7aa7
-    m_Address: BiteClip
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2e4038385f466fc45ad128139f242e6b
-    m_Address: FightPattern
+    m_Address: PatternClip
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

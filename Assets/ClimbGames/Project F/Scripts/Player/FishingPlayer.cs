@@ -1,43 +1,39 @@
 ﻿using UnityEngine;
 using Cysharp.Threading.Tasks;
-using Cysharp.Threading.Tasks.Triggers;
-using ClimbGames.ProjectF;
 
 namespace ClimbGames.ProjectF
 {
     public class FishingPlayer
     {
         private FishingPlayerModel model;
-        private FishData fishData;
-        private FishBiteClip biteClip;
-        private FishFightPattern fightPattern;
+        private FishModel fishModel;
 
         private FishingSpot spot;
         private FishingActor actor;
         private HookedFish hookedFish;
 
         private FishingActorMachine actorMachine;
-        private FishMachine fishMachine;
+        private FishLifecycleStateMachine fishLifecycle;
         private MessageBroker messageBroker;
         private FishingInputHandler handler;
 
         public FishingPlayerModel Model => model;
-        public FishData FishData => fishData;
 
         public FishingSpot Spot => spot;
         public FishingActor Actor => actor;
         public Transform CameraTarget => actor.Character.CameraTarget;
         public HookedFish Fish => hookedFish;
-        public FishMachine FishMachine => fishMachine;
+        public FishLifecycleStateMachine FishLifecycle => fishLifecycle;
         public MessageBroker MessageBroker => messageBroker;
 
         public FishingPlayer(int id)
         {
-            model = new FishingPlayerModel(id);
+            fishModel = new FishModel();
+            model = new FishingPlayerModel(id, fishModel);
             messageBroker = FishingEvent.GetBroker(id);
 
             actorMachine = new FishingActorMachine();
-            fishMachine = new FishMachine();
+            fishLifecycle = new FishLifecycleStateMachine();
 
             actorMachine.onChange += (_) => model.ChangeActorState(_);
         }
@@ -56,7 +52,7 @@ namespace ClimbGames.ProjectF
             await actor.Initialize(this, spot);
 
             actorMachine.InitializeAndStart(this);
-            fishMachine.InitializeAndStart(this);
+            fishLifecycle.InitializeAndStart(this);
 
             await UniTask.NextFrame();
         }
@@ -66,7 +62,8 @@ namespace ClimbGames.ProjectF
             if (actor != null)
                 actor.gameObject.SetActive(false);
 
-            fishMachine.Pause();
+            fishLifecycle.Pause();
+            fishLifecycle.Pattern.Pause();
             actorMachine.Pause();
         }
 
@@ -79,38 +76,28 @@ namespace ClimbGames.ProjectF
         public void TakeHookedFish()
         {
             actorMachine.ChangeState(FishingActorState.Idle);
-            fishMachine.ChangeState(FishState.Idle);
+            fishLifecycle.ChangeState(FishLifecycleState.Idle);
         }
 
-        public FishData FetchFishData()
+        // 물고기 결정: 기본 데이터(FishModel) → 클립 asset 로드(FishPattern). 클립이 하나도 없으면 false
+        public bool PrepareFish(int fishId)
         {
-            if (fishData == null)
-                fishData = AssetManager.LoadAsset<FishData>("Fish/FishData.asset");
+            // 이전에 준비한 물고기가 남아 있으면 먼저 해제 (Load 도 시작할 때 해제함)
+            fishModel.End();
 
-            return fishData;
-        }
+            fishModel.Initialize(fishId);
+            if (fishLifecycle.Pattern.Load(fishModel.Spec) == false)
+            {
+                Debug.LogError($"[FishingPlayer] 물고기 {fishId} 의 클립을 하나도 불러오지 못했습니다.");
+                return false;
+            }
 
-        // 입질 클립 (지금은 Nibble, Bite 모두 BiteClip_0)
-        public FishBiteClip FetchBiteClip()
-        {
-            if (biteClip == null)
-                biteClip = AssetManager.LoadAsset<FishBiteClip>("BiteClip/BiteClip_0.asset");
-
-            return biteClip;
-        }
-
-        // 파이팅 패턴 (지금은 FightPattern_0 하나)
-        public FishFightPattern FetchFightPattern()
-        {
-            if (fightPattern == null)
-                fightPattern = AssetManager.LoadAsset<FishFightPattern>("FightPattern/FightPattern_0.asset");
-
-            return fightPattern;
+            return true;
         }
 
         public HookedFish CreateHookedFish(FishingHook hook)
         {
-            model.FishStatus.Initialize();
+            fishModel.Begin();
 
             if (hookedFish == null)
                 hookedFish = AssetManager.Instantiate<HookedFish>("HookedFish");
@@ -126,27 +113,10 @@ namespace ClimbGames.ProjectF
             if (hookedFish != null)
                 GameObject.Destroy(hookedFish.gameObject);
 
-            if (fishData != null)
-                AssetManager.Release(fishData);
-
-            if (biteClip != null)
-                AssetManager.Release(biteClip);
-
-            if (fightPattern != null)
-                AssetManager.Release(fightPattern);
+            fishModel.End();
+            fishLifecycle.Pattern.Dispose();
 
             hookedFish = null;
-            fishData = null;
-            biteClip = null;
-            fightPattern = null;
-        }
-
-        public float GetFishNoise()
-        {
-            float stamina = fishData.staminaCurve.Evaluate(1f - model.FishStatus.stamina);
-            float currentJitter = Mathf.Max(0.01f, fishData.tensionJitterIntensity * stamina);
-            float noise = (Mathf.PerlinNoise(Time.time * fishData.tensionJitterFrequency + model.FishStatus.noiseSeed, 0f) * 2f) - 1f;
-            return noise * currentJitter;
         }
     }
 }

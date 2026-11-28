@@ -191,7 +191,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2bf1514277f5e19429f9d64549b7a6e3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.EntryScene
+  m_EditorClassIdentifier: Assembly-CSharp::ClimbGames.ProjectF.EntryScene
 --- !u!4 &1929056572
 Transform:
   m_ObjectHideFlags: 0

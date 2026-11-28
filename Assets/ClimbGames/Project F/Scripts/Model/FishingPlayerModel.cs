@@ -3,30 +3,6 @@ using UnityEngine;
 
 namespace ClimbGames.ProjectF
 {
-    public class FishStatus
-    {
-        public float stamina;          // 0~1
-        public float noiseSeed;
-        public FishFightState fightState;
-
-        public void Initialize()
-        {
-            stamina = 1f;
-            noiseSeed = Random.Range(0f, 1000f);
-            fightState = FishFightState.Run;
-        }
-
-        public void DecreaseStamina(float value)
-        {
-            stamina = Mathf.Clamp01(stamina - value);
-        }
-
-        public void RecoverStamina(float value)
-        {
-            stamina = Mathf.Clamp01(stamina + value);
-        }
-    }
-
     public class FishingPlayerModel
     {
         private readonly int id;
@@ -46,17 +22,18 @@ namespace ClimbGames.ProjectF
         private ReactiveProperty<float> lineLength = new ReactiveProperty<float>();
         private ReactiveProperty<CastingType> castingType = new ReactiveProperty<CastingType>();
         private ReactiveProperty<FishingActorState> actorState = new ReactiveProperty<FishingActorState>();
-        private FishStatus fishStatus = new FishStatus();
+        private readonly FishModel fish;    // 소유는 FishingPlayer, 여기서는 상태·UI 가 읽을 참조만 공개
 
         public int ID => id;
         public ReadOnlyReactiveProperty<float> LineLength => lineLength;
         public ReadOnlyReactiveProperty<CastingType> CastingType => castingType;
         public ReadOnlyReactiveProperty<FishingActorState> ActorState => actorState;
-        public FishStatus FishStatus => fishStatus;
+        public FishModel Fish => fish;
 
-        public FishingPlayerModel(int id)
+        public FishingPlayerModel(int id, FishModel fish)
         {
             this.id = id;
+            this.fish = fish;
         }
 
         public void SetMovement(float horizontal, float vertical)

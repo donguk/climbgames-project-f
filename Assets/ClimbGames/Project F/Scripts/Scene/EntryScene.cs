@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-namespace ClimbGames
+namespace ClimbGames.ProjectF
 {
     public class EntryScene : MonoScene
     {

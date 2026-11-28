@@ -5,7 +5,7 @@ namespace ClimbGames.ProjectF
     // 파이팅 상태가 HookedFish 에 전달하는 물고기의 의도
     public struct FishIntentInfo
     {
-        public FishFightState state;
+        public FishPatternState state;
 
         /// <summary>
         /// 헤엄 방향 (수평, 수역 조향이 끝난 값)

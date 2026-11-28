@@ -17,13 +17,16 @@
 - UniTask 기반 비동기 씬 전환 매니저
 - `(Mono)Singleton` 구조 및 제네릭 FSM 시스템
 - 카메라 스택 기반 UIManager 레이어 관리
+- **프로젝트 구현시 Framework 에 포함되어야 한다고 판단되는 부분은 보고**
 
 ## 코딩 및 개발 규칙 (Coding Conventions)
 - **C# Naming:**
   - Private fields: `camelCase` (`fieldName`)
   - Properties & Public Methods: `PascalCase` (`UpdateTension`)
+- **Namespace:** `Assets/ClimbGames/Project F` 폴더의 스크립트는 모두 `namespace ClimbGames.ProjectF`
 - **Architecture:**
   - 비동기 작업은 `UniTask` 사용
+- Field, Property, Method 순서로 위치
 
 ## 폴더 구조 및 설명
 ```text
@@ -38,8 +41,12 @@ Assets/
         │   │   ├── Actor/          # 1인칭 캐릭터 fsm
         │   │   ├── Component/      # 낚시대, 찌, 바늘, 줄에서 사용되는 컴포넌트
         │   │   │   └── Core/       # 낚시 줄 코어 시스템(verlet line)
-        │   │   ├── Fish/           # 물고기 fsm
+        │   │   ├── Fish/           # 물고기
+        │   │   │   ├── Lifecycle/  # 생애 주기 fsm (Idle → Approach → Bite → Fight → Submit/Flee)
+        │   │   │   └── Pattern/    # 행동 클립(SO)과 클립 시퀀서(FishPattern), 클립 실행 fsm
         │   │   └── Info/           # 낚시 시뮬레이션 중 전달되는 정보
+        │   ├── Model/              # 메모리 데이터 (FishingPlayerModel, FishModel, FishSpec)
+        │   ├── Player/             # 최상위 객체 FishingPlayer (Model·Actor·HookedFish 소유)
         │   ├── UI/                 # UI 컴포넌트
         │   └── World/              # 낚시 월드 및 카메라 스크립트
         └── Sources/                

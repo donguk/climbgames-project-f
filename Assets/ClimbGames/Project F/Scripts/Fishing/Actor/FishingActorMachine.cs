@@ -34,13 +34,10 @@ namespace ClimbGames.ProjectF
                         fsm.ChangeState(FishingActorState.Catching);
 
                     if (Keyboard.current.fKey.wasReleasedThisFrame)
-                        Player.FishMachine.ChangeState(FishState.Flee);
+                        Player.FishLifecycle.ChangeState(FishLifecycleState.Flee);
 
                     if (Keyboard.current.bKey.wasReleasedThisFrame)
-                        Player.FishMachine.ChangeState(FishState.Bite);
-
-                    if (Keyboard.current.nKey.wasReleasedThisFrame)
-                        Player.FishMachine.ChangeState(FishState.Nibble);
+                        Player.FishLifecycle.ChangeState(FishLifecycleState.Bite);
                 }
             }
 
